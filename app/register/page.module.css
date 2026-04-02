@@ -1,0 +1,123 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-image: url('/images/bg.png'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.bgOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.70);
+  z-index: 0;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: #1a2332;
+  border-radius: 20px;
+  padding: 36px 44px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.subtitle {
+  color: #aeb9c6;
+  font-size: 12px;
+  text-align: center;
+  margin: 0 0 22px;
+  font-weight: 400;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.label {
+  display: block;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 400;
+  margin-bottom: 4px;
+  
+}
+
+.input {
+  width: 100%;
+  padding: 12px 17px;
+  border-radius: 30px;
+  border: none;
+  background: #ffffff;
+  font-size: 11px;
+  color: rgb(36, 36, 36);
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  margin-bottom: -4px;
+}
+
+.input::placeholder {
+  color: rgb(147, 147, 147);  /* Warna abu-abu untuk placeholder */
+}
+
+.signUpBtn {
+  margin-top: 14px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 30px;
+  border: none;
+  background: #3b7cf4;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.googleBtn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 30px;
+  border: none;
+  background: #ffffff;
+  color: #333;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.footerText {
+  margin-top: 10px;
+  text-align: center;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.footerLink {
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}

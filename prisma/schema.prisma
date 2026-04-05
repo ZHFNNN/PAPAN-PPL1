@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum KycStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String          @id @default(cuid())
+  username      String          @unique
+  name          String
+  email         String          @unique
+  phoneNumber   String          @unique
+  passwordHash  String
+  role          Role            @default(USER)
+  kycStatus     KycStatus       @default(NONE)
+  kycSubmission KycSubmission?
+  properties    Property[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model KycSubmission {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ktpImageUrl   String
+  selfieImageUrl String
+  nik           String
+  fullName      String
+  phoneNumber   String
+  province      String
+  cityOrRegency String
+  district      String
+  rt            String
+  rw            String
+  postalCode    String
+  status        KycStatus @default(PENDING)
+  adminNotes    String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  price       Decimal
+  listingType String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

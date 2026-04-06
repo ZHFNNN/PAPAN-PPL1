@@ -79,7 +79,7 @@ const properties = [
   },
   {
     id: 5,
-    title: 'Kosan asri perumahan',
+    title: 'Kosan sangat asri perumahan',
     kategori: 'Kosan',
     price: 'Rp980.000.000',
     biayaHidup: 'Estimasi biaya hidup: 3 juta/bulan',

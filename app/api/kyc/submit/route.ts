@@ -1,106 +1,83 @@
-import { KycStatus } from "@prisma/client";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/require-user";
+// app/api/kyc/submit/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
-const submitKycSchema = z.object({
-  ktpImageUrl: z.string().url(),
-  selfieImageUrl: z.string().url(),
-  nik: z.string().regex(/^\d{16}$/, "NIK harus 16 digit"),
-  fullName: z.string().min(3),
-  phoneNumber: z.string().min(8).max(20),
-  province: z.string().min(2),
-  cityOrRegency: z.string().min(2),
-  district: z.string().min(2),
-  rt: z.string().regex(/^\d{1,3}$/, "RT harus angka 1-3 digit"),
-  rw: z.string().regex(/^\d{1,3}$/, "RW harus angka 1-3 digit"),
-  postalCode: z.string().regex(/^\d{5}$/, "Kode pos harus 5 digit")
-});
+const prisma = new PrismaClient();
 
-export async function POST(request: Request) {
-  const auth = await requireAuth();
-  if ("error" in auth) {
-    return auth.error;
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const parsed = submitKycSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return Response.json(
-        { message: "Payload tidak valid", errors: parsed.error.flatten() },
-        { status: 400 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { kycSubmission: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: 'User tidak ditemukan.' }, { status: 404 });
+    }
+
+    // Jika sudah APPROVED, tidak perlu submit lagi
+    if (user.kycStatus === 'APPROVED') {
+      return NextResponse.json({ message: 'Akun sudah terverifikasi.' }, { status: 400 });
+    }
+
+    // Jika sedang PENDING, tidak bisa submit lagi
+    if (user.kycStatus === 'PENDING') {
+      return NextResponse.json({ message: 'Pengajuan sedang ditinjau.' }, { status: 400 });
+    }
+
+    const body = await req.json();
     const {
-      ktpImageUrl,
-      selfieImageUrl,
-      nik,
-      fullName,
-      phoneNumber,
-      province,
-      cityOrRegency,
-      district,
-      rt,
-      rw,
-      postalCode
-    } = parsed.data;
-    const userId = auth.session.user.id;
+      nik, fullName, phoneNumber,
+      province, cityOrRegency, district,
+      rt, rw, postalCode,
+      ktpImageUrl, selfieImageUrl,
+    } = body;
 
-    const submission = await prisma.kycSubmission.upsert({
-      where: { userId },
-      create: {
-        userId,
-        ktpImageUrl,
-        selfieImageUrl,
-        nik,
-        fullName,
-        phoneNumber,
-        province,
-        cityOrRegency,
-        district,
-        rt,
-        rw,
-        postalCode,
-        status: KycStatus.PENDING,
-        adminNotes: null,
-        reviewedAt: null,
-        reviewedBy: null
-      },
-      update: {
-        ktpImageUrl,
-        selfieImageUrl,
-        nik,
-        fullName,
-        phoneNumber,
-        province,
-        cityOrRegency,
-        district,
-        rt,
-        rw,
-        postalCode,
-        status: KycStatus.PENDING,
-        adminNotes: null,
-        reviewedAt: null,
-        reviewedBy: null
-      },
-      select: {
-        id: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true
-      }
-    });
+    // Validasi field wajib
+    if (!nik || !fullName || !phoneNumber || !province || !cityOrRegency ||
+        !district || !rt || !rw || !postalCode || !ktpImageUrl || !selfieImageUrl) {
+      return NextResponse.json({ message: 'Semua field wajib diisi.' }, { status: 400 });
+    }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { kycStatus: KycStatus.PENDING }
-    });
+    // Upsert KycSubmission (buat baru atau update jika REJECTED)
+    await prisma.$transaction([
+      prisma.kycSubmission.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          nik, fullName, phoneNumber,
+          province, cityOrRegency, district,
+          rt, rw, postalCode,
+          ktpImageUrl, selfieImageUrl,
+          status: 'PENDING',
+        },
+        update: {
+          nik, fullName, phoneNumber,
+          province, cityOrRegency, district,
+          rt, rw, postalCode,
+          ktpImageUrl, selfieImageUrl,
+          status: 'PENDING',
+          adminNotes: null,
+          reviewedBy: null,
+          reviewedAt: null,
+        },
+      }),
+      prisma.user.update({
+        where: { id: user.id },
+        data: { kycStatus: 'PENDING' },
+      }),
+    ]);
 
-    return Response.json({ message: "KYC berhasil dikirim", submission }, { status: 201 });
-  } catch {
-    return Response.json({ message: "Terjadi kesalahan server" }, { status: 500 });
+    return NextResponse.json({ message: 'Pengajuan berhasil dikirim.' });
+  } catch (error) {
+    console.error('POST /api/kyc/submit error:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

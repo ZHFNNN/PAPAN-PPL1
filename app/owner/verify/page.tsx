@@ -52,9 +52,12 @@ const EMPTY_FORM: FormState = {
 };
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("id-ID", {
-    day: "numeric", month: "long", year: "numeric",
-  });
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Jakarta",
+  }).format(new Date(iso));
 }
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
@@ -342,7 +345,7 @@ export default function VerifyPage() {
             </div>
           )}
 
-          <button className={styles.submitBtn} onClick={() => router.push("/owner")}>
+          <button className={styles.submitBtn} onClick={() => router.push("/profile")}>
             Kembali ke Dashboard
           </button>
         </div>

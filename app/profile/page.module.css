@@ -335,3 +335,175 @@
 		padding: 2rem;
 	}
 }
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  text-align: center;
+}
+
+.retryBtn {
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.retryBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ── KYC Status Card ── */
+.kycCard {
+  border-radius: 20px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.kycLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.kycEmoji {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.kycTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: clamp(13px, 1.1vw, 15px);
+  margin: 0 0 3px;
+}
+
+.kycDesc {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 400;
+  font-size: clamp(11px, 0.9vw, 13px);
+  margin: 0;
+  opacity: 0.85;
+}
+
+.kycBtn {
+  flex-shrink: 0;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(12px, 0.95vw, 14px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+/* ── KYC color variants ── */
+
+/* NONE — abu gelap */
+.kycNone {
+  background: #19263c;
+  color: #ffffff;
+}
+.kycNone .kycTitle { color: #ffffff; }
+.kycNone .kycDesc  { color: rgba(255,255,255,0.65); }
+.kycNone .kycBtn {
+  background: #ffffff;
+  color: #19263c;
+  border: none;
+}
+.kycNone .kycBtn:hover { background: #f1f5f9; }
+
+/* PENDING — kuning */
+.kycPending {
+  background: #7c5a00;
+  color: #ffffff;
+}
+.kycPending .kycTitle { color: #fef3c7; }
+.kycPending .kycDesc  { color: rgba(254,243,199,0.75); }
+
+/* APPROVED — hijau */
+.kycApproved {
+  background: #14532d;
+  color: #ffffff;
+}
+.kycApproved .kycTitle { color: #bbf7d0; }
+.kycApproved .kycDesc  { color: rgba(187,247,208,0.75); }
+.kycApproved .kycBtn {
+  background: #ffffff;
+  color: #14532d;
+  border: none;
+}
+.kycApproved .kycBtn:hover { background: #f0fdf4; }
+
+/* REJECTED — merah */
+.kycRejected {
+  background: #7f1d1d;
+  color: #ffffff;
+}
+.kycRejected .kycTitle { color: #fecaca; }
+.kycRejected .kycDesc  { color: rgba(254,202,202,0.75); }
+.kycRejected .kycBtn {
+  background: #ffffff;
+  color: #7f1d1d;
+  border: none;
+}
+.kycRejected .kycBtn:hover { background: #fef2f2; }
+
+/* ── Responsive KYC card ── */
+@media (max-width: 480px) {
+  .kycCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .kycBtn {
+    width: 100%;
+    text-align: center;
+  }
+}

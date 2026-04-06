@@ -1,36 +1,36 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import styles from "./page.module.css";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type KycStatus = "NONE" | "PENDING" | "APPROVED" | "REJECTED";
 
-interface KycStatusResponse {
-  kycStatus: KycStatus;
-  submission: {
-    nik: string;
-    fullName: string;
-    phoneNumber: string;
-    province: string;
-    cityOrRegency: string;
-    district: string;
-    rt: string;
-    rw: string;
-    postalCode: string;
-    ktpImageUrl: string;
-    selfieImageUrl: string;
-    adminNotes?: string | null;
-    createdAt: string;
-  } | null;
+interface Submission {
+  nik: string;
+  fullName: string;
+  phoneNumber: string;
+  province: string;
+  cityOrRegency: string;
+  district: string;
+  rt: string;
+  rw: string;
+  postalCode: string;
+  ktpImageUrl: string;
+  selfieImageUrl: string;
+  adminNotes?: string | null;
+  createdAt: string;
 }
 
-type Step = 1 | 2 | 3;
+interface KycStatusResponse {
+  kycStatus: KycStatus;
+  submission: Submission | null;
+}
 
-interface FormData {
+interface FormState {
   nik: string;
   fullName: string;
   phoneNumber: string;
@@ -44,27 +44,98 @@ interface FormData {
   selfieImageUrl: string;
 }
 
-interface FieldErrors {
-  [key: string]: string;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const STEPS = [
-  { label: "Data Diri" },
-  { label: "Alamat KTP" },
-  { label: "Upload Foto" },
-];
+const EMPTY_FORM: FormState = {
+  nik: "", fullName: "", phoneNumber: "",
+  province: "", cityOrRegency: "", district: "",
+  rt: "", rw: "", postalCode: "",
+  ktpImageUrl: "", selfieImageUrl: "",
+};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+    day: "numeric", month: "long", year: "numeric",
   });
 }
 
-// ─── Upload Hook ─────────────────────────────────────────────────────────────
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
+function KtpIcon() {
+  return (
+    <svg className={styles.uploadSvg} width="64" height="48" viewBox="0 0 64 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="62" height="46" rx="7" stroke="white" strokeWidth="2" strokeOpacity="0.7"/>
+      <circle cx="20" cy="22" r="8" stroke="white" strokeWidth="1.8" strokeOpacity="0.7"/>
+      <line x1="33" y1="17" x2="55" y2="17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+      <line x1="33" y1="24" x2="55" y2="24" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+      <line x1="33" y1="31" x2="48" y2="31" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+    </svg>
+  );
+}
+
+function SelfieIcon() {
+  return (
+    <svg className={styles.uploadSvg} width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="20" r="10" stroke="white" strokeWidth="2" strokeOpacity="0.7"/>
+      <path d="M8 48c0-11 9-18 20-18s20 7 20 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+      <rect x="36" y="34" width="16" height="12" rx="3" stroke="white" strokeWidth="1.5" strokeOpacity="0.7"/>
+      <line x1="39" y1="37" x2="49" y2="37" stroke="white" strokeWidth="1.2" strokeOpacity="0.7"/>
+      <line x1="39" y1="40" x2="49" y2="40" stroke="white" strokeWidth="1.2" strokeOpacity="0.7"/>
+    </svg>
+  );
+}
+
+// ─── Upload Area Component ────────────────────────────────────────────────────
+
+interface UploadAreaProps {
+  label: string;
+  icon: "ktp" | "selfie";
+  subtext: string;
+  url: string;
+  uploading: boolean;
+  error?: string;
+  onTrigger: () => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function UploadArea({ label, icon, subtext, url, uploading, error, onTrigger, onDrop, inputRef, onChange }: UploadAreaProps) {
+  return (
+    <div className={styles.uploadBox}>
+      <span className={styles.uploadLabel}>{label}</span>
+      <div
+        className={`${styles.uploadArea}${error ? ` ${styles.uploadAreaError}` : ""}`}
+        onClick={onTrigger}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDrop}
+      >
+        {url ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt={label} className={styles.uploadPreview} />
+            <button className={styles.changeBtn} onClick={(e) => { e.stopPropagation(); onTrigger(); }}>
+              Ganti
+            </button>
+          </>
+        ) : (
+          <div className={styles.uploadPlaceholder}>
+            {icon === "ktp" ? <KtpIcon /> : <SelfieIcon />}
+            <span className={styles.uploadText}>{subtext}</span>
+          </div>
+        )}
+        {uploading && (
+          <div className={styles.uploadingOverlay}>
+            <div className={styles.spinner} />
+            <span className={styles.uploadingText}>Mengunggah…</span>
+          </div>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onChange} />
+      {error && <p className={styles.errorMsg}>{error}</p>}
+    </div>
+  );
+}
+
+// ─── Upload Hook ──────────────────────────────────────────────────────────────
 
 function useImageUpload(endpoint: string) {
   const [url, setUrl] = useState("");
@@ -73,193 +144,112 @@ function useImageUpload(endpoint: string) {
 
   const trigger = () => inputRef.current?.click();
 
-  const handleFile = useCallback(
-    async (file: File) => {
-      if (!file.type.startsWith("image/")) {
-        toast.error("File harus berupa gambar (JPG/PNG/WEBP).");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Ukuran file maksimal 5 MB.");
-        return;
-      }
-
-      setUploading(true);
-      try {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch(endpoint, { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Upload gagal");
-        setUrl(data.data.url);
-        toast.success("Foto berhasil diunggah!");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Upload gagal");
-      } finally {
-        setUploading(false);
-      }
-    },
-    [endpoint]
-  );
+  const handleFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("File harus berupa gambar."); return; }
+    if (file.size > 5 * 1024 * 1024)    { toast.error("Ukuran file maksimal 5 MB."); return; }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res  = await fetch(endpoint, { method: "POST", body: fd });
+      const data = await res.json() as { message?: string; data?: { url: string } };
+      if (!res.ok) throw new Error(data.message ?? "Upload gagal");
+      setUrl(data.data?.url ?? "");
+      toast.success("Foto berhasil diunggah!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload gagal");
+    } finally {
+      setUploading(false);
+    }
+  }, [endpoint]);
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleFile(file);
-    // reset so same file can be re-selected
+    if (file) void handleFile(file);
     e.target.value = "";
   };
 
-  return { url, setUrl, uploading, trigger, onChange, inputRef };
+  return { url, setUrl, uploading, trigger, handleFile, onChange, inputRef };
 }
 
-// ─── Page Component ───────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function VerifyPage() {
   const router = useRouter();
 
-  // Status loading
-  const [pageLoading, setPageLoading] = useState(true);
-  const [kycStatus, setKycStatus] = useState<KycStatus>("NONE");
-  const [existingSubmission, setExistingSubmission] =
-    useState<KycStatusResponse["submission"]>(null);
+  const [pageLoading,        setPageLoading]        = useState(true);
+  const [kycStatus,          setKycStatus]           = useState<KycStatus>("NONE");
+  const [existingSubmission, setExistingSubmission]  = useState<Submission | null>(null);
+  const [submitting,         setSubmitting]          = useState(false);
+  const [submitted,          setSubmitted]           = useState(false);
+  const [form,               setForm]                = useState<FormState>(EMPTY_FORM);
+  const [errors,             setErrors]              = useState<Partial<Record<keyof FormState, string>>>({});
 
-  // Multi-step form
-  const [step, setStep] = useState<Step>(1);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const [form, setForm] = useState<FormData>({
-    nik: "",
-    fullName: "",
-    phoneNumber: "",
-    province: "",
-    cityOrRegency: "",
-    district: "",
-    rt: "",
-    rw: "",
-    postalCode: "",
-    ktpImageUrl: "",
-    selfieImageUrl: "",
-  });
-
-  const [errors, setErrors] = useState<FieldErrors>({});
-
-  // Upload handlers
-  const ktp = useImageUpload("/api/uploads/ktp");
+  const ktp    = useImageUpload("/api/uploads/ktp");
   const selfie = useImageUpload("/api/uploads/selfie");
 
-  // ── Fetch current KYC status ──────────────────────────────────────────────
+  // Fetch KYC status
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
-        const res = await fetch("/api/kyc/my-status");
-        if (res.status === 401) {
-          router.push("/login");
-          return;
-        }
-        const data: KycStatusResponse = await res.json();
+        const res  = await fetch("/api/kyc/my-status");
+        if (res.status === 401) { router.push("/login"); return; }
+        const data = await res.json() as KycStatusResponse;
         setKycStatus(data.kycStatus);
         if (data.submission) {
           setExistingSubmission(data.submission);
-          // Prefill form for re-submission after rejection
           if (data.kycStatus === "REJECTED") {
             const s = data.submission;
-            setForm({
-              nik: s.nik,
-              fullName: s.fullName,
-              phoneNumber: s.phoneNumber,
-              province: s.province,
-              cityOrRegency: s.cityOrRegency,
-              district: s.district,
-              rt: s.rt,
-              rw: s.rw,
-              postalCode: s.postalCode,
-              ktpImageUrl: s.ktpImageUrl,
-              selfieImageUrl: s.selfieImageUrl,
-            });
+            setForm({ nik: s.nik, fullName: s.fullName, phoneNumber: s.phoneNumber,
+              province: s.province, cityOrRegency: s.cityOrRegency, district: s.district,
+              rt: s.rt, rw: s.rw, postalCode: s.postalCode,
+              ktpImageUrl: s.ktpImageUrl, selfieImageUrl: s.selfieImageUrl });
             ktp.setUrl(s.ktpImageUrl);
             selfie.setUrl(s.selfieImageUrl);
           }
         }
-      } catch {
-        toast.error("Gagal memuat status verifikasi.");
-      } finally {
-        setPageLoading(false);
-      }
+      } catch { toast.error("Gagal memuat status verifikasi."); }
+      finally  { setPageLoading(false); }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync upload URLs into form
-  useEffect(() => {
-    setForm((prev) => ({ ...prev, ktpImageUrl: ktp.url }));
-  }, [ktp.url]);
+  useEffect(() => { setForm((p) => ({ ...p, ktpImageUrl:    ktp.url    })); }, [ktp.url]);
+  useEffect(() => { setForm((p) => ({ ...p, selfieImageUrl: selfie.url })); }, [selfie.url]);
 
-  useEffect(() => {
-    setForm((prev) => ({ ...prev, selfieImageUrl: selfie.url }));
-  }, [selfie.url]);
-
-  // ── Field helpers ─────────────────────────────────────────────────────────
-  const set = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    setErrors((prev) => ({ ...prev, [field]: "" }));
+  const setField = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((p) => ({ ...p, [field]: e.target.value }));
+    setErrors((p) => ({ ...p, [field]: undefined }));
   };
 
-  // ── Validation per step ───────────────────────────────────────────────────
-  const validate = (target: Step): boolean => {
-    const errs: FieldErrors = {};
-
-    if (target === 1) {
-      if (!/^\d{16}$/.test(form.nik))
-        errs.nik = "NIK harus tepat 16 digit angka.";
-      if (form.fullName.trim().length < 3)
-        errs.fullName = "Nama lengkap minimal 3 karakter.";
-      if (form.phoneNumber.trim().length < 8)
-        errs.phoneNumber = "Nomor HP minimal 8 karakter.";
-    }
-
-    if (target === 2) {
-      if (form.province.trim().length < 2) errs.province = "Provinsi wajib diisi.";
-      if (form.cityOrRegency.trim().length < 2)
-        errs.cityOrRegency = "Kota/Kabupaten wajib diisi.";
-      if (form.district.trim().length < 2)
-        errs.district = "Kecamatan wajib diisi.";
-      if (!/^\d{1,3}$/.test(form.rt)) errs.rt = "RT harus 1–3 digit angka.";
-      if (!/^\d{1,3}$/.test(form.rw)) errs.rw = "RW harus 1–3 digit angka.";
-      if (!/^\d{5}$/.test(form.postalCode))
-        errs.postalCode = "Kode pos harus 5 digit.";
-    }
-
-    if (target === 3) {
-      if (!form.ktpImageUrl) errs.ktpImageUrl = "Foto KTP wajib diunggah.";
-      if (!form.selfieImageUrl) errs.selfieImageUrl = "Selfie wajib diunggah.";
-    }
-
+  const validate = (): boolean => {
+    const errs: Partial<Record<keyof FormState, string>> = {};
+    if (!/^\d{16}$/.test(form.nik))           errs.nik           = "NIK harus tepat 16 digit.";
+    if (form.fullName.trim().length < 3)       errs.fullName      = "Nama minimal 3 karakter.";
+    if (form.phoneNumber.trim().length < 8)    errs.phoneNumber   = "Nomor HP minimal 8 karakter.";
+    if (form.province.trim().length < 2)       errs.province      = "Provinsi wajib diisi.";
+    if (form.cityOrRegency.trim().length < 2)  errs.cityOrRegency = "Kota/Kabupaten wajib diisi.";
+    if (form.district.trim().length < 2)       errs.district      = "Kecamatan wajib diisi.";
+    if (!/^\d{1,3}$/.test(form.rt))            errs.rt            = "RT tidak valid.";
+    if (!/^\d{1,3}$/.test(form.rw))            errs.rw            = "RW tidak valid.";
+    if (!/^\d{5}$/.test(form.postalCode))      errs.postalCode    = "Kode pos harus 5 digit.";
+    if (!form.ktpImageUrl)                     errs.ktpImageUrl    = "Foto KTP wajib diunggah.";
+    if (!form.selfieImageUrl)                  errs.selfieImageUrl = "Selfie wajib diunggah.";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const nextStep = () => {
-    if (validate(step)) setStep((s) => (s < 3 ? ((s + 1) as Step) : s));
-  };
-
-  const prevStep = () => setStep((s) => (s > 1 ? ((s - 1) as Step) : s));
-
-  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!validate(3)) return;
-
+    if (!validate()) { toast.error("Lengkapi semua data terlebih dahulu."); return; }
     setSubmitting(true);
     try {
-      const res = await fetch("/api/kyc/submit", {
+      const res  = await fetch("/api/kyc/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Gagal mengirim data.");
-
+      const data = await res.json() as { message?: string };
+      if (!res.ok) throw new Error(data.message ?? "Gagal mengirim data.");
       setSubmitted(true);
       setKycStatus("PENDING");
     } catch (err) {
@@ -269,146 +259,26 @@ export default function VerifyPage() {
     }
   };
 
-  // ── Drag & Drop ───────────────────────────────────────────────────────────
-  const makeDrop =
-    (handler: (f: File) => void) =>
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files?.[0];
-      if (file) handler(file);
-    };
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Render helpers
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const stepClass = (n: number) => {
-    if (n < step) return `${styles.step} ${styles.stepDone}`;
-    if (n === step) return `${styles.step} ${styles.stepActive}`;
-    return styles.step;
+  const makeDrop = (handler: (f: File) => Promise<void>) => (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) void handler(file);
   };
 
-  const inputClass = (field: string) =>
-    [styles.input, errors[field] ? styles.inputError : ""].join(" ").trim();
-
-  const Field = ({
-    id,
-    label,
-    placeholder,
-    value,
-    onChange,
-    maxLength,
-    required = true,
-    className,
-  }: {
-    id: keyof FormData;
-    label: string;
-    placeholder: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    maxLength?: number;
-    required?: boolean;
-    className?: string;
-  }) => (
-    <div className={`${styles.field}${className ? ` ${className}` : ""}`}>
-      <label className={styles.label} htmlFor={id}>
-        {label}
-        {required && <span className={styles.required}>*</span>}
-      </label>
-      <input
-        id={id}
-        className={inputClass(id)}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        maxLength={maxLength}
-      />
-      {errors[id] && <p className={styles.errorMsg}>{errors[id]}</p>}
-    </div>
-  );
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Loading skeleton
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Loading ──────────────────────────────────────────────────────────────
   if (pageLoading) {
     return (
       <div className={styles.root}>
         <div className={styles.loadingWrapper}>
-          <div className={styles.skeleton} style={{ height: 60 }} />
-          <div className={styles.skeleton} style={{ height: 80 }} />
-          <div className={styles.skeleton} style={{ height: 320 }} />
+          <div className={styles.skeleton} style={{ height: 48 }} />
+          <div className={styles.skeleton} style={{ height: 420 }} />
+          <div className={styles.skeleton} style={{ height: 56 }} />
         </div>
       </div>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Status: PENDING
-  // ─────────────────────────────────────────────────────────────────────────
-  if (kycStatus === "PENDING" && !submitted) {
-    return (
-      <div className={styles.root}>
-        <Toaster position="top-center" />
-        <div className={styles.header}>
-          <button className={styles.backBtn} onClick={() => router.back()}>
-            ← Kembali
-          </button>
-          <h1 className={styles.pageTitle}>Verifikasi Identitas</h1>
-          <p className={styles.pageSubtitle}>
-            Data kamu sedang ditinjau oleh tim kami.
-          </p>
-        </div>
-
-        <div className={`${styles.statusBanner} ${styles.pending}`}>
-          <div className={styles.statusIcon}>⏳</div>
-          <div>
-            <p className={styles.statusTitle}>Sedang Ditinjau</p>
-            <p className={styles.statusDesc}>
-              Pengajuan verifikasi kamu diterima pada{" "}
-              {existingSubmission ? formatDate(existingSubmission.createdAt) : "—"}.
-              Proses peninjauan biasanya memakan waktu 1×24 jam kerja.
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.card}>
-          <p className={styles.sectionTitle}>
-            <span>✓</span> Ringkasan Pengajuan
-          </p>
-          {existingSubmission && (
-            <div className={styles.grid2}>
-              <div className={styles.field}>
-                <span className={styles.label}>Nama Lengkap</span>
-                <span>{existingSubmission.fullName}</span>
-              </div>
-              <div className={styles.field}>
-                <span className={styles.label}>NIK</span>
-                <span>{existingSubmission.nik}</span>
-              </div>
-              <div className={styles.field}>
-                <span className={styles.label}>Provinsi</span>
-                <span>{existingSubmission.province}</span>
-              </div>
-              <div className={styles.field}>
-                <span className={styles.label}>Kota/Kabupaten</span>
-                <span>{existingSubmission.cityOrRegency}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.actionRow}>
-          <button className={styles.btnFull} onClick={() => router.push("/owner")}>
-            Kembali ke Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Status: APPROVED
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── APPROVED ─────────────────────────────────────────────────────────────
   if (kycStatus === "APPROVED") {
     return (
       <div className={styles.root}>
@@ -420,10 +290,7 @@ export default function VerifyPage() {
             Identitasmu telah berhasil diverifikasi. Kamu sekarang bisa
             menambahkan properti dan menggunakan semua fitur PAPAN.
           </p>
-          <button
-            className={styles.btnFull}
-            onClick={() => router.push("/owner/addProperty")}
-          >
+          <button className={styles.submitBtn} onClick={() => router.push("/owner/addProperty")}>
             Tambah Properti Sekarang
           </button>
         </div>
@@ -431,25 +298,51 @@ export default function VerifyPage() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Submitted success state
-  // ─────────────────────────────────────────────────────────────────────────
-  if (submitted) {
+  // ── SUBMITTED / PENDING ───────────────────────────────────────────────────
+  if ((kycStatus === "PENDING" && !submitted) || submitted) {
     return (
       <div className={styles.root}>
         <Toaster position="top-center" />
-        <div className={styles.successWrapper}>
-          <div className={styles.successIcon}>📬</div>
-          <h2 className={styles.successTitle}>Pengajuan Terkirim!</h2>
-          <p className={styles.successDesc}>
-            Data verifikasimu telah kami terima dan sedang dalam proses
-            peninjauan. Kami akan memberitahumu melalui notifikasi dalam 1×24
-            jam kerja.
-          </p>
-          <button
-            className={styles.btnFull}
-            onClick={() => router.push("/owner")}
-          >
+        <div className={styles.inner}>
+          <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
+          <h1 className={styles.pageTitle}>Verifikasi Data Pemilik Properti</h1>
+
+          <div className={`${styles.statusBanner} ${styles.pending}`}>
+            <div className={styles.statusIcon}>⏳</div>
+            <div>
+              <p className={styles.statusTitle}>Sedang Ditinjau</p>
+              <p className={styles.statusDesc}>
+                Pengajuan diterima pada{" "}
+                {existingSubmission ? formatDate(existingSubmission.createdAt) : "—"}.
+                Proses peninjauan 1×24 jam kerja.
+              </p>
+            </div>
+          </div>
+
+          {existingSubmission && (
+            <div className={styles.card}>
+              <div className={styles.summaryGrid}>
+                <div className={styles.summaryField}>
+                  <span className={styles.summaryKey}>Nama Lengkap</span>
+                  <span className={styles.summaryVal}>{existingSubmission.fullName}</span>
+                </div>
+                <div className={styles.summaryField}>
+                  <span className={styles.summaryKey}>NIK</span>
+                  <span className={styles.summaryVal}>{existingSubmission.nik}</span>
+                </div>
+                <div className={styles.summaryField}>
+                  <span className={styles.summaryKey}>Provinsi</span>
+                  <span className={styles.summaryVal}>{existingSubmission.province}</span>
+                </div>
+                <div className={styles.summaryField}>
+                  <span className={styles.summaryKey}>Kota/Kabupaten</span>
+                  <span className={styles.summaryVal}>{existingSubmission.cityOrRegency}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button className={styles.submitBtn} onClick={() => router.push("/owner")}>
             Kembali ke Dashboard
           </button>
         </div>
@@ -457,278 +350,125 @@ export default function VerifyPage() {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // FORM (NONE / REJECTED)
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── FORM (NONE / REJECTED) ────────────────────────────────────────────────
   return (
     <div className={styles.root}>
       <Toaster position="top-center" />
+      <div className={styles.inner}>
 
-      {/* Header */}
-      <div className={styles.header}>
-        <button className={styles.backBtn} onClick={() => router.back()}>
-          ← Kembali
+        <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
+        <h1 className={styles.pageTitle}>Verifikasi Data Pemilik Properti</h1>
+
+        {/* Rejected banner */}
+        {kycStatus === "REJECTED" && existingSubmission && (
+          <div className={`${styles.statusBanner} ${styles.rejected}`}>
+            <div className={styles.statusIcon}>❌</div>
+            <div>
+              <p className={styles.statusTitle}>Pengajuan Ditolak</p>
+              <p className={styles.statusDesc}>Silakan perbaiki data dan coba lagi.</p>
+              {existingSubmission.adminNotes && (
+                <p className={styles.adminNotes}>
+                  <strong>Catatan Admin:</strong> {existingSubmission.adminNotes}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className={styles.card}>
+
+          {/* Upload Row */}
+          <div className={styles.uploadRow}>
+            <UploadArea
+              label="Upload KTP" icon="ktp" subtext="Upload Foto KTP"
+              url={ktp.url} uploading={ktp.uploading} error={errors.ktpImageUrl}
+              onTrigger={ktp.trigger} onDrop={makeDrop(ktp.handleFile)}
+              inputRef={ktp.inputRef} onChange={ktp.onChange}
+            />
+            <UploadArea
+              label="Upload Foto Diri" icon="selfie" subtext={"Upload Foto Diri\nDengan KTP"}
+              url={selfie.url} uploading={selfie.uploading} error={errors.selfieImageUrl}
+              onTrigger={selfie.trigger} onDrop={makeDrop(selfie.handleFile)}
+              inputRef={selfie.inputRef} onChange={selfie.onChange}
+            />
+          </div>
+
+          {/* NIK */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel} htmlFor="nik">NIK</label>
+            <input id="nik" className={`${styles.input}${errors.nik ? ` ${styles.inputError}` : ""}`}
+              placeholder="Masukkan NIK sesuai KTP" value={form.nik}
+              onChange={setField("nik")} maxLength={16} />
+            {errors.nik && <p className={styles.errorMsg}>{errors.nik}</p>}
+          </div>
+
+          {/* Nama Lengkap */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel} htmlFor="fullName">Nama Lengkap</label>
+            <input id="fullName" className={`${styles.input}${errors.fullName ? ` ${styles.inputError}` : ""}`}
+              placeholder="Masukkan nama lengkap sesuai KTP" value={form.fullName}
+              onChange={setField("fullName")} />
+            {errors.fullName && <p className={styles.errorMsg}>{errors.fullName}</p>}
+          </div>
+
+          {/* Nomor HP — tidak ada di mockup tapi diperlukan API */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.fieldLabel} htmlFor="phoneNumber">Nomor HP</label>
+            <input id="phoneNumber" className={`${styles.input}${errors.phoneNumber ? ` ${styles.inputError}` : ""}`}
+              placeholder="Masukkan nomor HP" value={form.phoneNumber}
+              onChange={setField("phoneNumber")} maxLength={20} />
+            {errors.phoneNumber && <p className={styles.errorMsg}>{errors.phoneNumber}</p>}
+          </div>
+
+          {/* Alamat Domisili */}
+          <div className={styles.fieldGroup}>
+            <span className={styles.addressLabel}>Alamat Domisili</span>
+            <div className={styles.addressGrid}>
+              <div>
+                <input className={`${styles.input}${errors.province ? ` ${styles.inputError}` : ""}`}
+                  placeholder="Pilih Provinsi" value={form.province} onChange={setField("province")} />
+                {errors.province && <p className={styles.errorMsg}>{errors.province}</p>}
+              </div>
+              <div>
+                <input className={`${styles.input}${errors.cityOrRegency ? ` ${styles.inputError}` : ""}`}
+                  placeholder="Pilih Kota/Kabupaten" value={form.cityOrRegency} onChange={setField("cityOrRegency")} />
+                {errors.cityOrRegency && <p className={styles.errorMsg}>{errors.cityOrRegency}</p>}
+              </div>
+              <div>
+                <input className={`${styles.input}${errors.district ? ` ${styles.inputError}` : ""}`}
+                  placeholder="Pilih Kecamatan" value={form.district} onChange={setField("district")} />
+                {errors.district && <p className={styles.errorMsg}>{errors.district}</p>}
+              </div>
+              <div className={styles.rowThree}>
+                <div>
+                  <input className={`${styles.input}${errors.rt ? ` ${styles.inputError}` : ""}`}
+                    placeholder="Masukkan RT" value={form.rt} onChange={setField("rt")} maxLength={3} />
+                  {errors.rt && <p className={styles.errorMsg}>{errors.rt}</p>}
+                </div>
+                <div>
+                  <input className={`${styles.input}${errors.rw ? ` ${styles.inputError}` : ""}`}
+                    placeholder="Masukkan RW" value={form.rw} onChange={setField("rw")} maxLength={3} />
+                  {errors.rw && <p className={styles.errorMsg}>{errors.rw}</p>}
+                </div>
+                <div>
+                  <input className={`${styles.input}${errors.postalCode ? ` ${styles.inputError}` : ""}`}
+                    placeholder="Masukkan Kode Pos" value={form.postalCode} onChange={setField("postalCode")} maxLength={5} />
+                  {errors.postalCode && <p className={styles.errorMsg}>{errors.postalCode}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>{/* end card */}
+
+        <button
+          className={styles.submitBtn}
+          onClick={() => void handleSubmit()}
+          disabled={submitting || ktp.uploading || selfie.uploading}
+        >
+          {submitting ? "Mengirim…" : "Submit Data"}
         </button>
-        <h1 className={styles.pageTitle}>Verifikasi Identitas</h1>
-        <p className={styles.pageSubtitle}>
-          Lengkapi data dirimu agar bisa menjadi pemilik properti terverifikasi.
-        </p>
-      </div>
 
-      {/* Rejected banner */}
-      {kycStatus === "REJECTED" && existingSubmission && (
-        <div className={`${styles.statusBanner} ${styles.rejected}`}>
-          <div className={styles.statusIcon}>❌</div>
-          <div>
-            <p className={styles.statusTitle}>Pengajuan Ditolak</p>
-            <p className={styles.statusDesc}>
-              Pengajuanmu sebelumnya ditolak. Silakan perbaiki data dan coba
-              lagi.
-            </p>
-            {existingSubmission.adminNotes && (
-              <p className={styles.adminNotes}>
-                <strong>Catatan Admin:</strong> {existingSubmission.adminNotes}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Steps */}
-      <div className={styles.steps}>
-        {STEPS.map((s, i) => (
-          <div key={i} className={stepClass(i + 1)}>
-            <div className={styles.stepCircle}>
-              {i + 1 < step ? "✓" : i + 1}
-            </div>
-            <span className={styles.stepLabel}>{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Step 1: Data Diri ── */}
-      {step === 1 && (
-        <div className={styles.card}>
-          <p className={styles.sectionTitle}>
-            <span>1</span> Data Diri Sesuai KTP
-          </p>
-          <div className={styles.grid2}>
-            <Field
-              id="nik"
-              label="NIK (16 digit)"
-              placeholder="Contoh: 3273010101900001"
-              value={form.nik}
-              onChange={set("nik")}
-              maxLength={16}
-              className={styles.gridFull}
-            />
-            <Field
-              id="fullName"
-              label="Nama Lengkap"
-              placeholder="Sesuai KTP"
-              value={form.fullName}
-              onChange={set("fullName")}
-              className={styles.gridFull}
-            />
-            <Field
-              id="phoneNumber"
-              label="Nomor HP"
-              placeholder="Contoh: 08123456789"
-              value={form.phoneNumber}
-              onChange={set("phoneNumber")}
-              maxLength={20}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ── Step 2: Alamat ── */}
-      {step === 2 && (
-        <div className={styles.card}>
-          <p className={styles.sectionTitle}>
-            <span>2</span> Alamat Sesuai KTP
-          </p>
-          <div className={styles.grid2}>
-            <Field
-              id="province"
-              label="Provinsi"
-              placeholder="Contoh: Jawa Barat"
-              value={form.province}
-              onChange={set("province")}
-            />
-            <Field
-              id="cityOrRegency"
-              label="Kota / Kabupaten"
-              placeholder="Contoh: Kota Bandung"
-              value={form.cityOrRegency}
-              onChange={set("cityOrRegency")}
-            />
-            <Field
-              id="district"
-              label="Kecamatan"
-              placeholder="Contoh: Coblong"
-              value={form.district}
-              onChange={set("district")}
-            />
-            <Field
-              id="postalCode"
-              label="Kode Pos"
-              placeholder="Contoh: 40132"
-              value={form.postalCode}
-              onChange={set("postalCode")}
-              maxLength={5}
-            />
-            <Field
-              id="rt"
-              label="RT"
-              placeholder="Contoh: 003"
-              value={form.rt}
-              onChange={set("rt")}
-              maxLength={3}
-            />
-            <Field
-              id="rw"
-              label="RW"
-              placeholder="Contoh: 007"
-              value={form.rw}
-              onChange={set("rw")}
-              maxLength={3}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ── Step 3: Upload Foto ── */}
-      {step === 3 && (
-        <div className={styles.card}>
-          <p className={styles.sectionTitle}>
-            <span>3</span> Upload Foto Identitas
-          </p>
-          <div className={styles.uploadGrid}>
-            {/* KTP */}
-            <div className={styles.uploadBox}>
-              <span className={styles.uploadLabel}>
-                Foto KTP <span className={styles.required}>*</span>
-              </span>
-              <div
-                className={[
-                  styles.uploadArea,
-                  errors.ktpImageUrl ? styles.uploadAreaError : "",
-                ].join(" ")}
-                onClick={ktp.trigger}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={makeDrop(ktp.handleFile)}
-              >
-                {ktp.url ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={ktp.url} alt="KTP" className={styles.uploadPreview} />
-                    <button className={styles.changeBtn} onClick={(e) => { e.stopPropagation(); ktp.trigger(); }}>
-                      Ganti
-                    </button>
-                  </>
-                ) : (
-                  <div className={styles.uploadPlaceholder}>
-                    <span className={styles.uploadIcon}>🪪</span>
-                    <span className={styles.uploadText}>Klik atau seret foto KTP</span>
-                    <span className={styles.uploadHint}>JPG / PNG, maks. 5 MB</span>
-                  </div>
-                )}
-                {ktp.uploading && (
-                  <div className={styles.uploadingOverlay}>
-                    <div className={styles.spinner} />
-                    <span className={styles.uploadingText}>Mengunggah…</span>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={ktp.inputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={ktp.onChange}
-              />
-              {errors.ktpImageUrl && (
-                <p className={styles.errorMsg}>{errors.ktpImageUrl}</p>
-              )}
-            </div>
-
-            {/* Selfie */}
-            <div className={styles.uploadBox}>
-              <span className={styles.uploadLabel}>
-                Selfie + KTP <span className={styles.required}>*</span>
-              </span>
-              <div
-                className={[
-                  styles.uploadArea,
-                  errors.selfieImageUrl ? styles.uploadAreaError : "",
-                ].join(" ")}
-                onClick={selfie.trigger}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={makeDrop(selfie.handleFile)}
-              >
-                {selfie.url ? (
-                  <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={selfie.url} alt="Selfie" className={styles.uploadPreview} />
-                    <button className={styles.changeBtn} onClick={(e) => { e.stopPropagation(); selfie.trigger(); }}>
-                      Ganti
-                    </button>
-                  </>
-                ) : (
-                  <div className={styles.uploadPlaceholder}>
-                    <span className={styles.uploadIcon}>🤳</span>
-                    <span className={styles.uploadText}>Klik atau seret foto selfie</span>
-                    <span className={styles.uploadHint}>Pegang KTP di samping wajah</span>
-                  </div>
-                )}
-                {selfie.uploading && (
-                  <div className={styles.uploadingOverlay}>
-                    <div className={styles.spinner} />
-                    <span className={styles.uploadingText}>Mengunggah…</span>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={selfie.inputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={selfie.onChange}
-              />
-              {errors.selfieImageUrl && (
-                <p className={styles.errorMsg}>{errors.selfieImageUrl}</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      <div className={styles.actionRow}>
-        {step > 1 ? (
-          <button className={styles.btnSecondary} onClick={prevStep} disabled={submitting}>
-            ← Sebelumnya
-          </button>
-        ) : (
-          <button className={styles.btnSecondary} onClick={() => router.back()}>
-            Batal
-          </button>
-        )}
-
-        {step < 3 ? (
-          <button className={styles.btnPrimary} onClick={nextStep}>
-            Selanjutnya →
-          </button>
-        ) : (
-          <button
-            className={styles.btnPrimary}
-            onClick={handleSubmit}
-            disabled={submitting || ktp.uploading || selfie.uploading}
-          >
-            {submitting ? "Mengirim…" : "Kirim Verifikasi ✓"}
-          </button>
-        )}
       </div>
     </div>
   );

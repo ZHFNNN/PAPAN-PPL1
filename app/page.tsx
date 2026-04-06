@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styles from './HomePage.module.css';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 // ─── Data dummy properti ───────────────────────────────────────────────────────
 const properties = [
@@ -115,21 +117,17 @@ const properties = [
   },
 ];
 
-// ─── Tipe kategori ─────────────────────────────────────────────────────────────
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
-// ─── Sub-komponen: kartu properti ─────────────────────────────────────────────
 function PropertyCard({ prop }: { prop: (typeof properties)[0] }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     if (!isHovered) return;
-
     const id = setInterval(() => {
       setImgIndex((prev) => (prev + 1) % prop.images.length);
-    }, 1200); // kecepatan swipe saat hover
-
+    }, 1200);
     return () => clearInterval(id);
   }, [isHovered, prop.images.length]);
 
@@ -156,8 +154,8 @@ function PropertyCard({ prop }: { prop: (typeof properties)[0] }) {
               onClick={() => setImgIndex(i)}
             />
           ))}
+        </div>
       </div>
-    </div>
 
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
@@ -192,7 +190,6 @@ function PropertyCard({ prop }: { prop: (typeof properties)[0] }) {
   );
 }
 
-// ─── Sub-komponen: section scroll properti ────────────────────────────────────
 function PropertySection({ title }: { title: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -220,12 +217,10 @@ function PropertySection({ title }: { title: string }) {
   );
 }
 
-// ─── Komponen utama ────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [kategori, setKategori] = useState<KategoriType>('Apartemen');
 
-  // ── State untuk chara.png ──
-  const [charaX, setCharaX] = useState(50); // posisi % horizontal dalam hero
+  const [charaX, setCharaX] = useState(50);
   const heroRef = useRef<HTMLDivElement>(null);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
@@ -233,14 +228,14 @@ export default function HomePage() {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!heroRef.current) return;
     const rect = heroRef.current.getBoundingClientRect();
-    // Hitung posisi X sebagai % dari lebar hero
-    // clamp 5%–88% supaya gambar tidak keluar batas kiri/kanan
     const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
     setCharaX(Math.min(Math.max(xPercent, 5), 88));
   };
 
   return (
     <div className={styles.page}>
+      <Navbar />
+
       {/* ── Hero ── */}
       <div
         className={styles.hero}
@@ -248,30 +243,25 @@ export default function HomePage() {
         onMouseMove={handleMouseMove}
       >
         <img src="/images/bgHome.jpeg" alt="Hero" className={styles.heroBg} />
-
         <img
           src="/images/chara.png"
           alt="chara"
           className={styles.charaImg}
-          style={{
-            left: `${charaX}%`,
-            opacity: 1,
-            transition: 'left 0.12s ease-out',
-          }}
+          style={{ left: `${charaX}%` }}
         />
-      </div>
 
-      {/* ── Tab kategori ── */}
-      <div className={styles.tabsWrapper}>
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            className={`${styles.tab} ${kategori === tab ? styles.tabActive : ''}`}
-            onClick={() => setKategori(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+        {/* ── Tab bar DIDALAM hero, nempel di bawah ── */}
+        <div className={styles.tabsWrapper}>
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              className={`${styles.tab} ${kategori === tab ? styles.tabActive : ''}`}
+              onClick={() => setKategori(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ── Konten ── */}
@@ -279,7 +269,7 @@ export default function HomePage() {
         <PropertySection title="Rekomendasi" />
         <PropertySection title="Best Seller" />
       </div>
-
+      <Footer />
     </div>
   );
 }

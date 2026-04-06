@@ -201,6 +201,7 @@ export default function AdminKycPage() {
   const [selected, setSelected] = useState<Submission | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [search, setSearch] = useState('');
+  const [hasMounted, setHasMounted] = useState(false);
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true);
@@ -218,6 +219,7 @@ export default function AdminKycPage() {
   }, [router]);
 
   useEffect(() => {
+    setHasMounted(true);
     void fetchSubmissions();
   }, [fetchSubmissions]);
 
@@ -271,6 +273,14 @@ export default function AdminKycPage() {
     { label: 'Disetujui', value: 'APPROVED' },
     { label: 'Ditolak', value: 'REJECTED' },
   ];
+
+  if (!hasMounted) {
+    return (
+      <div className={styles.loadingState}>
+        <p>Memuat...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -389,7 +399,9 @@ export default function AdminKycPage() {
                     </td>
                     <td className={styles.td}>{s.user.email}</td>
                     <td className={styles.td}><code className={styles.nik}>{s.nik}</code></td>
-                    <td className={styles.td}>{formatDate(s.createdAt)}</td>
+                    <td className={styles.td} suppressHydrationWarning>
+                      {formatDate(s.createdAt)}
+                    </td>
                     <td className={styles.td}>
                       <span className={`${styles.badge} ${styles[`badge${s.status}`]}`}>
                         {STATUS_LABEL[s.status]}

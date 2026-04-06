@@ -4,15 +4,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## SETUP DATABASE
+
+ - psql -U postgre
+ - masukin password
+ - CREATE DATABASE papan_db;
+ - edit DATABASE_URL = "postgresql://postgres:UR_PSQL_PASSWORD@localhost:5432/papan_db?schema=public"
+ 
+## install dan validasi
+ 1. npm install
+ 2. npx prisma generate
+ 3. npx prisma migrate dev --name init
+ 4. npm run prisma:seed
+ 5. npm run dev
+
+dah
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

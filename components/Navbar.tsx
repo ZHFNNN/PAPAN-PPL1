@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -8,6 +9,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [highlightStyle, setHighlightStyle] = useState({
     left: "0px",
@@ -51,6 +53,39 @@ export default function Navbar() {
   }, [pathname]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    const getCurrentUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!res.ok) {
+          if (isMounted) setDisplayName(null);
+          return;
+        }
+
+        const data = (await res.json()) as {
+          user?: { username?: string | null; name?: string | null; email?: string | null };
+        };
+
+        const username = data.user?.username || data.user?.name || data.user?.email || null;
+        if (isMounted) {
+          setDisplayName(username);
+        }
+      } catch {
+        if (isMounted) {
+          setDisplayName(null);
+        }
+      }
+    };
+
+    getCurrentUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const handleResize = () => {
       const activeItem = navItems.find((item) => pathname === item.href);
       if (!activeItem) return;
@@ -70,15 +105,24 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
-    <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-[980px] px-2.5 sm:px-3 ml-12">
+    <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-100 w-full max-w-[980px] px-2.5 sm:px-3 ml-12">
       <div className="h-[38px] sm:h-[42px] md:h-[46px] w-full flex items-center gap-1.5 sm:gap-2">
         {/* Left Section - Navigation Menu */}
         <div className="bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] px-2 sm:px-2.5 md:px-3 flex items-center gap-1 sm:gap-1.5 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
           {/* Logo */}
           <Link
             href="/"
-            className="h-[24px] sm:h-[28px] md:h-[30px] px-1.5 sm:px-2 md:px-2.5 rounded-full flex items-center justify-center hover:bg-black/5 transition-all font-semibold text-[10px] sm:text-[11px] md:text-[12px] tracking-[0.2px] text-[#171717]"
+            className="px-1.5 sm:px-2 md:px-2.5 py-1 rounded-full flex flex-col items-center justify-center gap-0.5 sm:gap-1 hover:bg-black/5 transition-all font-semibold text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2px] text-[#171717] leading-none"
           >
+            <span className="relative w-[16px] h-[10px] sm:w-[18px] sm:h-[11px] md:w-[20px] md:h-[12px]">
+              <Image
+                src="/images/logoDark.png"
+                alt="PAPAN logo"
+                fill
+                sizes="(max-width: 640px) 16px, (max-width: 768px) 18px, 20px"
+                className="object-contain"
+              />
+            </span>
             PAPAN
           </Link>
 
@@ -131,12 +175,13 @@ export default function Navbar() {
           </div>
         </form>
 
-        {/* Right Section - Login Button */}
+        {/* Right Section - Login/Profile Button */}
         <Link
-          href="/login"
-          className="shrink-0 bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] w-[74px] sm:w-[90px] md:w-[108px] flex items-center justify-center text-[10px] sm:text-[11px] md:text-[12px] font-semibold text-[#171717] hover:bg-white/80 transition-all shadow-[0_5px_14px_rgba(0,0,0,0.06)]"
+          href={displayName ? "/profile" : "/login"}
+          className="shrink-0 bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] w-[74px] sm:w-[100px] md:w-[128px] px-2 flex items-center justify-center text-[10px] sm:text-[11px] md:text-[12px] font-semibold text-[#171717] hover:bg-white/80 transition-all shadow-[0_5px_14px_rgba(0,0,0,0.06)]"
+          title={displayName ?? "Login"}
         >
-          Login
+          <span className="truncate">{displayName ? displayName : "Login"}</span>
         </Link>
       </div>
     </div>

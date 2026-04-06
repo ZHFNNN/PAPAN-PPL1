@@ -1,0 +1,337 @@
+.page {
+	background-color: #ffffff;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.contentArea {
+	flex: 1;
+	padding: 6.5rem 0.875rem 4rem;
+}
+
+.container {
+	max-width: 1400px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.sidebarWrapper {
+	width: 100%;
+}
+
+.sidebar {
+	background: #19263c;
+	border-radius: 20px;
+	padding: 1rem;
+}
+
+.sidebarTitle {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 600;
+	font-size: clamp(16px, 1.4vw, 20px);
+	color: #ffffff;
+	margin-bottom: 1.25rem;
+}
+
+.menuList {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	margin-bottom: 1.25rem;
+}
+
+.menuButton {
+	width: 100%;
+	border-radius: 18px;
+	padding: 0.6rem 0.95rem;
+	text-align: left;
+	transition: all 0.2s ease;
+}
+
+.menuButtonActive {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.menuButtonInactive:hover {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.menuLabel {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(13px, 1.1vw, 15px);
+	color: #ffffff;
+	transition: opacity 0.2s ease;
+}
+
+.menuLabelActive {
+	opacity: 1;
+}
+
+.menuLabelInactive {
+	opacity: 0.8;
+}
+
+.logoutButton {
+	width: 100%;
+	background: #9e0c0c;
+	border-radius: 18px;
+	padding: 0.65rem;
+	transition: all 0.2s ease;
+}
+
+.logoutButton:hover {
+	background: #8a0a0a;
+}
+
+.logoutText {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 600;
+	font-size: clamp(13px, 1.1vw, 16px);
+	color: #ffffff;
+	text-align: center;
+}
+
+.mainContent {
+	flex: 1;
+	min-width: 0;
+}
+
+.profileCard {
+	background: #19263c;
+	border-radius: 20px;
+	padding: 1rem;
+	margin-bottom: 1rem;
+}
+
+.profileCardInner {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.avatarSection {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.avatarWrapper {
+	position: relative;
+	width: clamp(96px, 11vw, 168px);
+	height: clamp(96px, 11vw, 168px);
+	border-radius: 9999px;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.avatarImage {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.avatarOverlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.avatarWrapper:hover .avatarOverlay {
+	opacity: 1;
+}
+
+.overlayText {
+	margin-top: 0.25rem;
+	color: #ffffff;
+	font-size: 10px;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+}
+
+.hiddenInput {
+	display: none;
+}
+
+.avatarHelpText {
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 10px;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
+}
+
+.fieldsGrid {
+	flex: 1;
+	display: grid;
+	grid-template-columns: 1fr;
+	column-gap: 1rem;
+	row-gap: 0.75rem;
+}
+
+.fieldLabel {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(12px, 1vw, 14px);
+	color: #ffffff;
+	margin-bottom: 0.35rem;
+}
+
+.fieldValueWrapper {
+	background: #ffffff;
+	border-radius: 16px;
+	padding: 0.55rem 0.9rem;
+}
+
+.fieldValue {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(11px, 0.92vw, 13px);
+	color: #0f1d33;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.actionButtons {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.editButton {
+	width: 100%;
+	background: #ffffff;
+	border: 2px solid #19263c;
+	border-radius: 16px;
+	padding: 0.8rem;
+	transition: all 0.2s ease;
+}
+
+.editButton:hover {
+	background: #f9fafb;
+}
+
+.editButtonText {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(13px, 1vw, 15px);
+	color: #19263c;
+	text-align: center;
+}
+
+.ownerModeButton {
+	width: 100%;
+	background: #19263c;
+	border: 2px solid #19263c;
+	border-radius: 16px;
+	padding: 0.8rem;
+	transition: all 0.2s ease;
+}
+
+.ownerModeButton:hover {
+	background: #0f1d33;
+}
+
+.ownerModeButtonText {
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(13px, 1vw, 15px);
+	color: #ffffff;
+	text-align: center;
+}
+
+@media (min-width: 480px) {
+	.contentArea {
+		padding: 7rem 1rem 4.25rem;
+	}
+
+	.sidebar {
+		padding: 1.25rem;
+	}
+
+	.profileCard {
+		padding: 1.25rem;
+	}
+}
+
+@media (min-width: 640px) {
+	.profileCard {
+		padding: 1.5rem;
+	}
+
+	.profileCardInner {
+		flex-direction: row;
+		gap: 1.5rem;
+	}
+
+	.fieldsGrid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		column-gap: 1.25rem;
+		row-gap: 1rem;
+	}
+
+	.avatarSection {
+		align-items: flex-start;
+	}
+
+	.avatarHelpText {
+		text-align: left;
+	}
+}
+
+@media (min-width: 768px) {
+	.contentArea {
+		padding: 7.5rem 1rem 4.5rem;
+	}
+
+	.container {
+		gap: 1.25rem;
+	}
+
+	.sidebar {
+		border-radius: 24px;
+		padding: 1.25rem;
+	}
+
+	.profileCard {
+		border-radius: 24px;
+		padding: 1.75rem;
+	}
+
+	.fieldValueWrapper,
+	.editButton,
+	.ownerModeButton {
+		border-radius: 22px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.container {
+		flex-direction: row;
+		gap: 1.5rem;
+	}
+
+	.sidebarWrapper {
+		width: 293px;
+		flex-shrink: 0;
+	}
+
+	.sidebar {
+		padding: 1.5rem;
+	}
+
+	.profileCard {
+		padding: 2rem;
+	}
+}

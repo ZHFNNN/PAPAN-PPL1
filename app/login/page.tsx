@@ -44,8 +44,8 @@ export default function LoginPage() {
 
         // Jeda 1.5 detik agar notifikasi terlihat sebelum pindah halaman
         setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
+          router.push("/");
+        }, 500);
       } else {
         toast.error(
           data.message ||
@@ -63,7 +63,38 @@ export default function LoginPage() {
   return (
     <div className={styles.root}>
       {/* Komponen Toaster untuk memunculkan pop-up melayang */}
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 2600,
+          style: {
+            background: "rgba(255,255,255,0.72)",
+            color: "#171717",
+            border: "1px solid #9a9a9a",
+            borderRadius: "999px",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            boxShadow: "0 5px 14px rgba(0,0,0,0.06)",
+            fontSize: "13px",
+            fontWeight: 500,
+            fontFamily: "inherit",
+            padding: "12px 16px",
+          },
+          success: {
+            iconTheme: {
+              primary: "#171717",
+              secondary: "#ffffff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#B42318",
+              secondary: "#ffffff",
+            },
+          },
+        }}
+      />
 
       <div className={styles.bgOverlay} />
 
@@ -91,26 +122,30 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
               placeholder="Masukkan kata sandi"
-              style={{ width: "100%", paddingRight: "80px" }} // Memberi ruang agar teks tidak tertimpa tombol
+              style={{ width: "100%", paddingRight: "44px" }}
             />
-            {/* Tombol toggle untuk show/hide password */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               style={{
                 position: "absolute",
-                right: "10px",
-                top: "50%",
+                right: "12px",
+                top: "55%",
                 transform: "translateY(-50%)",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
                 color: "#666",
+                width: "28px",
+                height: "28px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              {showPassword ? "Sembunyikan" : "Lihat"}
+              {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
             </button>
           </div>
 
@@ -146,6 +181,48 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+function EyeOpenIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeClosedIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m3 3 18 18" />
+      <path d="M10.58 10.58a2 2 0 1 0 2.83 2.83" />
+      <path d="M16.68 16.67A8.7 8.7 0 0 1 12 18c-5 0-9.27-3.11-11-6 1.02-1.71 2.52-3.16 4.38-4.24" />
+      <path d="M9.88 5.09A9.12 9.12 0 0 1 12 5c5 0 9.27 3.11 11 6a10.48 10.48 0 0 1-1.63 2.26" />
+    </svg>
   );
 }
 

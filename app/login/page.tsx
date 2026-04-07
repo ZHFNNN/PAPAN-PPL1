@@ -40,11 +40,27 @@ export default function LoginPage() {
 
       // 4. Handle Response
       if (response.ok) {
+        let redirectPath = "/";
+
+        try {
+          const meResponse = await fetch("/api/auth/me", { method: "GET" });
+          if (meResponse.ok) {
+            const meData = (await meResponse.json()) as {
+              user?: { role?: string };
+            };
+            if (meData.user?.role === "ADMIN") {
+              redirectPath = "/admin/kyc";
+            }
+          }
+        } catch (meError) {
+          console.warn("Gagal mengambil data role setelah login:", meError);
+        }
+
         toast.success("Login berhasil! Mengalihkan...");
 
         // Jeda 1.5 detik agar notifikasi terlihat sebelum pindah halaman
         setTimeout(() => {
-          router.push("/");
+          router.push(redirectPath);
         }, 500);
       } else {
         toast.error(

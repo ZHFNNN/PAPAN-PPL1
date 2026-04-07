@@ -9,7 +9,7 @@ First, run the development server:
  - psql -U postgre
  - masukin password
  - CREATE DATABASE papan_db;
- - edit DATABASE_URL = "postgresql://postgres:UR_PSQL_PASSWORD@localhost:5432/papan_db?schema=public"
+ - edit .env DATABASE_URL = "postgresql://postgres:UR_PSQL_PASSWORD@localhost:5432/papan_db?schema=public"
  
 ## install dan validasi
  1. npm install

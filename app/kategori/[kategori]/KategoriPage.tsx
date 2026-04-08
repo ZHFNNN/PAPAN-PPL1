@@ -2,13 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './HomePage.module.css';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { properties, type Properti } from '../lib/properties';
+import styles from '../../HomePage.module.css'; // ← pakai CSS yang sama!
+import Navbar from '../../../components/Navbar';
+import Footer from '../../../components/Footer';
+import { properties, Properti } from '../../../lib/properties';
 
+// ── Tipe & helper ────────────────────────────────────────────────────────────
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
+function capitalize(s: string): KategoriType {
+  return (s.charAt(0).toUpperCase() + s.slice(1)) as KategoriType;
+}
+
+// ── PropertyCard (sama persis kayak di HomePage) ─────────────────────────────
 function PropertyCard({ prop }: { prop: Properti }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -51,7 +57,6 @@ function PropertyCard({ prop }: { prop: Properti }) {
         <h3 className={styles.cardTitle}>{prop.title}</h3>
         <p className={styles.cardPrice}>{prop.price}</p>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
-
         <div className={styles.cardLokasi}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path
@@ -61,9 +66,7 @@ function PropertyCard({ prop }: { prop: Properti }) {
           </svg>
           <span>{prop.lokasi}</span>
         </div>
-
         <hr className={styles.divider} />
-
         <div className={styles.cardStats}>
           <span>{prop.luas}</span>
           <span>{prop.lantai}</span>
@@ -80,7 +83,8 @@ function PropertyCard({ prop }: { prop: Properti }) {
   );
 }
 
-function PropertySection({ title }: { title: string }) {
+// ── PropertySection ───────────────────────────────────────────────────────────
+function PropertySection({ title, data }: { title: string; data: Properti[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: 'left' | 'right') => {
@@ -99,21 +103,32 @@ function PropertySection({ title }: { title: string }) {
         </div>
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
-        {properties.map((p) => (
-          <PropertyCard key={p.id} prop={p} />
-        ))}
+        {data.length === 0 ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>
+            Tidak ada properti tersedia.
+          </p>
+        ) : (
+          data.map((p) => <PropertyCard key={p.id} prop={p} />)
+        )}
       </div>
     </section>
   );
 }
 
-export default function HomePage() {
+// ── KategoriPage (komponen utama) ─────────────────────────────────────────────
+export default function KategoriPage({ kategori }: { kategori: string }) {
   const router = useRouter();
-
-  const [charaX, setCharaX] = useState(50);
   const heroRef = useRef<HTMLDivElement>(null);
+  const [charaX, setCharaX] = useState(50);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
+
+  // Kapitalisasi dan validasi kategori dari URL
+  const aktif = capitalize(kategori);
+  const validKategori = tabs.includes(aktif) ? aktif : 'Apartemen';
+
+  // Filter data berdasarkan kategori
+  const filtered = properties.filter((p) => p.kategori === validKategori);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!heroRef.current) return;
@@ -127,11 +142,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* ── Hero ── */}
-      <div
-        className={styles.hero}
-        ref={heroRef}
-        onMouseMove={handleMouseMove}
-      >
+      <div className={styles.hero} ref={heroRef} onMouseMove={handleMouseMove}>
         <img src="/images/bgHome.jpeg" alt="Hero" className={styles.heroBg} />
         <img
           src="/images/chara.png"
@@ -140,13 +151,16 @@ export default function HomePage() {
           style={{ left: `${charaX}%` }}
         />
 
-        {/* ── Tab bar DIDALAM hero, nempel di bawah ── */}
+        {/* ── Tabs ── */}
         <div className={styles.tabsWrapper}>
           {tabs.map((tab) => (
             <button
               key={tab}
-              className={`${styles.tab} ${tab === 'Apartemen' ? styles.tabActive : ''}`}
-              onClick={() => router.push(`/kategori/${tab.toLowerCase()}`)}
+              className={`${styles.tab} ${tab === validKategori ? styles.tabActive : ''}`}
+              onClick={() => {
+                if (tab === validKategori) return; // sudah di halaman ini
+                router.push(`/kategori/${tab.toLowerCase()}`);
+              }}
             >
               {tab}
             </button>
@@ -156,9 +170,20 @@ export default function HomePage() {
 
       {/* ── Konten ── */}
       <div className={styles.content}>
-        <PropertySection title="Rekomendasi" />
-        <PropertySection title="Best Seller" />
+        {/* Judul halaman */}
+        <div style={{ paddingTop: 48, paddingBottom: 0 }}>
+          <h1 style={{ fontSize: 'clamp(20px, 2.5vw, 30px)', fontWeight: 700, color: '#1a2332', margin: 0 }}>
+            {validKategori}
+          </h1>
+          <p style={{ color: '#888', fontSize: 14, marginTop: 6 }}>
+            Menampilkan {filtered.length} properti
+          </p>
+        </div>
+
+        <PropertySection title="Rekomendasi" data={filtered} />
+        <PropertySection title="Best Seller" data={filtered} />
       </div>
+
       <Footer />
     </div>
   );

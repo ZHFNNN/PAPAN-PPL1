@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from './HomePage.module.css';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { properties, type Properti } from '../lib/properties';
+import styles from '../../HomePage.module.css';
+import Navbar from '../../../components/Navbar';
+import Footer from '../../../components/Footer';
+import { properties, Properti } from '../../../lib/properties';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
@@ -46,24 +46,17 @@ function PropertyCard({ prop }: { prop: Properti }) {
           ))}
         </div>
       </div>
-
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
         <p className={styles.cardPrice}>{prop.price}</p>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
-
         <div className={styles.cardLokasi}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-              fill="currentColor"
-            />
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" />
           </svg>
           <span>{prop.lokasi}</span>
         </div>
-
         <hr className={styles.divider} />
-
         <div className={styles.cardStats}>
           <span>{prop.luas}</span>
           <span>{prop.lantai}</span>
@@ -71,22 +64,17 @@ function PropertyCard({ prop }: { prop: Properti }) {
           <span>{prop.km}</span>
         </div>
         <div className={styles.cardFasilitas}>
-          {prop.fasilitas.map((f) => (
-            <span key={f}>{f}</span>
-          ))}
+          {prop.fasilitas.map((f) => <span key={f}>{f}</span>)}
         </div>
       </div>
     </div>
   );
 }
 
-function PropertySection({ title }: { title: string }) {
+function PropertySection({ title, data }: { title: string; data: Properti[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const scroll = (dir: 'left' | 'right') => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: dir === 'right' ? 370 : -370, behavior: 'smooth' });
-    }
+    scrollRef.current?.scrollBy({ left: dir === 'right' ? 370 : -370, behavior: 'smooth' });
   };
 
   return (
@@ -99,65 +87,65 @@ function PropertySection({ title }: { title: string }) {
         </div>
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
-        {properties.map((p) => (
-          <PropertyCard key={p.id} prop={p} />
-        ))}
+        {data.length === 0
+          ? <p style={{ color: '#999', padding: '20px 0' }}>Tidak ada properti tersedia.</p>
+          : data.map((p) => <PropertyCard key={p.id} prop={p} />)
+        }
       </div>
     </section>
   );
 }
 
-export default function HomePage() {
+export default function ApartemenPage() {
   const router = useRouter();
-
-  const [charaX, setCharaX] = useState(50);
   const heroRef = useRef<HTMLDivElement>(null);
+  const [charaX, setCharaX] = useState(50);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
+  const aktif: KategoriType = 'Apartemen'; // ← BEDA tiap file
+
+  const filtered = properties.filter((p) => p.kategori === aktif);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!heroRef.current) return;
     const rect = heroRef.current.getBoundingClientRect();
-    const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
-    setCharaX(Math.min(Math.max(xPercent, 5), 88));
+    setCharaX(Math.min(Math.max(((e.clientX - rect.left) / rect.width) * 100, 5), 88));
+  };
+
+  const handleTabClick = (tab: KategoriType) => {
+    if (tab === aktif) return;
+    router.push(`/kategori/${tab.toLowerCase()}`);
   };
 
   return (
     <div className={styles.page}>
       <Navbar />
-
-      {/* ── Hero ── */}
-      <div
-        className={styles.hero}
-        ref={heroRef}
-        onMouseMove={handleMouseMove}
-      >
-        <img src="/images/bgHome.jpeg" alt="Hero" className={styles.heroBg} />
-        <img
-          src="/images/chara.png"
-          alt="chara"
-          className={styles.charaImg}
-          style={{ left: `${charaX}%` }}
-        />
-
-        {/* ── Tab bar DIDALAM hero, nempel di bawah ── */}
+      <div className={styles.hero} ref={heroRef} onMouseMove={handleMouseMove}>
+        <img src="/images/bgHomeApart.png" alt="Hero" className={styles.heroBg} />
+        <img src="/images/chara.png" alt="chara" className={styles.charaImg} style={{ left: `${charaX}%` }} />
         <div className={styles.tabsWrapper}>
           {tabs.map((tab) => (
             <button
               key={tab}
-              className={`${styles.tab} ${tab === 'Apartemen' ? styles.tabActive : ''}`}
-              onClick={() => router.push(`/kategori/${tab.toLowerCase()}`)}
+              className={`${styles.tab} ${tab === aktif ? styles.tabActive : ''}`}
+              onClick={() => handleTabClick(tab)}
             >
               {tab}
             </button>
           ))}
         </div>
       </div>
-
-      {/* ── Konten ── */}
       <div className={styles.content}>
-        <PropertySection title="Rekomendasi" />
-        <PropertySection title="Best Seller" />
+        <div style={{ paddingTop: 48 }}>
+          <h1 style={{ fontSize: 'clamp(20px, 2.5vw, 30px)', fontWeight: 700, color: '#1a2332', margin: 0 }}>
+            Apartemen
+          </h1>
+          <p style={{ color: '#888', fontSize: 14, marginTop: 6 }}>
+            Menampilkan {filtered.length} properti
+          </p>
+        </div>
+        <PropertySection title="Rekomendasi" data={filtered} />
+        <PropertySection title="Best Seller" data={filtered} />
       </div>
       <Footer />
     </div>

@@ -104,6 +104,12 @@ export default function RumahPage() {                           // ← BEDA 1: n
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
   const aktif: KategoriType = 'Rumah';                          // ← BEDA 2: nilai aktif
 
+  useEffect(() => {
+    router.prefetch('/');
+    router.prefetch('/kategori/apartemen');
+    router.prefetch('/kategori/kosan');
+  }, [router]);
+
   const filtered = properties.filter((p) => p.kategori === aktif);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -112,15 +118,26 @@ export default function RumahPage() {                           // ← BEDA 1: n
     setCharaX(Math.min(Math.max(((e.clientX - rect.left) / rect.width) * 100, 5), 88));
   };
 
+  const navigateWithFade = (href: string) => {
+    router.push(href);
+  };
+
   const handleTabClick = (tab: KategoriType) => {
-    if (tab === aktif) return;
-    router.push(`/kategori/${tab.toLowerCase()}`);
+    if (tab === aktif) {
+      navigateWithFade('/');
+      return;
+    }
+    navigateWithFade(`/kategori/${tab.toLowerCase()}`);
   };
 
   return (
     <div className={styles.page}>
       <Navbar />
-      <div className={styles.hero} ref={heroRef} onMouseMove={handleMouseMove}>
+      <div
+        className={`${styles.hero} ${styles.heroFadeIn}`}
+        ref={heroRef}
+        onMouseMove={handleMouseMove}
+      >
         <img src="/images/bgHomeRumah.jpeg" alt="Hero" className={styles.heroBg} />
         <img src="/images/chara.png" alt="chara" className={styles.charaImg} style={{ left: `${charaX}%` }} />
         <div className={styles.tabsWrapper}>

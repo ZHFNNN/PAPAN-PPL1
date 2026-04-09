@@ -7,6 +7,7 @@
   font-family: 'Poppins', 'Segoe UI', sans-serif;
   background: #f5f5f5;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ── Hero ─────────────────────────────────── */
@@ -129,7 +130,7 @@
 }
 
 .tab:hover {
-  bottom: 2px;
+  bottom: 9px;
 }
 
 .tabActive {
@@ -164,6 +165,7 @@
 /* ── Section ──────────────────────────────── */
 .section {
   padding-top: 48px;
+  
 }
 
 @media (max-width: 600px) {
@@ -217,10 +219,17 @@
   display: flex;
   gap: 24px;
   overflow-x: auto;
-  padding-bottom: 20px;
+  padding: 22px 3px 30px;
+  scroll-padding-left: 28px;
   scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  margin-left: -30px;
+}
+
+.scrollTrack::before {
+  content: '';
+  flex: 0 0 28px;
 }
 
 .scrollTrack::-webkit-scrollbar {
@@ -365,4 +374,301 @@
   font-size: clamp(10px, 1vw, 12px);
   color: rgba(0, 0, 0, 0.65);
   flex-wrap: wrap;
+}
+
+/* ── Flash Sale Section wrapper ── */
+.discountSection {
+  transform: translateX(1250px);
+  opacity: 0;
+  transition: transform 2.85s linear;
+  overflow-x: hidden;
+  overflow-y: visible;
+  margin: 48px 0;
+  width: 100dvw;
+  margin-left: calc(50% - 50dvw);
+  margin-right: calc(50% - 50dvw);
+}
+
+.discountSectionVisible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.discountBg {
+  position: relative;
+  background: linear-gradient(135deg, #0d1b35 0%, #1b3a6b 30%, #2a1a6e 60%, #0d1b35 100%);
+  padding: 0 0 42px;
+  overflow: hidden;
+}
+
+/* dot grid texture */
+.discountBg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.12) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* conic rays */
+.discountBg::after {
+  content: '';
+  position: absolute;
+  top: -60%; left: 50%;
+  transform: translateX(-50%);
+  width: 200%; height: 260%;
+  pointer-events: none; z-index: 0;
+  background: conic-gradient(from 0deg at 50% 20%,
+    transparent 0deg, rgba(255,210,0,0.04) 6deg, transparent 12deg,
+    transparent 18deg, rgba(255,210,0,0.03) 24deg, transparent 30deg,
+    transparent 36deg, rgba(255,210,0,0.05) 42deg, transparent 48deg,
+    transparent 54deg, rgba(120,80,255,0.04) 60deg, transparent 66deg,
+    transparent 72deg, rgba(255,210,0,0.03) 78deg, transparent 84deg,
+    transparent 90deg, rgba(255,210,0,0.04) 96deg, transparent 102deg,
+    transparent 108deg, rgba(120,80,255,0.04) 114deg, transparent 120deg,
+    transparent 126deg, rgba(255,210,0,0.05) 132deg, transparent 138deg,
+    transparent 144deg, rgba(255,210,0,0.03) 150deg, transparent 156deg,
+    transparent 162deg, rgba(120,80,255,0.04) 168deg, transparent 174deg,
+    transparent 180deg, rgba(255,210,0,0.04) 186deg, transparent 192deg,
+    transparent 198deg, rgba(255,210,0,0.03) 204deg, transparent 210deg,
+    transparent 216deg, rgba(120,80,255,0.05) 222deg, transparent 228deg,
+    transparent 234deg, rgba(255,210,0,0.04) 240deg, transparent 246deg,
+    transparent 252deg, rgba(255,210,0,0.03) 258deg, transparent 264deg,
+    transparent 270deg, rgba(120,80,255,0.04) 276deg, transparent 282deg,
+    transparent 288deg, rgba(255,210,0,0.05) 294deg, transparent 300deg,
+    transparent 306deg, rgba(255,210,0,0.03) 312deg, transparent 318deg,
+    transparent 324deg, rgba(120,80,255,0.04) 330deg, transparent 336deg,
+    transparent 342deg, rgba(255,210,0,0.04) 348deg, transparent 354deg,
+    transparent 360deg
+  );
+}
+
+/* glow orbs */
+.discountGlowLeft {
+  position: absolute;
+  left: -120px; top: -60px;
+  width: 340px; height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,190,0,0.18) 0%, transparent 70%);
+  pointer-events: none; z-index: 1;
+}
+
+.discountGlowRight {
+  position: absolute;
+  right: -100px; bottom: -80px;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(100,60,255,0.22) 0%, transparent 70%);
+  pointer-events: none; z-index: 1;
+}
+
+.discountGlowCenter {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,210,0,0.07) 0%, transparent 70%);
+  pointer-events: none; z-index: 1;
+}
+
+/* canvas sparks */
+.discountSparkCanvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Header area */
+.discountHeader {
+  position: relative;
+  z-index: 3;
+  padding: 14px 28px 12px;
+  background: linear-gradient(180deg, #070d1c 0%, #0d1a33 100%);
+  box-shadow: 0 10px 24px rgba(0, 8, 255, 0.178);
+  overflow: hidden;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.discountHeaderBottom {
+  margin-top: 10px;
+  margin-bottom: -45px;
+}
+
+.discountHeader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+}
+
+.discountHeader::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.24) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+}
+
+.discountTrackWrap {
+  position: relative;
+  z-index: 3;
+}
+
+/* Ticker */
+.discountTicker {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: max-content;
+  margin: 0;
+  animation: discountTickerMove 18s linear infinite;
+}
+
+.discountTickerGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding-right: 20px;
+}
+
+.discountTickerItem {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Pill */
+.discountPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px 0 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  position: relative;
+  overflow: visible;
+}
+
+.discountPill::before {
+  display: none;
+}
+
+@keyframes pillSheen {
+  0%   { left: -60%; }
+  60%, 100% { left: 140%; }
+}
+
+.discountFlashIcon {
+  font-size: 25px;
+  animation: iconBounce 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes iconBounce {
+  0%   { transform: scale(1) rotate(-5deg); }
+  100% { transform: scale(1.2) rotate(5deg); }
+}
+
+.discountTitle {
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(98, 103, 255, 0.594), 0 0 28px rgba(255,210,0,0.35);
+  text-transform: uppercase;
+  margin-left: 28px;
+}
+
+/* Scroll track */
+.discountTrack {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  gap: 18px;
+  padding: 16px 28px 32px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.discountTrack::-webkit-scrollbar { display: none; }
+
+/* Discount Card */
+.discountCard {
+  position: relative;
+  flex: 0 0 clamp(220px, 28vw, 280px);
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.discountCard:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+}
+
+.discountBadge {
+  position: absolute;
+  top: 10px; left: 10px;
+  z-index: 10;
+  background: linear-gradient(135deg, #FF3B3B, #FF6B00);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(255,80,0,0.6);
+  letter-spacing: 0.3px;
+}
+
+.discountPriceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.discountOriginalPrice {
+  font-size: 11px;
+  color: #bbb;
+  text-decoration: line-through;
+  margin: 0;
+}
+
+.discountNewPrice {
+  font-size: clamp(14px, 1.6vw, 17px);
+  font-weight: 800;
+  color: #e53935;
+  margin: 0;
+}
+
+@keyframes discountTickerMove {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }

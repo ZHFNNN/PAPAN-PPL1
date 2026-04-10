@@ -672,3 +672,23 @@
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+
+.heroBgOverlay {
+  opacity: 0;
+  transform: scale(1.007);
+  transform-origin: center;
+  
+}
+ 
+.heroBgOverlayVisible {
+  opacity: 1;
+}
+ 
+/* Invisible hitbox di atas bangunan */
+.hotspot {
+  position: absolute;
+  z-index: 6;
+  cursor: pointer;
+  /* DEBUG: uncomment untuk lihat posisi hitbox */
+  /* background: rgba(255, 0, 0, 0.25); border: 1px dashed red; */
+}

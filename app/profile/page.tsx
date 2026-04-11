@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Sidebar from '@/components/Sidebar';
 import styles from './page.module.css';
 
 const DEFAULT_AVATAR = '/images/default-avatar.png';
@@ -85,7 +86,9 @@ export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarSrc, setAvatarSrc] = useState<string>(DEFAULT_AVATAR);
-  const [activeMenu, setActiveMenu] = useState('Profile');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,17 +117,20 @@ export default function ProfilePage() {
     fetchProfile();
   }, [router]);
 
-  const handleLogout = async () => {
-    // Sesuaikan dengan metode logout kamu (next-auth, custom, dll)
-    router.push('/login');
-  };
-
   const handleEditProfile = () => {
     router.push('/profile/edit');
   };
 
   const handleSwitchMode = () => {
-    router.push('/owner/verify');
+    setShowSwitchModal(true);
+  };
+
+  const confirmSwitchMode = () => {
+    setIsSwitchingMode(true);
+    window.setTimeout(() => {
+      const target = profile?.kycStatus === 'APPROVED' ? '/owner/dashboard' : '/owner/verify';
+      router.push(target);
+    }, 450);
   };
 
   const handleAvatarClick = () => {
@@ -142,8 +148,6 @@ export default function ProfilePage() {
     setAvatarSrc(objectUrl);
     // TODO: Upload ke server
   };
-
-  const menuItems = ['Profile', 'Settings', 'Contact Us', 'Help Center'];
 
   const kycLabel: Record<KycStatus, string> = {
     NONE: 'Belum Verifikasi',
@@ -171,37 +175,11 @@ export default function ProfilePage() {
         <div className={styles.container}>
 
           {/* ── Left Sidebar ── */}
-          <div className={styles.sidebarWrapper}>
-            <div className={styles.sidebar}>
-              <h2 className={styles.sidebarTitle}>
-                {profile?.role === 'ADMIN' ? 'Admin' : 'Pencari Properti'}
-              </h2>
-
-              <div className={styles.menuList}>
-                {menuItems.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setActiveMenu(item)}
-                    className={`${styles.menuButton} ${
-                      activeMenu === item
-                        ? styles.menuButtonActive
-                        : styles.menuButtonInactive
-                    }`}
-                  >
-                    <p className={`${styles.menuLabel} ${
-                      activeMenu === item ? styles.menuLabelActive : styles.menuLabelInactive
-                    }`}>
-                      {item}
-                    </p>
-                  </button>
-                ))}
-              </div>
-
-              <button onClick={handleLogout} className={styles.logoutButton}>
-                <p className={styles.logoutText}>Log Out</p>
-              </button>
-            </div>
-          </div>
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed((prev) => !prev)}
+            onSwitchMode={handleSwitchMode}
+          />
 
           {/* ── Main Content ── */}
           <div className={styles.mainContent}>
@@ -275,9 +253,6 @@ export default function ProfilePage() {
                   <button onClick={handleEditProfile} className={styles.editButton}>
                     <p className={styles.editButtonText}>Edit Profile</p>
                   </button>
-                  <button onClick={handleSwitchMode} className={styles.ownerModeButton}>
-                    <p className={styles.ownerModeButtonText}>Aktifkan Mode Pemilik Properti</p>
-                  </button>
                 </div>
               </>
             )}
@@ -285,6 +260,33 @@ export default function ProfilePage() {
 
         </div>
       </div>
+
+      {showSwitchModal && (
+        <div className={styles.modeOverlay} onClick={() => !isSwitchingMode && setShowSwitchModal(false)}>
+          <div className={styles.modeModal} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.modeModalTitle}>Pindah ke Mode Pemilik?</p>
+            <p className={styles.modeModalDesc}>
+              Kamu akan diarahkan ke area pemilik properti untuk verifikasi dan pengelolaan listing.
+            </p>
+            <div className={styles.modeModalActions}>
+              <button
+                className={styles.modeCancelBtn}
+                onClick={() => setShowSwitchModal(false)}
+                disabled={isSwitchingMode}
+              >
+                Batal
+              </button>
+              <button
+                className={styles.modeConfirmBtn}
+                onClick={confirmSwitchMode}
+                disabled={isSwitchingMode}
+              >
+                {isSwitchingMode ? 'Memindahkan...' : 'Ya, lanjut'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

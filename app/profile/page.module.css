@@ -207,6 +207,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+  max-width: 240px;
 }
 
 .editButton {
@@ -249,6 +250,84 @@
 	font-size: clamp(13px, 1vw, 15px);
 	color: #ffffff;
 	text-align: center;
+}
+
+.modeOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 140;
+	background: rgba(10, 14, 24, 0.46);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.modeModal {
+	width: min(440px, 100%);
+	background: #ffffff;
+	border-radius: 18px;
+	padding: 22px 20px;
+	box-shadow: 0 14px 48px rgba(0, 0, 0, 0.22);
+}
+
+.modeModalTitle {
+	margin: 0 0 8px;
+	font-family: 'Poppins', sans-serif;
+	font-size: 18px;
+	font-weight: 700;
+	color: #1a2332;
+}
+
+.modeModalDesc {
+	margin: 0;
+	font-family: 'Poppins', sans-serif;
+	font-size: 13px;
+	line-height: 1.6;
+	color: rgba(26, 35, 50, 0.72);
+}
+
+.modeModalActions {
+	margin-top: 18px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.modeCancelBtn,
+.modeConfirmBtn {
+	border: none;
+	border-radius: 999px;
+	padding: 10px 16px;
+	font-family: 'Poppins', sans-serif;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.modeCancelBtn {
+	background: #eef1f6;
+	color: #2e3d58;
+}
+
+.modeCancelBtn:hover {
+	background: #e1e6ee;
+}
+
+.modeConfirmBtn {
+	background: #19263c;
+	color: #ffffff;
+}
+
+.modeConfirmBtn:hover {
+	background: #253450;
+}
+
+.modeCancelBtn:disabled,
+.modeConfirmBtn:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
 }
 
 @media (min-width: 480px) {
@@ -323,7 +402,7 @@
 	}
 
 	.sidebarWrapper {
-		width: 293px;
+		width: 340px;
 		flex-shrink: 0;
 	}
 

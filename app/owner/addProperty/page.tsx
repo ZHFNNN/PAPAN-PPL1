@@ -134,9 +134,6 @@ export default function AddPropertyPage() {
   return (
     <div className={styles.contentArea}>
         <div className={styles.header}>
-          <button className={styles.backBtn} onClick={() => router.back()}>
-            ← Kembali
-          </button>
           <h1 className={styles.pageTitle}>Tambah Properti</h1>
         </div>
 

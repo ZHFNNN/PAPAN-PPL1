@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import styles from './page.module.css';
 
 type EditForm = {
@@ -136,15 +134,13 @@ export default function EditProfilePage() {
 
   return (
     <div className={styles.page}>
-      <Navbar />
-
       <div className={styles.contentArea}>
         <div className={styles.container}>
 
           {/* Back button */}
           <button
             className={styles.backBtn}
-            onClick={() => router.push('/profile')}
+            onClick={() => router.push('/owner/profile')}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5"
@@ -235,7 +231,7 @@ export default function EditProfilePage() {
                 <div className={styles.actions}>
                   <button
                     type="button"
-                    onClick={() => router.push('/profile')}
+                    onClick={() => router.push('/owner/profile')}
                     className={styles.cancelBtn}
                     disabled={isSaving}
                   >
@@ -262,8 +258,6 @@ export default function EditProfilePage() {
 
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }

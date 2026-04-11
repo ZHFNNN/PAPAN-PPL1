@@ -6,25 +6,26 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './ownerSidebar.module.css';
 
 const MENU_ITEMS = [
-  { href: '/owner/dashboard', label: 'Dashboard' },
-  { href: '/owner/profile', label: 'Profile' },
-  { href: '/owner/addProperty', label: 'Tambah Properti' },
-  { href: '/owner/booster', label: 'Booster' },
-  { href: '/owner/verifyPage', label: 'Verifikasi' },
+  { href: '/profile', label: 'Profile' },
+  { href: '/personalisasi', label: 'Personalisasi' },
+  { href: '/profile/setting', label: 'Settings' },
+  { href: '/aboutus', label: 'Contact Us' },
+  { href: '/faq', label: 'Help Center' },
 ] as const;
 
-interface OwnerSidebarProps {
+interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  onSwitchMode?: () => void;
 }
 
-export default function OwnerSidebar({ collapsed, onToggle }: OwnerSidebarProps) {
+export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [highlightStyle, setHighlightStyle] = useState({ top: '0px', height: '0px', opacity: 0 });
 
-  const activeHref = pathname === '/owner' ? '/owner/dashboard' : pathname;
+  const activeHref = pathname;
 
   useEffect(() => {
     const activeItem = MENU_ITEMS.find((item) => item.href === activeHref);
@@ -47,7 +48,7 @@ export default function OwnerSidebar({ collapsed, onToggle }: OwnerSidebarProps)
       <div className={`${styles.sidebarWrapper} ${collapsed ? styles.collapsed : ''}`}>
         <div className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
-            <h2 className={styles.sidebarTitle}>Pemilik Properti</h2>
+            <h2 className={styles.sidebarTitle}>Pencari Properti</h2>
           </div>
 
           <div className={styles.menuList}>
@@ -76,10 +77,16 @@ export default function OwnerSidebar({ collapsed, onToggle }: OwnerSidebarProps)
 
           <div className={styles.sidebarActions}>
             <button
-              onClick={() => router.push('/profile')}
+              onClick={() => {
+                if (onSwitchMode) {
+                  onSwitchMode();
+                  return;
+                }
+                router.push('/owner/verify');
+              }}
               className={styles.switchModeButton}
             >
-              Kembali ke Mode Pencari
+              Aktifkan Mode Pemilik
             </button>
             <button
               onClick={() => router.push('/login')}

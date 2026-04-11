@@ -105,10 +105,10 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
-    <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-100 w-full max-w-[980px] px-2.5 sm:px-3 ml-12">
-      <div className="h-[38px] sm:h-[42px] md:h-[46px] w-full flex items-center gap-1.5 sm:gap-2">
+    <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-100 w-full max-w-[1040px] px-2.5 sm:px-3 md:px-4">
+      <div className="h-[38px] sm:h-[42px] md:h-[46px] w-full flex items-center justify-center gap-1.5 sm:gap-2">
         {/* Left Section - Navigation Menu */}
-        <div className="bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] px-2 sm:px-2.5 md:px-3 flex items-center gap-1 sm:gap-1.5 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
+        <div className="min-w-0 bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] px-2 sm:px-2.5 md:px-3 flex items-center gap-1 sm:gap-1.5 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
           {/* Logo */}
           <Link
             href="/"
@@ -127,7 +127,7 @@ export default function Navbar() {
           </Link>
 
           {/* Navigation Items */}
-          <div className="relative flex items-center gap-1 sm:gap-1.5">
+          <div className="relative flex items-center gap-0.5 sm:gap-1 md:gap-2">
             {/* Sliding highlight — floats behind the links */}
             <div
               className="absolute top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ease-in-out pointer-events-none"
@@ -147,7 +147,7 @@ export default function Navbar() {
                 ref={(el) => {
                   linkRefs.current[item.href] = el;
                 }}
-                className={`relative z-10 h-5 sm:h-6 md:h-7 px-1.5 sm:px-2.5 md:px-3 rounded-full flex items-center whitespace-nowrap text-[10px] sm:text-[11px] md:text-[12px] transition-all ${
+                className={`relative z-10 h-5 sm:h-6 md:h-7 px-1 sm:px-1.5 md:px-3 rounded-full flex items-center whitespace-nowrap text-[10px] sm:text-[11px] md:text-[12px] transition-all  ${
                   isActive(item.href)
                     ? "font-semibold text-[#111111]"
                     : "font-medium text-[#303030] hover:text-[#111111]"
@@ -160,7 +160,7 @@ export default function Navbar() {
         </div>
 
         {/* Center Section - Search Bar */}
-        <form onSubmit={handleSearch} className="flex-1 min-w-0 max-w-[220px] sm:max-w-[280px] md:max-w-[360px]">
+        <form onSubmit={handleSearch} className="hidden sm:block flex-1 min-w-0 max-w-[240px] md:max-w-[340px]">
           <div className="bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] w-full flex items-center px-2 sm:px-2.5 md:px-3 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
             <div className="size-[14px] sm:size-[16px] md:size-[18px] mr-1 sm:mr-1.5 flex-shrink-0 flex items-center justify-center text-[10px] sm:text-[11px] md:text-[12px]">
               <span aria-hidden="true">🔍</span>

@@ -216,7 +216,9 @@ function DiscountCard({ prop }: { prop: Properti & { discount: number; originalP
 function DiscountSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [inView, setInView] = useState(false);
+  const [entryAnim, setEntryAnim] = useState<'intro' | 'vibrate'>('intro');
+  const hasPlayedIntroRef = useRef(false);
   const tickerItems = Array.from({ length: 5 });
 
   const discountProperties = properties.map((p, i) => ({
@@ -229,8 +231,20 @@ function DiscountSection() {
     const el = sectionRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
-      { threshold: 0.15 }
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          if (!hasPlayedIntroRef.current) {
+            setEntryAnim('intro');
+            hasPlayedIntroRef.current = true;
+          } else {
+            setEntryAnim('vibrate');
+          }
+        } else {
+          setInView(false);
+        }
+      },
+      { threshold: 0.2 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -307,7 +321,7 @@ function DiscountSection() {
   return (
     <section
       ref={sectionRef}
-      className={`${styles.discountSection} ${visible ? styles.discountSectionVisible : ''}`}
+      className={`${styles.discountSection} ${inView ? (entryAnim === 'intro' ? styles.discountSectionVisible : styles.discountSectionVibrate) : ''}`}
     >
       <div className={styles.discountBg}>
         <canvas ref={canvasRef} className={styles.discountSparkCanvas} />

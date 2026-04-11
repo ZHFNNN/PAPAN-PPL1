@@ -378,9 +378,9 @@
 
 /* ── Flash Sale Section wrapper ── */
 .discountSection {
-  transform: translateX(1250px);
-  opacity: 0;
-  transition: transform 2.85s linear;
+  transform: none;
+  opacity: 1;
+  transition: none;
   overflow-x: hidden;
   overflow-y: visible;
   margin: 48px 0;
@@ -390,8 +390,41 @@
 }
 
 .discountSectionVisible {
-  transform: translateX(0);
-  opacity: 1;
+  animation: discountDropBounce 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.discountSectionVibrate {
+  animation: discountSectionVibrate 0.38s ease-in-out 2;
+  transform-origin: center top;
+}
+
+@keyframes discountDropBounce {
+  0% {
+    transform: translateY(-120px) rotate(7deg) scale(0.96);
+  }
+  38% {
+    transform: translateY(18px) rotate(4deg) scale(1.01);
+  }
+  58% {
+    transform: translateY(-12px) rotate(-6deg) scale(1.005);
+  }
+  74% {
+    transform: translateY(8px) rotate(3deg);
+  }
+  88% {
+    transform: translateY(-3px) rotate(-1.5deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes discountSectionVibrate {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(1.5px, -0.5px) rotate(0.8deg); }
+  40% { transform: translate(-1.5px, 0.5px) rotate(-0.8deg); }
+  60% { transform: translate(1px, 0.5px) rotate(0.5deg); }
+  80% { transform: translate(-1px, -0.5px) rotate(-0.5deg); }
 }
 
 .discountBg {
@@ -556,6 +589,20 @@
 .discountTickerItem {
   display: inline-flex;
   align-items: center;
+  animation: discountTickerWave 2.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+.discountTickerItem:nth-child(2n) {
+  animation-delay: -0.4s;
+}
+
+.discountTickerItem:nth-child(3n) {
+  animation-delay: -0.8s;
+}
+
+.discountTickerItem:nth-child(4n) {
+  animation-delay: -1.2s;
 }
 
 /* Pill */
@@ -671,6 +718,13 @@
 @keyframes discountTickerMove {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
+}
+
+@keyframes discountTickerWave {
+  0%, 100% { transform: translateY(0); }
+  25%      { transform: translateY(-3px); }
+  50%      { transform: translateY(0); }
+  75%      { transform: translateY(3px); }
 }
 
 .heroBgOverlay {

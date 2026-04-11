@@ -119,7 +119,7 @@ export default function OwnerDashboardPage() {
         <div className={styles.pageHeader}>
           <div>
             <h1 className={styles.pageTitle}>Dashboard</h1>
-            <p className={styles.pageSubtitle}>Selamat datang kembali, kelola properti kamu di sini.</p>
+            <p className={styles.pageSubtitle}>Hai! Yuk cek properti-properti kamu!</p>
           </div>
           <button
             className={styles.addPropertyBtn}

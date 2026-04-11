@@ -284,7 +284,6 @@ export default function VerifyPage() {
       <Toaster position="top-center" />
       <div className={styles.inner}>
 
-        <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
         <h1 className={styles.pageTitle}>Verifikasi Data Pemilik Properti</h1>
 
         {kycStatus === "PENDING" && (
@@ -414,14 +413,6 @@ export default function VerifyPage() {
           </div>
 
         </div>{/* end card */}
-
-        <button
-          className={styles.submitBtn}
-          onClick={() => void handleSubmit()}
-          disabled={submitting || ktp.uploading || selfie.uploading}
-        >
-          {submitting ? "Mengirim…" : "Submit Data"}
-        </button>
 
       </div>
     </div>

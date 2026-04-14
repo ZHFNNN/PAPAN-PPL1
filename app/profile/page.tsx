@@ -161,6 +161,13 @@ export default function ProfilePage() {
   };
 
   const menuItems = ['Profile', 'Settings', 'Contact Us', 'Help Center'];
+  
+  const handleMenuClick = (item: string) => {
+  setActiveMenu(item);
+  if (item === 'Settings') router.push('/settings');
+  if (item === 'Contact Us') router.push('/contact');
+  if (item === 'Help Center') router.push('/help');
+};
 
   const kycLabel: Record<KycStatus, string> = {
     NONE: 'Belum Verifikasi',
@@ -209,7 +216,7 @@ export default function ProfilePage() {
                 {menuItems.map((item) => (
                   <button
                     key={item}
-                    onClick={() => setActiveMenu(item)}
+                    onClick={() => handleMenuClick(item)}
                     className={`${styles.menuButton} ${
                       activeMenu === item
                         ? styles.menuButtonActive

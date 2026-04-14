@@ -211,7 +211,7 @@
 }
 
 .editButton {
-	width: 100%;
+	width: 1040px;
 	background: #ffffff;
 	border: 2px solid #19263c;
 	border-radius: 16px;
@@ -220,7 +220,7 @@
 }
 
 .editButton:hover {
-	background: #f9fafb;
+	background: #19263c;
 }
 
 .editButtonText {
@@ -229,6 +229,10 @@
 	font-size: clamp(13px, 1vw, 15px);
 	color: #19263c;
 	text-align: center;
+}
+
+.editButtonText:hover{
+	color: #ffffff;
 }
 
 .ownerModeButton {

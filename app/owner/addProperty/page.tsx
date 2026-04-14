@@ -39,6 +39,7 @@ export default function AddPropertyPage() {
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -63,13 +64,35 @@ export default function AddPropertyPage() {
     }));
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  const appendPhotoFiles = (files: File[]) => {
     if (!files.length) return;
     const validFiles = files.filter((f) => f.type.startsWith('image/'));
+    if (!validFiles.length) return;
     const newPreviews = validFiles.map((f) => URL.createObjectURL(f));
     setPhotos((prev) => [...prev, ...validFiles]);
     setPhotoPreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    appendPhotoFiles(files);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files ?? []);
+    appendPhotoFiles(files);
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -251,7 +274,14 @@ export default function AddPropertyPage() {
           {/* ── Kanan: Upload Foto ── */}
           <div className={styles.formRight}>
             <label className={styles.label}>Upload Foto-foto Properti</label>
-            <label className={styles.uploadArea} htmlFor="photo-upload">
+            <label
+              className={`${styles.uploadArea} ${isDragOver ? styles.uploadAreaDragOver : ''}`}
+              htmlFor="photo-upload"
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               {photoPreviews.length === 0 ? (
                 <div className={styles.uploadPlaceholder}>
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

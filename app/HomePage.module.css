@@ -390,41 +390,18 @@
 }
 
 .discountSectionVisible {
-  animation: discountDropBounce 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: discountFadeUp 0.65s ease-out forwards;
 }
 
-.discountSectionVibrate {
-  animation: discountSectionVibrate 0.38s ease-in-out 2;
-  transform-origin: center top;
-}
-
-@keyframes discountDropBounce {
+@keyframes discountFadeUp {
   0% {
-    transform: translateY(-120px) rotate(7deg) scale(0.96);
-  }
-  38% {
-    transform: translateY(18px) rotate(4deg) scale(1.01);
-  }
-  58% {
-    transform: translateY(-12px) rotate(-6deg) scale(1.005);
-  }
-  74% {
-    transform: translateY(8px) rotate(3deg);
-  }
-  88% {
-    transform: translateY(-3px) rotate(-1.5deg);
+    opacity: 0;
+    transform: translateY(18px);
   }
   100% {
-    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+    transform: translateY(0);
   }
-}
-
-@keyframes discountSectionVibrate {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20% { transform: translate(1.5px, -0.5px) rotate(0.8deg); }
-  40% { transform: translate(-1.5px, 0.5px) rotate(-0.8deg); }
-  60% { transform: translate(1px, 0.5px) rotate(0.5deg); }
-  80% { transform: translate(-1px, -0.5px) rotate(-0.5deg); }
 }
 
 .discountBg {
@@ -576,7 +553,7 @@
   gap: 0;
   width: max-content;
   margin: 0;
-  animation: discountTickerMove 18s linear infinite;
+  animation: discountTickerMove 26s linear infinite;
 }
 
 .discountTickerGroup {
@@ -589,20 +566,7 @@
 .discountTickerItem {
   display: inline-flex;
   align-items: center;
-  animation: discountTickerWave 2.4s ease-in-out infinite;
   will-change: transform;
-}
-
-.discountTickerItem:nth-child(2n) {
-  animation-delay: -0.4s;
-}
-
-.discountTickerItem:nth-child(3n) {
-  animation-delay: -0.8s;
-}
-
-.discountTickerItem:nth-child(4n) {
-  animation-delay: -1.2s;
 }
 
 /* Pill */
@@ -630,12 +594,12 @@
 
 .discountFlashIcon {
   font-size: 25px;
-  animation: iconBounce 0.8s ease-in-out infinite alternate;
+  animation: iconBounce 2.4s ease-in-out infinite;
 }
 
 @keyframes iconBounce {
-  0%   { transform: scale(1) rotate(-5deg); }
-  100% { transform: scale(1.2) rotate(5deg); }
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.03); }
 }
 
 .discountTitle {
@@ -675,8 +639,8 @@
 }
 
 .discountCard:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+  transform: translateY(-3px) scale(1.008);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.35);
 }
 
 .discountBadge {

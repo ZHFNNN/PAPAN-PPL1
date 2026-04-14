@@ -80,6 +80,13 @@
 }
 .uploadArea:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.1); }
 .uploadAreaError  { border-color: #f87171 !important; }
+.uploadAreaReadOnly {
+  cursor: default;
+}
+.uploadAreaReadOnly:hover {
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+}
 
 .uploadPlaceholder {
   display: flex;
@@ -171,6 +178,12 @@
 .input:focus { box-shadow: 0 0 0 3px rgba(59,124,244,0.35); }
 .input::placeholder { color: #9ca3af; }
 .inputError { box-shadow: 0 0 0 2px #f87171 !important; }
+.input[readonly] {
+  cursor: default;
+}
+.input[readonly]:focus {
+  box-shadow: none;
+}
 
 .errorMsg { font-size: 11px; color: #f87171; margin: 4px 0 0 14px; }
 
@@ -231,6 +244,18 @@
 .approved .statusTitle { color: #2e7d32; }
 .rejected .statusTitle { color: #c62828; }
 .statusDesc  { font-size: 13px; color: #555; margin: 0; line-height: 1.5; }
+
+.gotoVerifyBtn {
+  margin-top: 10px;
+  background: #1a2332;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
 
 .adminNotes {
   margin-top: 8px;

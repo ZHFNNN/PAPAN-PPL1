@@ -8,9 +8,9 @@ import styles from './ownerSidebar.module.css';
 const MENU_ITEMS = [
   { href: '/profile', label: 'Profile' },
   { href: '/profile/personalisasi', label: 'Personalisasi' },
-  { href: '/profile/setting', label: 'Settings' },
-  { href: '/aboutus', label: 'Contact Us' },
-  { href: '/faq', label: 'Help Center' },
+  { href: '/settings', label: 'Settings' },
+  { href: '/contact', label: 'Contact Us' },
+  { href: '/help', label: 'Help Center' },
 ] as const;
 
 interface SidebarProps {
@@ -24,6 +24,7 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
   const pathname = usePathname();
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [highlightStyle, setHighlightStyle] = useState({ top: '0px', height: '0px', opacity: 0 });
+  const [isSwitching, setIsSwitching] = useState(false);
 
   const activeHref = pathname;
 
@@ -41,6 +42,37 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
       opacity: 1,
     });
   }, [activeHref]);
+
+  const handleSwitchMode = async () => {
+    if (onSwitchMode) {
+      onSwitchMode();
+      return;
+    }
+
+    if (isSwitching) return;
+    setIsSwitching(true);
+
+    try {
+      const res = await fetch('/api/profile');
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push('/login');
+          return;
+        }
+        router.push('/owner/verify');
+        return;
+      }
+
+      const target = data.kycStatus === 'APPROVED' ? '/owner/dashboard' : '/owner/verify';
+      router.push(target);
+    } catch {
+      router.push('/owner/verify');
+    } finally {
+      setIsSwitching(false);
+    }
+  };
 
   return (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
@@ -77,16 +109,11 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
 
           <div className={styles.sidebarActions}>
             <button
-              onClick={() => {
-                if (onSwitchMode) {
-                  onSwitchMode();
-                  return;
-                }
-                router.push('/owner/verify');
-              }}
+              onClick={handleSwitchMode}
               className={styles.switchModeButton}
+              disabled={isSwitching}
             >
-              Aktifkan Mode Pemilik
+              {isSwitching ? 'Memproses...' : 'Aktifkan Mode Pemilik'}
             </button>
             <button
               onClick={() => router.push('/login')}

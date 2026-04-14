@@ -218,7 +218,6 @@ export default function PersonalisasiPage() {
             <Sidebar
               collapsed={sidebarCollapsed}
               onToggle={() => setSidebarCollapsed((prev) => !prev)}
-              onSwitchMode={() => router.push('/owner/verify')}
             />
           </div>
 

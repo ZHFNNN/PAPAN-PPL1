@@ -94,6 +94,7 @@ interface UploadAreaProps {
   subtext: string;
   url: string;
   uploading: boolean;
+  readOnly?: boolean;
   error?: string;
   onTrigger: () => void;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -101,23 +102,25 @@ interface UploadAreaProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-function UploadArea({ label, icon, subtext, url, uploading, error, onTrigger, onDrop, inputRef, onChange }: UploadAreaProps) {
+function UploadArea({ label, icon, subtext, url, uploading, readOnly, error, onTrigger, onDrop, inputRef, onChange }: UploadAreaProps) {
   return (
     <div className={styles.uploadBox}>
       <span className={styles.uploadLabel}>{label}</span>
       <div
-        className={`${styles.uploadArea}${error ? ` ${styles.uploadAreaError}` : ""}`}
-        onClick={onTrigger}
+        className={`${styles.uploadArea}${readOnly ? ` ${styles.uploadAreaReadOnly}` : ""}${error ? ` ${styles.uploadAreaError}` : ""}`}
+        onClick={readOnly ? undefined : onTrigger}
         onDragOver={(e) => e.preventDefault()}
-        onDrop={onDrop}
+        onDrop={readOnly ? undefined : onDrop}
       >
         {url ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt={label} className={styles.uploadPreview} />
-            <button className={styles.changeBtn} onClick={(e) => { e.stopPropagation(); onTrigger(); }}>
-              Ganti
-            </button>
+            {!readOnly && (
+              <button className={styles.changeBtn} onClick={(e) => { e.stopPropagation(); onTrigger(); }}>
+                Ganti
+              </button>
+            )}
           </>
         ) : (
           <div className={styles.uploadPlaceholder}>
@@ -132,7 +135,7 @@ function UploadArea({ label, icon, subtext, url, uploading, error, onTrigger, on
           </div>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onChange} />
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onChange} disabled={readOnly} />
       {error && <p className={styles.errorMsg}>{error}</p>}
     </div>
   );
@@ -179,6 +182,7 @@ function useImageUpload(endpoint: string) {
 
 export default function VerifyPage() {
   const router = useRouter();
+  const isReadOnly = true;
 
   const [pageLoading,        setPageLoading]        = useState(true);
   const [kycStatus,          setKycStatus]           = useState<KycStatus>("NONE");
@@ -312,6 +316,19 @@ export default function VerifyPage() {
           </div>
         )}
 
+        {!existingSubmission && (
+          <div className={`${styles.statusBanner} ${styles.pending}`}>
+            <div className={styles.statusIcon}>ℹ️</div>
+            <div>
+              <p className={styles.statusTitle}>Belum Ada Data Verifikasi</p>
+              <p className={styles.statusDesc}>Halaman ini hanya menampilkan data yang sudah pernah kamu kirim.</p>
+              <button className={styles.gotoVerifyBtn} onClick={() => router.push('/owner/verify')}>
+                Isi Verifikasi Sekarang
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Rejected banner */}
         {kycStatus === "REJECTED" && existingSubmission && (
           <div className={`${styles.statusBanner} ${styles.rejected}`}>
@@ -335,12 +352,14 @@ export default function VerifyPage() {
             <UploadArea
               label="Upload KTP" icon="ktp" subtext="Upload Foto KTP"
               url={ktp.url} uploading={ktp.uploading} error={errors.ktpImageUrl}
+              readOnly={isReadOnly}
               onTrigger={ktp.trigger} onDrop={makeDrop(ktp.handleFile)}
               inputRef={ktp.inputRef} onChange={ktp.onChange}
             />
             <UploadArea
               label="Upload Foto Diri" icon="selfie" subtext={"Upload Foto Diri\nDengan KTP"}
               url={selfie.url} uploading={selfie.uploading} error={errors.selfieImageUrl}
+              readOnly={isReadOnly}
               onTrigger={selfie.trigger} onDrop={makeDrop(selfie.handleFile)}
               inputRef={selfie.inputRef} onChange={selfie.onChange}
             />
@@ -351,7 +370,7 @@ export default function VerifyPage() {
             <label className={styles.fieldLabel} htmlFor="nik">NIK</label>
             <input id="nik" className={`${styles.input}${errors.nik ? ` ${styles.inputError}` : ""}`}
               placeholder="Masukkan NIK sesuai KTP" value={form.nik}
-              onChange={setField("nik")} maxLength={16} />
+              onChange={setField("nik")} maxLength={16} readOnly={isReadOnly} />
             {errors.nik && <p className={styles.errorMsg}>{errors.nik}</p>}
           </div>
 
@@ -360,7 +379,7 @@ export default function VerifyPage() {
             <label className={styles.fieldLabel} htmlFor="fullName">Nama Lengkap</label>
             <input id="fullName" className={`${styles.input}${errors.fullName ? ` ${styles.inputError}` : ""}`}
               placeholder="Masukkan nama lengkap sesuai KTP" value={form.fullName}
-              onChange={setField("fullName")} />
+              onChange={setField("fullName")} readOnly={isReadOnly} />
             {errors.fullName && <p className={styles.errorMsg}>{errors.fullName}</p>}
           </div>
 
@@ -369,7 +388,7 @@ export default function VerifyPage() {
             <label className={styles.fieldLabel} htmlFor="phoneNumber">Nomor HP</label>
             <input id="phoneNumber" className={`${styles.input}${errors.phoneNumber ? ` ${styles.inputError}` : ""}`}
               placeholder="Masukkan nomor HP" value={form.phoneNumber}
-              onChange={setField("phoneNumber")} maxLength={20} />
+              onChange={setField("phoneNumber")} maxLength={20} readOnly={isReadOnly} />
             {errors.phoneNumber && <p className={styles.errorMsg}>{errors.phoneNumber}</p>}
           </div>
 
@@ -379,33 +398,33 @@ export default function VerifyPage() {
             <div className={styles.addressGrid}>
               <div>
                 <input className={`${styles.input}${errors.province ? ` ${styles.inputError}` : ""}`}
-                  placeholder="Pilih Provinsi" value={form.province} onChange={setField("province")} />
+                  placeholder="Pilih Provinsi" value={form.province} onChange={setField("province")} readOnly={isReadOnly} />
                 {errors.province && <p className={styles.errorMsg}>{errors.province}</p>}
               </div>
               <div>
                 <input className={`${styles.input}${errors.cityOrRegency ? ` ${styles.inputError}` : ""}`}
-                  placeholder="Pilih Kota/Kabupaten" value={form.cityOrRegency} onChange={setField("cityOrRegency")} />
+                  placeholder="Pilih Kota/Kabupaten" value={form.cityOrRegency} onChange={setField("cityOrRegency")} readOnly={isReadOnly} />
                 {errors.cityOrRegency && <p className={styles.errorMsg}>{errors.cityOrRegency}</p>}
               </div>
               <div>
                 <input className={`${styles.input}${errors.district ? ` ${styles.inputError}` : ""}`}
-                  placeholder="Pilih Kecamatan" value={form.district} onChange={setField("district")} />
+                  placeholder="Pilih Kecamatan" value={form.district} onChange={setField("district")} readOnly={isReadOnly} />
                 {errors.district && <p className={styles.errorMsg}>{errors.district}</p>}
               </div>
               <div className={styles.rowThree}>
                 <div>
                   <input className={`${styles.input}${errors.rt ? ` ${styles.inputError}` : ""}`}
-                    placeholder="Masukkan RT" value={form.rt} onChange={setField("rt")} maxLength={3} />
+                    placeholder="Masukkan RT" value={form.rt} onChange={setField("rt")} maxLength={3} readOnly={isReadOnly} />
                   {errors.rt && <p className={styles.errorMsg}>{errors.rt}</p>}
                 </div>
                 <div>
                   <input className={`${styles.input}${errors.rw ? ` ${styles.inputError}` : ""}`}
-                    placeholder="Masukkan RW" value={form.rw} onChange={setField("rw")} maxLength={3} />
+                    placeholder="Masukkan RW" value={form.rw} onChange={setField("rw")} maxLength={3} readOnly={isReadOnly} />
                   {errors.rw && <p className={styles.errorMsg}>{errors.rw}</p>}
                 </div>
                 <div>
                   <input className={`${styles.input}${errors.postalCode ? ` ${styles.inputError}` : ""}`}
-                    placeholder="Masukkan Kode Pos" value={form.postalCode} onChange={setField("postalCode")} maxLength={5} />
+                    placeholder="Masukkan Kode Pos" value={form.postalCode} onChange={setField("postalCode")} maxLength={5} readOnly={isReadOnly} />
                   {errors.postalCode && <p className={styles.errorMsg}>{errors.postalCode}</p>}
                 </div>
               </div>

@@ -7,7 +7,7 @@ import styles from './ownerSidebar.module.css';
 
 const MENU_ITEMS = [
   { href: '/profile', label: 'Profile' },
-  { href: '/personalisasi', label: 'Personalisasi' },
+  { href: '/profile/personalisasi', label: 'Personalisasi' },
   { href: '/profile/setting', label: 'Settings' },
   { href: '/aboutus', label: 'Contact Us' },
   { href: '/faq', label: 'Help Center' },

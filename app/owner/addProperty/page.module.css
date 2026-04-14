@@ -297,6 +297,11 @@
   border-color: rgba(25, 38, 60, 0.5);
 }
 
+.uploadAreaDragOver {
+  border-color: #19263c;
+  background: rgba(25, 38, 60, 0.04);
+}
+
 .uploadPlaceholder {
   display: flex;
   flex-direction: column;

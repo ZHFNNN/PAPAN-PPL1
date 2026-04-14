@@ -1,0 +1,102 @@
+.page {
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentArea {
+  flex: 1;
+  padding: 6.5rem 1rem 3rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #19263c;
+}
+
+.subtitle {
+  margin: 6px 0 18px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: rgba(25, 38, 60, 0.68);
+}
+
+.emptyState {
+  border: 1px dashed rgba(25, 38, 60, 0.3);
+  border-radius: 14px;
+  padding: 20px;
+  color: #334155;
+  font-family: 'Poppins', sans-serif;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.card {
+  border: 1px solid rgba(25, 38, 60, 0.14);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.cardImage {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.cardBody {
+  padding: 12px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #19263c;
+}
+
+.cardLocation {
+  margin: 4px 0 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: rgba(25, 38, 60, 0.7);
+}
+
+.cardPrice {
+  margin: 10px 0 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f1d33;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .contentArea {
+    padding-top: 5.75rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

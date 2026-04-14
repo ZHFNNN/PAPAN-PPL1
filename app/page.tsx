@@ -216,9 +216,7 @@ function DiscountCard({ prop }: { prop: Properti & { discount: number; originalP
 function DiscountSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [inView, setInView] = useState(false);
-  const [entryAnim, setEntryAnim] = useState<'intro' | 'vibrate'>('intro');
-  const hasPlayedIntroRef = useRef(false);
+  const [hasPlayedIntro, setHasPlayedIntro] = useState(false);
   const tickerItems = Array.from({ length: 5 });
 
   const discountProperties = properties.map((p, i) => ({
@@ -232,23 +230,15 @@ function DiscountSection() {
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          if (!hasPlayedIntroRef.current) {
-            setEntryAnim('intro');
-            hasPlayedIntroRef.current = true;
-          } else {
-            setEntryAnim('vibrate');
-          }
-        } else {
-          setInView(false);
+        if (entry.isIntersecting && !hasPlayedIntro) {
+          setHasPlayedIntro(true);
         }
       },
       { threshold: 0.2 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [hasPlayedIntro]);
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -262,16 +252,16 @@ function DiscountSection() {
 
     type Particle = { x:number;y:number;col:string;size:number;speedX:number;speedY:number;life:number;maxLife:number;type:'star'|'circle' };
     const particles: Particle[] = [];
-    const COLORS = ['#FFD700','#FFB300','#FFF176','#FF6B6B','#B39DFF','#FFFFFF'];
+    const COLORS = ['#FFE082', '#FFF8E1', '#EDE7F6', '#FFFFFF'];
 
     function spawn() {
       particles.push({
         x: Math.random() * canvasEl!.width,
         y: Math.random() * canvasEl!.height,
         col: COLORS[Math.floor(Math.random() * COLORS.length)],
-        size: Math.random() * 3 + 1,
-        speedX: (Math.random() - 0.5) * 1.2,
-        speedY: -(Math.random() * 1.4 + 0.3),
+        size: Math.random() * 1.6 + 0.8,
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: -(Math.random() * 0.8 + 0.2),
         life: Math.random() * 90 + 60,
         maxLife: 0,
         type: Math.random() < 0.4 ? 'star' : 'circle',
@@ -295,11 +285,11 @@ function DiscountSection() {
 
     function tick() {
       ctx.clearRect(0, 0, canvasEl!.width, canvasEl!.height);
-      if (Math.random() < 0.35) spawn();
+      if (Math.random() < 0.14) spawn();
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.speedX; p.y += p.speedY; p.speedY += 0.018; p.life--;
-        const alpha = (p.life / p.maxLife) * 0.85;
+        p.x += p.speedX; p.y += p.speedY; p.speedY += 0.01; p.life--;
+        const alpha = (p.life / p.maxLife) * 0.55;
         if (p.type === 'star') {
           drawStar(p.x, p.y, p.size * 1.4, p.col, alpha);
         } else {
@@ -321,7 +311,7 @@ function DiscountSection() {
   return (
     <section
       ref={sectionRef}
-      className={`${styles.discountSection} ${inView ? (entryAnim === 'intro' ? styles.discountSectionVisible : styles.discountSectionVibrate) : ''}`}
+      className={`${styles.discountSection} ${hasPlayedIntro ? styles.discountSectionVisible : ''}`}
     >
       <div className={styles.discountBg}>
         <canvas ref={canvasRef} className={styles.discountSparkCanvas} />

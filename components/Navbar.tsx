@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { properties, type Properti } from "@/lib/properties";
 
 export default function Navbar() {
   const router = useRouter();
@@ -11,17 +12,38 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [displayName, setDisplayName] = useState<string | null>(null);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const searchWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [highlightStyle, setHighlightStyle] = useState({
     left: "0px",
     width: "0px",
     opacity: 0,
   });
 
+  const query = searchQuery.trim().toLowerCase();
+  const suggestions: Properti[] = query
+    ? properties
+        .filter((p) => {
+          const haystack = `${p.title} ${p.lokasi} ${p.kategori}`.toLowerCase();
+          return haystack.includes(query);
+        })
+        .slice(0, 6)
+    : [];
+
+  const shouldShowSuggestions = isSearchFocused && searchQuery.trim().length > 0;
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchFocused(false);
     }
+  };
+
+  const handleSuggestionClick = (item: Properti) => {
+    setSearchQuery(item.title);
+    setIsSearchFocused(false);
+    router.push(`/search?q=${encodeURIComponent(item.title)}`);
   };
 
   const isActive = (path: string) => {
@@ -104,6 +126,18 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, [pathname]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!searchWrapperRef.current) return;
+      if (!searchWrapperRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-100 w-full max-w-[1040px] px-2.5 sm:px-3 md:px-4">
       <div className="h-[38px] sm:h-[42px] md:h-[46px] w-full flex items-center justify-center gap-1.5 sm:gap-2">
@@ -161,17 +195,56 @@ export default function Navbar() {
 
         {/* Center Section - Search Bar */}
         <form onSubmit={handleSearch} className="hidden sm:block flex-1 min-w-0 max-w-[240px] md:max-w-[340px]">
-          <div className="bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] w-full flex items-center px-2 sm:px-2.5 md:px-3 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
-            <div className="size-[14px] sm:size-[16px] md:size-[18px] mr-1 sm:mr-1.5 flex-shrink-0 flex items-center justify-center text-[10px] sm:text-[11px] md:text-[12px]">
-              <span aria-hidden="true">🔍</span>
+          <div ref={searchWrapperRef} className="relative">
+              <div className="bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] w-full flex items-center pl-3 sm:pl-3.5 md:pl-4 pr-2 sm:pr-2.5 md:pr-3 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
+              <div className="size-[14px] sm:size-[16px] md:size-[18px] mr-1.5 sm:mr-2 flex-shrink-0 flex items-center justify-center text-[10px] sm:text-[11px] md:text-[12px]">
+                <span aria-hidden="true">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  
+                  stroke="#404040"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                placeholder="Cari properti berdasarkan lokasi..."
+                className="flex-1 min-w-0 bg-transparent text-[10px] sm:text-[11px] md:text-[12px] font-medium text-[#1f1f1f] placeholder:text-[#5f5f5f] outline-none"
+              />
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari properti berdasarkan lokasi..."
-              className="flex-1 min-w-0 bg-transparent text-[10px] sm:text-[11px] md:text-[12px] font-medium text-[#1f1f1f] placeholder:text-[#5f5f5f] outline-none"
-            />
+
+            {shouldShowSuggestions && (
+              <div className="absolute top-[calc(100%+8px)] left-0 right-0 rounded-2xl border border-[#b9b9b9] bg-[rgba(255,255,255,0.92)] backdrop-blur-md shadow-[0_10px_24px_rgba(0,0,0,0.1)] py-1 z-[120] max-h-72 overflow-y-auto">
+                {suggestions.length > 0 ? (
+                  suggestions.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleSuggestionClick(item)}
+                      className="w-full text-left px-3 py-2 hover:bg-black/5 transition-colors"
+                    >
+                      <p className="text-[11px] md:text-[12px] font-semibold text-[#1f1f1f] truncate">{item.title}</p>
+                      <p className="text-[10px] md:text-[11px] text-[#5f5f5f] truncate">{item.lokasi}</p>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-[10px] md:text-[11px] text-[#5f5f5f]">Tidak ada hasil yang mirip.</p>
+                )}
+              </div>
+            )}
           </div>
         </form>
 

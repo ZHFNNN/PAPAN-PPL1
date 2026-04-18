@@ -1,0 +1,325 @@
+/* tentang/page.module.css — design-system aligned with HomePage */
+
+.main {
+  font-family: 'Poppins', 'Segoe UI', sans-serif;
+  background: #f5f5f5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Animation ────────────────────────────────────────── */
+.animate {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.inView {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+/* ── Hero Banner ──────────────────────────────────────── */
+.heroBanner {
+  position: relative;
+  height: min(52vw, 480px);
+  min-height: 260px;
+  overflow: hidden;
+}
+
+.heroImg {
+  position: absolute;
+  inset: 0;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(13, 27, 53, 0.15) 0%,
+    rgba(13, 27, 53, 0.72) 100%
+  );
+  z-index: 1;
+}
+
+.heroContent {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding: clamp(24px, 4vw, 48px) clamp(24px, 5vw, 64px);
+}
+
+.heroEyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 10px;
+}
+
+.heroTitle {
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  max-width: 640px;
+}
+
+/* ── About Section ────────────────────────────────────── */
+.aboutSection {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 64px clamp(16px, 4vw, 48px);
+  background: #f5f5f5;
+}
+
+.aboutGrid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .aboutGrid { grid-template-columns: 1fr; gap: 20px; }
+}
+
+.aboutLabelCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.labelLine {
+  display: block;
+  width: 28px;
+  height: 3px;
+  background: #000cb8;
+  border-radius: 2px;
+}
+
+.labelText {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.aboutTitle {
+  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
+  font-weight: 700;
+  color: rgba(31, 31, 31, 0.85);
+  margin: 0 0 22px;
+  letter-spacing: -0.01em;
+}
+
+.aboutText {
+  font-size: clamp(12px, 1.2vw, 14px);
+  line-height: 1.8;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0 0 18px;
+  text-align: justify;
+}
+
+.aboutText:last-child { margin-bottom: 0; }
+
+/* ── Stats ────────────────────────────────────────────── */
+.statsSection {
+  background: linear-gradient(135deg, #0d1b35 0%, #1b3a6b 50%, #0d1b35 100%);
+  padding: 56px clamp(16px, 4vw, 48px);
+}
+
+.statsInner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .statsInner { grid-template-columns: repeat(2, 1fr); }
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statValue {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: clamp(11px, 1.1vw, 13px);
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+/* ── Values ───────────────────────────────────────────── */
+.valuesSection {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 64px clamp(16px, 4vw, 48px);
+}
+
+.valuesTitleWrap {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.valuesTitle {
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 700;
+  color: rgba(31, 31, 31, 0.85);
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
+}
+
+.valuesSub {
+  font-size: clamp(12px, 1.2vw, 14px);
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  line-height: 1.65;
+}
+
+.valuesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 560px) {
+  .valuesGrid { grid-template-columns: 1fr; }
+}
+
+.valueCard {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: clamp(22px, 2.5vw, 32px) clamp(22px, 2.5vw, 30px);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.5s ease;
+  cursor: default;
+}
+
+.valueCard:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.18);
+}
+
+.valueNum {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(0, 12, 184, 0.3);
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.valueCardTitle {
+  font-size: clamp(14px, 1.5vw, 17px);
+  font-weight: 600;
+  color: rgba(31, 31, 31, 0.85);
+  margin: 0 0 10px;
+}
+
+.valueCardDesc {
+  font-size: clamp(12px, 1.1vw, 13px);
+  line-height: 1.72;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0;
+}
+
+/* ── CTA Band ─────────────────────────────────────────── */
+.ctaBand {
+  background: linear-gradient(135deg, #0d1b35 0%, #1b3a6b 50%, #2a1a6e 100%);
+  padding: 72px clamp(24px, 5vw, 80px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaBand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.ctaBandInner {
+  position: relative;
+  z-index: 1;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.ctaBandTitle {
+  font-size: clamp(1.3rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 32px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.ctaBandBtns {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  display: inline-block;
+  background: #ffffff;
+  color: #1a2332;
+  padding: 13px 28px;
+  border-radius: 24px;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(12px, 1.2vw, 14px);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.btnPrimary:hover {
+  background: #f0f4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.btnSecondary {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  padding: 13px 28px;
+  border-radius: 24px;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(12px, 1.2vw, 14px);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.btnSecondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+}

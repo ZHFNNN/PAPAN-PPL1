@@ -30,7 +30,7 @@ export default function Footer() {
               Tentang
             </h3>
             <div className="flex flex-col gap-3 text-center">
-              <a href="#" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
+              <a href="/aboutus" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
                 Tentang Kami
               </a>
               <a href="#" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
@@ -48,10 +48,10 @@ export default function Footer() {
               Bantuan
             </h3>
             <div className="flex flex-col gap-3 text-center">
-              <a href="#" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
+              <a href="/faq" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
                 FAQ
               </a>
-              <a href="#" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
+              <a href="/panduan" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">
                 Panduan
               </a>
               <a href="#" className="font-['Poppins',sans-serif] text-[12px] opacity-70 hover:opacity-100 transition-opacity">

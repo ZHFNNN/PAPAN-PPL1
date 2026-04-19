@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from './HomePage.module.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -122,6 +123,12 @@ type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 function PropertyCard({ prop }: { prop: (typeof properties)[0] }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
+
+  const handleCardClick = () => {
+    sessionStorage.setItem('selectedProperty', JSON.stringify(prop));
+    router.push(`/propertyDetail?id=${prop.id}`);
+  };
 
   useEffect(() => {
     if (!isHovered) return;
@@ -136,6 +143,8 @@ function PropertyCard({ prop }: { prop: (typeof properties)[0] }) {
       className={styles.card}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick}
+      style={{ cursor: 'pointer' }}
     >
       <div className={styles.cardImageWrapper}>
         <div

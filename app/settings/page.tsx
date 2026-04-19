@@ -37,8 +37,6 @@ export default function SettingsPage() {
   ]);
 
   const [selects, setSelects] = useState<SelectSetting[]>([
-    { id: 'language', label: 'Bahasa', description: 'Pilih bahasa antarmuka', value: 'Indonesia', options: ['Indonesia', 'English',] },
-    { id: 'currency', label: 'Mata Uang', description: 'Satuan mata uang untuk harga properti', value: 'IDR (Rp)', options: ['IDR (Rp)', 'USD ($)'] },
     { id: 'privacy', label: 'Privasi Profil', description: 'Siapa yang dapat melihat profilmu', value: 'Publik', options: ['Publik', 'Hanya Saya', 'Terverifikasi'] },
   ]);
 

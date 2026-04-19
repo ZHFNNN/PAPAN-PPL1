@@ -72,3 +72,5 @@ Tambahkan nilai env production ke `Settings > Secrets and variables > Actions` d
 ### Catatan
 
 File `.env` lokal jangan di-commit. Jika credential Google login atau secret lain sempat tersebar di luar lingkungan lokal, sebaiknya diganti dulu sebelum dipakai di production.
+
+coba

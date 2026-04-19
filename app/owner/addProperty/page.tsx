@@ -1,14 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import type { PickedLocation } from '@/components/MapPicker';
+
+const MapPicker = lazy(() => import('@/components/MapPicker'));
 
 type ListingType = 'JUAL' | 'SEWA' | 'KOSAN' | '';
 
 type FormData = {
   title: string;
   address: string;
+  locationLat: number | null;
+  locationLng: number | null;
+  locationCity: string;
+  locationDistrict: string;
+  locationNeighbourhood: string;
   price: string;
   description: string;
   listingType: ListingType;
@@ -16,6 +24,11 @@ type FormData = {
 };
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
+
+type FacilityOption = {
+  code: string;
+  name: string;
+};
 
 const LISTING_TYPE_OPTIONS: { value: ListingType; label: string }[] = [
   { value: 'JUAL', label: 'Dijual' },
@@ -28,40 +41,124 @@ export default function AddPropertyPage() {
   const [form, setForm] = useState<FormData>({
     title: '',
     address: '',
+    locationLat: null,
+    locationLng: null,
+    locationCity: '',
+    locationDistrict: '',
+    locationNeighbourhood: '',
     price: '',
     description: '',
     listingType: '',
     facilities: [],
   });
-  const [facilityInput, setFacilityInput] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
+  const [isLoadingFacilities, setIsLoadingFacilities] = useState(true);
+  const [facilityLoadError, setFacilityLoadError] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
+
+  const uploadPhotosToCloudinary = async (files: File[]) => {
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadRes = await fetch('/api/uploads/property', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const uploadJson = await uploadRes.json().catch(() => ({}));
+      if (!uploadRes.ok) {
+        throw new Error(uploadJson.message ?? 'Gagal upload foto properti.');
+      }
+
+      const url = typeof uploadJson?.data?.url === 'string' ? uploadJson.data.url : '';
+      if (!url) {
+        throw new Error('URL foto dari Cloudinary tidak valid.');
+      }
+
+      uploadedUrls.push(url);
+    }
+
+    return uploadedUrls;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFacilities = async () => {
+      setIsLoadingFacilities(true);
+      setFacilityLoadError(null);
+
+      try {
+        const res = await fetch('/api/facilities');
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(json.message ?? 'Gagal memuat daftar fasilitas.');
+        }
+
+        const data = Array.isArray(json.data) ? (json.data as FacilityOption[]) : [];
+        if (!cancelled) {
+          setFacilityOptions(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setFacilityLoadError(err instanceof Error ? err.message : 'Gagal memuat daftar fasilitas.');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingFacilities(false);
+        }
+      }
+    };
+
+    loadFacilities();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const handleAddFacility = () => {
-    const trimmed = facilityInput.trim();
-    if (!trimmed) return;
-    if (form.facilities.includes(trimmed)) {
-      alert('Fasilitas sudah ditambahkan.');
-      return;
-    }
-    setForm((prev) => ({ ...prev, facilities: [...prev.facilities, trimmed] }));
-    setFacilityInput('');
+  const toggleFacility = (code: string) => {
+    setForm((prev) => {
+      const selected = prev.facilities.includes(code);
+      return {
+        ...prev,
+        facilities: selected
+          ? prev.facilities.filter((item) => item !== code)
+          : [...prev.facilities, code],
+      };
+    });
   };
 
-  const handleRemoveFacility = (index: number) => {
+  const handleLocationPicked = (loc: PickedLocation) => {
+    const parts = [loc.neighbourhood, loc.district, loc.city].filter(Boolean);
+    const shortName = parts.join(', ') || loc.displayName;
+
     setForm((prev) => ({
       ...prev,
-      facilities: prev.facilities.filter((_, i) => i !== index),
+      address: shortName,
+      locationLat: loc.lat,
+      locationLng: loc.lng,
+      locationCity: loc.city,
+      locationDistrict: loc.district,
+      locationNeighbourhood: loc.neighbourhood,
     }));
+
+    setErrors((prev) => ({ ...prev, address: undefined }));
   };
 
   const appendPhotoFiles = (files: File[]) => {
@@ -104,7 +201,9 @@ export default function AddPropertyPage() {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
     if (!form.title.trim()) newErrors.title = 'Nama properti wajib diisi.';
-    if (!form.address.trim()) newErrors.address = 'Alamat wajib diisi.';
+    if (!form.address.trim() || form.locationLat == null || form.locationLng == null) {
+      newErrors.address = 'Lokasi wajib dipilih lewat peta.';
+    }
     if (!form.price.trim()) newErrors.price = 'Harga wajib diisi.';
     else if (isNaN(Number(form.price.replace(/[^0-9]/g, '')))) newErrors.price = 'Harga harus berupa angka.';
     if (!form.description.trim()) newErrors.description = 'Deskripsi wajib diisi.';
@@ -120,6 +219,7 @@ export default function AddPropertyPage() {
 
     try {
       const priceNum = Number(form.price.replace(/[^0-9]/g, ''));
+      const uploadedPhotoUrls = photos.length > 0 ? await uploadPhotosToCloudinary(photos) : [];
 
       // NOTE: Buat API route POST /api/owner/properties
       const res = await fetch('/api/owner/properties', {
@@ -131,6 +231,14 @@ export default function AddPropertyPage() {
           price: priceNum,
           listingType: form.listingType,
           address: form.address,
+          location: {
+            lat: form.locationLat,
+            lng: form.locationLng,
+            city: form.locationCity,
+            district: form.locationDistrict,
+            neighbourhood: form.locationNeighbourhood,
+          },
+          imageUrls: uploadedPhotoUrls,
           facilities: form.facilities,
         }),
       });
@@ -177,13 +285,41 @@ export default function AddPropertyPage() {
 
             {/* Alamat */}
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Alamat Lengkap</label>
-              <input
-                className={`${styles.input} ${errors.address ? styles.inputError : ''}`}
-                placeholder="Masukkan alamat lengkap"
-                value={form.address}
-                onChange={(e) => handleChange('address', e.target.value)}
-              />
+              <label className={styles.label}>Lokasi Properti</label>
+              <div
+                className={`${styles.locationInput} ${errors.address ? styles.inputError : ''}`}
+                onClick={() => setShowMap(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setShowMap(true);
+                  }
+                }}
+              >
+                {form.address ? (
+                  <>
+                    <span className={styles.locationIcon}>📍</span>
+                    <span className={styles.locationValue}>{form.address}</span>
+                    <button
+                      type="button"
+                      className={styles.changeLocationBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMap(true);
+                      }}
+                    >
+                      Ganti
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.locationPlaceholder}>Pilih lokasi di peta...</span>
+                    <span className={styles.locationArrow}>→</span>
+                  </>
+                )}
+              </div>
               {errors.address && <p className={styles.errorText}>{errors.address}</p>}
             </div>
 
@@ -236,36 +372,25 @@ export default function AddPropertyPage() {
             {/* Fasilitas */}
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Fasilitas</label>
-              <div className={styles.facilityInputRow}>
-                <input
-                  className={styles.input}
-                  placeholder="Masukkan fasilitas dari properti"
-                  value={facilityInput}
-                  onChange={(e) => setFacilityInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddFacility(); } }}
-                />
-                <button
-                  type="button"
-                  className={styles.addFacilityBtn}
-                  onClick={handleAddFacility}
-                >
-                  + Tambah
-                </button>
-              </div>
-              {form.facilities.length > 0 && (
-                <div className={styles.facilityTags}>
-                  {form.facilities.map((f, i) => (
-                    <span key={i} className={styles.facilityTag}>
-                      {f}
+              {isLoadingFacilities ? (
+                <p className={styles.facilityHint}>Memuat daftar fasilitas...</p>
+              ) : facilityLoadError ? (
+                <p className={styles.errorText}>{facilityLoadError}</p>
+              ) : (
+                <div className={styles.facilityOptionGrid}>
+                  {facilityOptions.map((facility) => {
+                    const selected = form.facilities.includes(facility.code);
+                    return (
                       <button
+                        key={facility.code}
                         type="button"
-                        className={styles.removeFacilityBtn}
-                        onClick={() => handleRemoveFacility(i)}
+                        onClick={() => toggleFacility(facility.code)}
+                        className={`${styles.facilityOptionBtn} ${selected ? styles.facilityOptionBtnActive : ''}`}
                       >
-                        ×
+                        {facility.name}
                       </button>
-                    </span>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -348,6 +473,22 @@ export default function AddPropertyPage() {
             'Tambah Properti'
           )}
         </button>
+
+        {showMap && (
+          <Suspense
+            fallback={
+              <div className={styles.mapLoadingOverlay}>
+                <div className={styles.mapLoadingSpinner} />
+                <p>Memuat peta...</p>
+              </div>
+            }
+          >
+            <MapPicker
+              onLocationPicked={handleLocationPicked}
+              onClose={() => setShowMap(false)}
+            />
+          </Suspense>
+        )}
     </div>
   );
 }

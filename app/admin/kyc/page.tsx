@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import styles from './page.module.css';
+import { signOut } from 'next-auth/react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -320,7 +321,7 @@ export default function AdminKycPage() {
           {/* Tambah menu admin lain di sini jika perlu */}
         </nav>
 
-        <button className={styles.sidebarLogout} onClick={() => router.push('/login')}>
+        <button className={styles.sidebarLogout} onClick={() => signOut({ callbackUrl: '/login' })}>
           Log Out
         </button>
       </aside>

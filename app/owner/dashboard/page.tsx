@@ -11,6 +11,7 @@ type Property = {
   price: string;
   listingType: string;
   address?: string;
+  imageUrls?: string[];
   views?: number;
   status?: string;
   createdAt: string;
@@ -176,12 +177,20 @@ export default function OwnerDashboardPage() {
                   <div key={property.id} className={styles.propertyCard}>
                     {/* Thumbnail placeholder */}
                     <div className={styles.propertyThumb}>
-                      <div className={styles.thumbPlaceholder}>
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                          <polyline points="9 22 9 12 15 12 15 22"/>
-                        </svg>
-                      </div>
+                      {Array.isArray(property.imageUrls) && property.imageUrls.length > 0 ? (
+                        <img
+                          src={property.imageUrls[0]}
+                          alt={property.title}
+                          className={styles.thumbImg}
+                        />
+                      ) : (
+                        <div className={styles.thumbPlaceholder}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                          </svg>
+                        </div>
+                      )}
                     </div>
 
                     {/* Info */}

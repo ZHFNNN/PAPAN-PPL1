@@ -9,6 +9,18 @@ import { properties, type Properti } from '../lib/properties';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
+type RecommendationItem = {
+  id: string;
+  title: string;
+  listingType: string;
+  coverImageUrl?: string | null;
+  price: number;
+  score: number;
+  breakdown: {
+    matchedFacilityCodes?: string[];
+  };
+};
+
 const HOTSPOTS = [
   {
     id: 'apartemen',
@@ -36,9 +48,13 @@ const HOTSPOTS = [
 const HERO_HOVER_STORAGE_KEY = 'hero-hover-spot';
 
 /* ── Property Card ── */
-function PropertyCard({ prop }: { prop: Properti }) {
+function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Properti) => void }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleOpen = () => {
+    onOpen?.(prop);
+  };
 
   useEffect(() => {
     if (!isHovered) return;
@@ -53,6 +69,15 @@ function PropertyCard({ prop }: { prop: Properti }) {
       className={styles.card}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="button"
+      tabIndex={0}
+      onClick={handleOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleOpen();
+        }
+      }}
     >
       <div className={styles.cardImageWrapper}>
         <div
@@ -68,7 +93,10 @@ function PropertyCard({ prop }: { prop: Properti }) {
             <button
               key={i}
               className={`${styles.dot} ${i === imgIndex ? styles.dotActive : ''}`}
-              onClick={() => setImgIndex(i)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIndex(i);
+              }}
             />
           ))}
         </div>
@@ -109,7 +137,12 @@ function PropertyCard({ prop }: { prop: Properti }) {
 
 /* ── Property Section ── */
 function PropertySection({ title }: { title: string }) {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const openPropertyDetail = (id: string | number) => {
+    router.push(`/propertyDetail/${encodeURIComponent(String(id))}`);
+  };
 
   const scroll = (dir: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -128,17 +161,166 @@ function PropertySection({ title }: { title: string }) {
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
         {properties.map((p) => (
-          <PropertyCard key={p.id} prop={p} />
+          <PropertyCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
         ))}
       </div>
     </section>
   );
 }
 
+function RecommendationSection() {
+  const router = useRouter();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [items, setItems] = useState<RecommendationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRecommendations = async () => {
+      setIsLoading(true);
+      setMessage(null);
+
+      try {
+        const res = await fetch('/api/recommendations');
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            if (!cancelled) setMessage('Silakan login untuk melihat rekomendasi personal.');
+            return;
+          }
+          if (!cancelled) setMessage(data.message ?? 'Gagal mengambil rekomendasi.');
+          return;
+        }
+
+        const nextItems = Array.isArray(data.data) ? (data.data as RecommendationItem[]) : [];
+        if (!cancelled) {
+          setItems(nextItems);
+          if (nextItems.length === 0) {
+            setMessage('Isi personalisasi dulu supaya rekomendasi bisa ditampilkan.');
+          }
+        }
+      } catch {
+        if (!cancelled) setMessage('Terjadi kesalahan saat mengambil rekomendasi.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    loadRecommendations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: dir === 'right' ? 370 : -370, behavior: 'smooth' });
+    }
+  };
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
+
+  const formatListingType = (listingType: string) => {
+    const normalized = listingType.trim().toUpperCase();
+    if (normalized === 'RENT') return 'Sewa';
+    if (normalized === 'SELL') return 'Jual';
+    return listingType;
+  };
+
+  const formatFacilityCode = (code: string) =>
+    code
+      .toLowerCase()
+      .split('_')
+      .map((word) => (word.length <= 2 ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1)))
+      .join(' ');
+
+  const openPropertyDetail = (id: string) => {
+    router.push(`/propertyDetail/${encodeURIComponent(id)}`);
+  };
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Rekomendasi Untuk Kamu</h2>
+        <div className={styles.arrowBtns}>
+          <button className={styles.arrowBtn} onClick={() => scroll('left')}>&#8592;</button>
+          <button className={styles.arrowBtn} onClick={() => scroll('right')}>&#8594;</button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className={styles.recommendationNotice}>Menghitung rekomendasi...</div>
+      ) : items.length === 0 ? (
+        <div className={styles.recommendationNotice}>
+          <p>{message ?? 'Belum ada rekomendasi.'}</p>
+          <button
+            className={styles.recommendationCta}
+            onClick={() => router.push('/personalisasi')}
+          >
+            Atur Personalisasi
+          </button>
+        </div>
+      ) : (
+        <div className={styles.scrollTrack} ref={scrollRef}>
+          {items.map((item, idx) => (
+            <article
+              key={item.id}
+              className={styles.card}
+              role="button"
+              tabIndex={0}
+              onClick={() => openPropertyDetail(item.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openPropertyDetail(item.id);
+                }
+              }}
+            >
+              <div className={styles.cardImageWrapper}>
+                <img
+                  src={item.coverImageUrl ?? (idx % 2 === 0 ? '/images/bgHomeKosan.jpeg' : '/images/bgHomeApart.png')}
+                  alt={item.title}
+                  className={styles.cardImage}
+                />
+              </div>
+
+              <div className={styles.cardBody}>
+                <h3 className={styles.cardTitle}>{item.title}</h3>
+                <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
+                <p className={styles.cardBiaya}>Tipe: {formatListingType(item.listingType)}</p>
+                <div className={styles.cardFasilitas}>
+                  {(item.breakdown.matchedFacilityCodes ?? []).slice(0, 4).map((code) => (
+                    <span key={code}>{formatFacilityCode(code)}</span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /* ── Discount Card ── */
-function DiscountCard({ prop }: { prop: Properti & { discount: number; originalPrice: string } }) {
+function DiscountCard({
+  prop,
+  onOpen,
+}: {
+  prop: Properti & { discount: number; originalPrice: string };
+  onOpen?: (prop: Properti) => void;
+}) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleOpen = () => {
+    onOpen?.(prop);
+  };
 
   useEffect(() => {
     if (!isHovered) return;
@@ -153,6 +335,15 @@ function DiscountCard({ prop }: { prop: Properti & { discount: number; originalP
       className={styles.discountCard}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="button"
+      tabIndex={0}
+      onClick={handleOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleOpen();
+        }
+      }}
     >
       <div className={styles.discountBadge}>-{prop.discount}%</div>
 
@@ -170,7 +361,10 @@ function DiscountCard({ prop }: { prop: Properti & { discount: number; originalP
             <button
               key={i}
               className={`${styles.dot} ${i === imgIndex ? styles.dotActive : ''}`}
-              onClick={() => setImgIndex(i)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIndex(i);
+              }}
             />
           ))}
         </div>
@@ -214,6 +408,7 @@ function DiscountCard({ prop }: { prop: Properti & { discount: number; originalP
 
 /* ── Discount Section ── */
 function DiscountSection() {
+  const router = useRouter();
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasPlayedIntro, setHasPlayedIntro] = useState(false);
@@ -224,6 +419,10 @@ function DiscountSection() {
     discount: [15, 20, 10, 25, 30, 18][i % 6],
     originalPrice: p.price,
   }));
+
+  const openPropertyDetail = (id: string | number) => {
+    router.push(`/propertyDetail/${encodeURIComponent(String(id))}`);
+  };
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -347,7 +546,7 @@ function DiscountSection() {
         <div className={styles.discountTrackWrap}>
           <div className={styles.discountTrack}>
             {discountProperties.map((p) => (
-              <DiscountCard key={p.id} prop={p} />
+              <DiscountCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
             ))}
           </div>
         </div>
@@ -493,7 +692,7 @@ export default function HomePage() {
 
       {/* ── Konten ── */}
       <div className={styles.content}>
-        <PropertySection title="Rekomendasi" />
+        <RecommendationSection />
         <DiscountSection />
         <PropertySection title="Best Seller" />
       </div>

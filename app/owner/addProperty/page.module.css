@@ -281,6 +281,114 @@
   color: white;
 }
 
+.facilityHint {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  padding-left: 6px;
+}
+
+.facilityOptionGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.facilityOptionBtn {
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.facilityOptionBtn:hover {
+  border-color: white;
+  color: white;
+}
+
+.facilityOptionBtnActive {
+  background: white;
+  color: #19263c;
+  border-color: white;
+}
+
+.locationInput {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 30px;
+  border: none;
+  background: white;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.locationIcon {
+  font-size: 16px;
+}
+
+.locationValue {
+  flex: 1;
+  color: #0f1d33;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.changeLocationBtn {
+  border: none;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+.locationPlaceholder {
+  flex: 1;
+  color: rgba(15, 29, 51, 0.5);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.locationArrow {
+  color: rgba(15, 29, 51, 0.6);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mapLoadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: white;
+  z-index: 2000;
+}
+
+.mapLoadingSpinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
 /* ── Upload Area ── */
 .uploadArea {
   display: block;

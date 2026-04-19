@@ -7,58 +7,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
-enum KycStatus {
-  NONE
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model User {
-  id            String          @id @default(cuid())
-  name          String?         
-  email         String?         @unique
-  emailVerified DateTime?       
-  image         String?         
-  
-  username      String?         @unique
-  phoneNumber   String?         @unique
-  passwordHash  String?         
-
-  role          Role            @default(USER)
-  kycStatus     KycStatus       @default(NONE)
-  
-  kycSubmission   KycSubmission?
-  properties      Property[]
-  personalization UserPersonalization?
-
-  accounts      Account[]
-  sessions      Session[]
-
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                  String                   @id @default(cuid())
+  name                String?
+  email               String?                  @unique
+  passwordHash        String?
+  role                Role                     @default(USER)
+  kycStatus           KycStatus                @default(NONE)
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  phoneNumber         String?                  @unique
+  username            String?                  @unique
+  emailVerified       DateTime?
+  image               String?
+  accounts            Account[]
+  kycSubmission       KycSubmission?
+  properties          Property[]
+  sessions            Session[]
+  criteriaWeights     UserCriteriaWeight[]
+  personalization     UserPersonalization?
+  preferredFacilities UserPreferenceFacility[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -80,60 +64,130 @@ model VerificationToken {
 }
 
 model KycSubmission {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ktpImageUrl   String
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  ktpImageUrl    String
+  status         KycStatus @default(PENDING)
+  adminNotes     String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  cityOrRegency  String
+  district       String
+  fullName       String
+  nik            String
+  phoneNumber    String
+  postalCode     String
+  province       String
+  rt             String
+  rw             String
   selfieImageUrl String
-  nik           String
-  fullName      String
-  phoneNumber   String
-  province      String
-  cityOrRegency String
-  district      String
-  rt            String
-  rw            String
-  postalCode    String
-  status        KycStatus @default(PENDING)
-  adminNotes    String?
-  reviewedBy    String?
-  reviewedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Property {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   title       String
+  address     String?
+  city        String?
+  district    String?
+  neighbourhood String?
+  latitude    Float?
+  longitude   Float?
+  imageUrls   String[]           @default([])
   description String?
   price       Decimal
   listingType String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  owner       User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  facilities  PropertyFacility[]
+}
+
+model Facility {
+  id          String                   @id @default(cuid())
+  code        String                   @unique
+  name        String                   @unique
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  properties  PropertyFacility[]
+  preferredBy UserPreferenceFacility[]
+}
+
+model PropertyFacility {
+  propertyId String
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@id([propertyId, facilityId])
+  @@index([facilityId])
+}
+
+model UserPreferenceFacility {
+  userId     String
+  facilityId String
+  isRequired Boolean  @default(false)
+  weight     Float    @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, facilityId])
+  @@index([facilityId])
+}
+
+model UserCriteriaWeight {
+  id        String      @id @default(cuid())
+  userId    String
+  criteria  DssCriteria
+  weight    Float       @default(1)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, criteria])
+  @@index([userId])
 }
 
 model UserPersonalization {
-  id                   String   @id @default(cuid())
-  userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
- 
-  location             String?
-  occupation           String?
-  budgetMin            Int?
-  budgetMax            Int?
-  gender               String?
- 
-  // Preferensi boolean
-  prefFurnished        Boolean  @default(false)
-  prefUnfurnished      Boolean  @default(false)
-  prefPetFriendly      Boolean  @default(false)
-  prefParkirMobil      Boolean  @default(false)
-  prefAc               Boolean  @default(false)
-  prefWaterHeater      Boolean  @default(false)
-  prefDekatTransportasi Boolean @default(false)
- 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  location              String?
+  occupation            String?
+  budgetMin             Int?
+  budgetMax             Int?
+  gender                String?
+  prefFurnished         Boolean  @default(false)
+  prefUnfurnished       Boolean  @default(false)
+  prefPetFriendly       Boolean  @default(false)
+  prefParkirMobil       Boolean  @default(false)
+  prefAc                Boolean  @default(false)
+  prefWaterHeater       Boolean  @default(false)
+  prefDekatTransportasi Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum KycStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DssCriteria {
+  BUDGET
+  LOCATION
+  FACILITIES
+  GENDER
 }

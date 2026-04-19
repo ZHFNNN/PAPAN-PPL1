@@ -6,6 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { properties, type Properti } from "@/lib/properties";
 
+const NAV_ITEMS = [
+  { href: "/", label: "Home" },
+  { href: "/bookmark", label: "Bookmark" },
+  { href: "/history", label: "History" },
+  { href: "/notification", label: "Notification" },
+];
+
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,15 +57,8 @@ export default function Navbar() {
     return pathname === path;
   };
 
-  const navItems = [
-    { href: "/", label: "Home" },
-    { href: "/bookmark", label: "Bookmark" },
-    { href: "/history", label: "History" },
-    { href: "/notification", label: "Notification" },
-  ];
-
   useEffect(() => {
-    const activeItem = navItems.find((item) => pathname === item.href);
+    const activeItem = NAV_ITEMS.find((item) => pathname === item.href);
     if (!activeItem) {
       setHighlightStyle((prev) => ({ ...prev, opacity: 0 }));
       return;
@@ -109,7 +109,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleResize = () => {
-      const activeItem = navItems.find((item) => pathname === item.href);
+      const activeItem = NAV_ITEMS.find((item) => pathname === item.href);
       if (!activeItem) return;
 
       const activeEl = linkRefs.current[activeItem.href];
@@ -174,7 +174,7 @@ export default function Navbar() {
               }}
             />
 
-            {navItems.map((item) => (
+            {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

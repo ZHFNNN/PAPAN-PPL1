@@ -3,22 +3,31 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6)
+  password: z.string().min(6),
 });
 
 export const authOptions: NextAuthOptions = {
+  // 2. TAMBAHKAN ADAPTER DI SINI
+  adapter: PrismaAdapter(prisma),
+
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
@@ -29,7 +38,8 @@ export const authOptions: NextAuthOptions = {
         const { email, password } = parsed.data;
         const user = await prisma.user.findUnique({ where: { email } });
 
-        if (!user) {
+        // Tambahkan pengecekan: Jika user login manual tapi akunnya dibuat dari Google (password null)
+        if (!user || !user.passwordHash) {
           return null;
         }
 
@@ -43,21 +53,24 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           role: user.role,
-          kycStatus: user.kycStatus
+          kycStatus: user.kycStatus,
         };
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
+      // 'user' hanya tersedia saat pertama kali sign-in
       if (user?.id) {
         token.sub = user.id;
       }
 
       if (token?.sub) {
+        // Karena pakai Adapter, user dari Google SEKARANG sudah ada di database,
+        // jadi query pencarian ini akan berhasil menemukan role & kycStatus-nya!
         const latest = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true, kycStatus: true }
+          select: { role: true, kycStatus: true },
         });
         if (latest) {
           token.role = latest.role;
@@ -74,7 +87,7 @@ export const authOptions: NextAuthOptions = {
         session.user.kycStatus = (token.kycStatus as string) || "NONE";
       }
       return session;
-    }
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
 };

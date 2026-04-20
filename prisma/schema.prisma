@@ -191,3 +191,27 @@ enum DssCriteria {
   FACILITIES
   GENDER
 }
+
+model UserPersonalization {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  location             String?
+  occupation           String?
+  budgetMin            Int?
+  budgetMax            Int?
+  gender               String?
+ 
+  // Preferensi boolean
+  prefFurnished        Boolean  @default(false)
+  prefUnfurnished      Boolean  @default(false)
+  prefPetFriendly      Boolean  @default(false)
+  prefParkirMobil      Boolean  @default(false)
+  prefAc               Boolean  @default(false)
+  prefWaterHeater      Boolean  @default(false)
+  prefDekatTransportasi Boolean @default(false)
+ 
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}

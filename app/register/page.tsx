@@ -52,12 +52,29 @@ export default function RegisterPage() {
 
       // 4. Handle Response
       if (response.ok) {
-        toast.success("Registrasi berhasil! Mengalihkan...");
+        const loginResponse = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            callbackUrl: `${window.location.origin}/personalisasi`,
+          }),
+        });
 
-        // Beri jeda 1.5 detik agar user bisa melihat notifikasi sukses sebelum pindah
-        setTimeout(() => {
-          router.push("/login");
-        }, 1500);
+        if (loginResponse.ok) {
+          toast.success("Registrasi berhasil! Lanjut personalisasi...");
+          setTimeout(() => {
+            router.push("/personalisasi");
+          }, 500);
+        } else {
+          toast.success("Registrasi berhasil! Silakan login dulu.");
+          setTimeout(() => {
+            router.push("/login");
+          }, 700);
+        }
       } else {
         toast.error(data.message || "Registrasi gagal, silakan coba lagi.");
       }

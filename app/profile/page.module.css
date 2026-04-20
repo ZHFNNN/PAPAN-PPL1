@@ -1,345 +1,423 @@
-/* ═══════════════════════════════════════════
-   PAPAN — Profile Page Styles
-   Responsive: sidebar collapsible, main panel expands to full width
-   ═══════════════════════════════════════════ */
-
 .page {
-  background-color: #ffffff;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+	background-color: #ffffff;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 }
 
 .contentArea {
-  flex: 1;
-  padding: 6.5rem 0.875rem 4rem;
+	flex: 1;
+	padding: 6.5rem 0.875rem 4rem;
 }
 
-/* ── Layout Container ── */
 .container {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: relative;
+	max-width: 1400px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
 }
 
-/* ── Sidebar Toggle (mobile/collapsed) ── */
-.sidebarToggle {
-  display: none; /* hidden on desktop, shown on mobile */
-  align-self: flex-start;
-  background: #19263c;
-  border: none;
-  border-radius: 12px;
-  padding: 0.5rem 0.9rem;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  margin-bottom: 0.25rem;
-}
-
-.sidebarToggle:hover {
-  background: #0f1d33;
-}
-
-.toggleIcon {
-  font-size: 16px;
-  color: #ffffff;
-  font-family: 'Poppins', sans-serif;
-}
-
-/* ── Sidebar ── */
 .sidebarWrapper {
-  width: 100%;
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.sidebarHidden {
-  /* On mobile: hidden */
-  display: none;
-}
-
-.sidebarVisible {
-  display: block;
+	width: 100%;
 }
 
 .sidebar {
-  background: #19263c;
-  border-radius: 20px;
-  padding: 1rem;
+	background: #19263c;
+	border-radius: 20px;
+	padding: 1rem;
 }
 
 .sidebarTitle {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: clamp(16px, 1.4vw, 20px);
-  color: #ffffff;
-  margin-bottom: 1.25rem;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 600;
+	font-size: clamp(16px, 1.4vw, 20px);
+	color: #ffffff;
+	margin-bottom: 1.25rem;
 }
 
 .menuList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  margin-bottom: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	margin-bottom: 1.25rem;
 }
 
 .menuButton {
-  width: 100%;
-  border-radius: 18px;
-  padding: 0.6rem 0.95rem;
-  text-align: left;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
+	width: 100%;
+	border-radius: 18px;
+	padding: 0.6rem 0.95rem;
+	text-align: left;
+	transition: all 0.2s ease;
 }
 
 .menuButtonActive {
-  background: rgba(255, 255, 255, 0.2);
+	background: rgba(255, 255, 255, 0.2);
 }
 
 .menuButtonInactive:hover {
-  background: rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.1);
 }
 
 .menuLabel {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: clamp(13px, 1.1vw, 15px);
-  color: #ffffff;
-  transition: opacity 0.2s ease;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(13px, 1.1vw, 15px);
+	color: #ffffff;
+	transition: opacity 0.2s ease;
 }
 
 .menuLabelActive {
-  opacity: 1;
+	opacity: 1;
 }
 
 .menuLabelInactive {
-  opacity: 0.8;
+	opacity: 0.8;
 }
 
 .logoutButton {
-  width: 100%;
-  background: #9e0c0c;
-  border: none;
-  border-radius: 18px;
-  padding: 0.65rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+	width: 100%;
+	background: #9e0c0c;
+	border-radius: 18px;
+	padding: 0.65rem;
+	transition: all 0.2s ease;
 }
 
 .logoutButton:hover {
-  background: #8a0a0a;
+	background: #8a0a0a;
 }
 
 .logoutText {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: clamp(13px, 1.1vw, 16px);
-  color: #ffffff;
-  text-align: center;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 600;
+	font-size: clamp(13px, 1.1vw, 16px);
+	color: #ffffff;
+	text-align: center;
 }
-
-/* ══════════════════════════════════════════
-   MAIN CONTENT — RIGHT PANEL
-   This is the core responsive panel
-   ══════════════════════════════════════════ */
 
 .mainContent {
-  flex: 1;
-  min-width: 0;
-  /* Smooth transition when sidebar collapses */
-  transition: all 0.35s ease;
+	flex: 1;
+	min-width: 0;
 }
 
-/* When sidebar is hidden, main content takes full width */
-.mainContentFull {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* ── Profile Card ── */
 .profileCard {
-  background: #19263c;
-  border-radius: 20px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+	background: #19263c;
+	border-radius: 20px;
+	padding: 1rem;
+	margin-bottom: 1rem;
 }
 
 .profileCardInner {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
 }
 
-/* ── Avatar ── */
 .avatarSection {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
 }
 
 .avatarWrapper {
-  position: relative;
-  width: clamp(96px, 11vw, 168px);
-  height: clamp(96px, 11vw, 168px);
-  border-radius: 9999px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  transition: border-color 0.2s ease;
-}
-
-.avatarWrapper:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+	position: relative;
+	width: clamp(96px, 11vw, 168px);
+	height: clamp(96px, 11vw, 168px);
+	border-radius: 9999px;
+	overflow: hidden;
+	cursor: pointer;
 }
 
 .avatarImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
 }
 
 .avatarOverlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.2s ease;
 }
 
 .avatarWrapper:hover .avatarOverlay {
-  opacity: 1;
+	opacity: 1;
 }
 
 .overlayText {
-  margin-top: 0.25rem;
-  color: #ffffff;
-  font-size: 10px;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
+	margin-top: 0.25rem;
+	color: #ffffff;
+	font-size: 10px;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
 }
 
 .hiddenInput {
-  display: none;
-}
-
-.avatarName {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  font-size: clamp(14px, 1.2vw, 16px);
-  color: #ffffff;
-  text-align: center;
-  margin-top: 0.25rem;
+	display: none;
 }
 
 .avatarHelpText {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 10px;
-  font-family: 'Poppins', sans-serif;
-  text-align: center;
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 10px;
+	font-family: 'Poppins', sans-serif;
+	text-align: center;
 }
 
-/* ── Profile Fields Grid ── */
 .fieldsGrid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr;
-  column-gap: 1rem;
-  row-gap: 0.75rem;
+	flex: 1;
+	display: grid;
+	grid-template-columns: 1fr;
+	column-gap: 1rem;
+	row-gap: 0.75rem;
 }
 
 .fieldLabel {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: clamp(12px, 1vw, 14px);
-  color: #ffffff;
-  margin-bottom: 0.35rem;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(12px, 1vw, 14px);
+	color: #ffffff;
+	margin-bottom: 0.35rem;
 }
 
 .fieldValueWrapper {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 0.55rem 0.9rem;
+	background: #ffffff;
+	border-radius: 16px;
+	padding: 0.55rem 0.9rem;
 }
 
 .fieldValue {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: clamp(11px, 0.92vw, 13px);
-  color: #0f1d33;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(11px, 0.92vw, 13px);
+	color: #0f1d33;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-/* ── KYC Section ── */
-.kycSection {
-  margin-bottom: 1rem;
-}
-
-/* ── Action Buttons ── */
 .actionButtons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+  max-width: 240px;
 }
 
 .editButton {
-  width: 100%;
-  background: #ffffff;
-  border: 2px solid #19263c;
-  border-radius: 16px;
-  padding: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+	width: 1040px;
+	background: #ffffff;
+	border: 2px solid #19263c;
+	border-radius: 16px;
+	padding: 0.8rem;
+	transition: all 0.2s ease;
 }
 
 .editButton:hover {
-  background: #f9fafb;
+	background: #19263c;
 }
 
 .editButtonText {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: clamp(13px, 1vw, 15px);
-  color: #19263c;
-  text-align: center;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(13px, 1vw, 15px);
+	color: #19263c;
+	text-align: center;
+}
+
+.editButtonText:hover{
+	color: #ffffff;
 }
 
 .ownerModeButton {
-  width: 100%;
-  background: #19263c;
-  border: 2px solid #19263c;
-  border-radius: 16px;
-  padding: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
+	width: 100%;
+	background: #19263c;
+	border: 2px solid #19263c;
+	border-radius: 16px;
+	padding: 0.8rem;
+	transition: all 0.2s ease;
 }
 
 .ownerModeButton:hover {
-  background: #0f1d33;
+	background: #0f1d33;
 }
 
 .ownerModeButtonText {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: clamp(13px, 1vw, 15px);
-  color: #ffffff;
-  text-align: center;
+	font-family: 'Poppins', sans-serif;
+	font-weight: 500;
+	font-size: clamp(13px, 1vw, 15px);
+	color: #ffffff;
+	text-align: center;
 }
 
-/* ══════════════════════════════════════════
-   LOADING / ERROR STATES
-   ══════════════════════════════════════════ */
+.modeOverlay {
+	position: fixed;
+	inset: 0;
+	z-index: 140;
+	background: rgba(10, 14, 24, 0.46);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.modeModal {
+	width: min(440px, 100%);
+	background: #ffffff;
+	border-radius: 18px;
+	padding: 22px 20px;
+	box-shadow: 0 14px 48px rgba(0, 0, 0, 0.22);
+}
+
+.modeModalTitle {
+	margin: 0 0 8px;
+	font-family: 'Poppins', sans-serif;
+	font-size: 18px;
+	font-weight: 700;
+	color: #1a2332;
+}
+
+.modeModalDesc {
+	margin: 0;
+	font-family: 'Poppins', sans-serif;
+	font-size: 13px;
+	line-height: 1.6;
+	color: rgba(26, 35, 50, 0.72);
+}
+
+.modeModalActions {
+	margin-top: 18px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+.modeCancelBtn,
+.modeConfirmBtn {
+	border: none;
+	border-radius: 999px;
+	padding: 10px 16px;
+	font-family: 'Poppins', sans-serif;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.modeCancelBtn {
+	background: #eef1f6;
+	color: #2e3d58;
+}
+
+.modeCancelBtn:hover {
+	background: #e1e6ee;
+}
+
+.modeConfirmBtn {
+	background: #19263c;
+	color: #ffffff;
+}
+
+.modeConfirmBtn:hover {
+	background: #253450;
+}
+
+.modeCancelBtn:disabled,
+.modeConfirmBtn:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+@media (min-width: 480px) {
+	.contentArea {
+		padding: 7rem 1rem 4.25rem;
+	}
+
+	.sidebar {
+		padding: 1.25rem;
+	}
+
+	.profileCard {
+		padding: 1.25rem;
+	}
+}
+
+@media (min-width: 640px) {
+	.profileCard {
+		padding: 1.5rem;
+	}
+
+	.profileCardInner {
+		flex-direction: row;
+		gap: 1.5rem;
+	}
+
+	.fieldsGrid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		column-gap: 1.25rem;
+		row-gap: 1rem;
+	}
+
+	.avatarSection {
+		align-items: flex-start;
+	}
+
+	.avatarHelpText {
+		text-align: left;
+	}
+}
+
+@media (min-width: 768px) {
+	.contentArea {
+		padding: 7.5rem 1rem 4.5rem;
+	}
+
+	.container {
+		gap: 1.25rem;
+	}
+
+	.sidebar {
+		border-radius: 24px;
+		padding: 1.25rem;
+	}
+
+	.profileCard {
+		border-radius: 24px;
+		padding: 1.75rem;
+	}
+
+	.fieldValueWrapper,
+	.editButton,
+	.ownerModeButton {
+		border-radius: 22px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.container {
+		flex-direction: row;
+		gap: 1.5rem;
+	}
+
+	.sidebarWrapper {
+		width: 340px;
+		flex-shrink: 0;
+	}
+
+	.sidebar {
+		padding: 1.5rem;
+	}
+
+	.profileCard {
+		padding: 2rem;
+	}
+}
 
 .loadingState {
   display: flex;
@@ -348,7 +426,7 @@
   justify-content: center;
   gap: 16px;
   padding: 60px 0;
-  color: rgba(25, 38, 60, 0.5);
+  color: rgba(255, 255, 255, 0.5);
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
 }
@@ -356,8 +434,8 @@
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(25, 38, 60, 0.15);
-  border-top-color: #19263c;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: rgba(255, 255, 255, 0.7);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
@@ -373,7 +451,7 @@
   justify-content: center;
   gap: 12px;
   padding: 60px 0;
-  color: rgba(25, 38, 60, 0.5);
+  color: rgba(255, 255, 255, 0.5);
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
   text-align: center;
@@ -381,8 +459,8 @@
 
 .retryBtn {
   padding: 8px 20px;
-  background: #19263c;
-  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
   color: #ffffff;
   font-family: 'Poppins', sans-serif;
@@ -393,13 +471,10 @@
 }
 
 .retryBtn:hover {
-  background: #0f1d33;
+  background: rgba(255, 255, 255, 0.18);
 }
 
-/* ══════════════════════════════════════════
-   KYC STATUS CARD
-   ══════════════════════════════════════════ */
-
+/* ── KYC Status Card ── */
 .kycCard {
   border-radius: 20px;
   padding: 1rem 1.25rem;
@@ -449,164 +524,61 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  border: none;
 }
 
-/* KYC color variants */
-.kycNone { background: #19263c; color: #ffffff; }
+/* ── KYC color variants ── */
+
+/* NONE — abu gelap */
+.kycNone {
+  background: #19263c;
+  color: #ffffff;
+}
 .kycNone .kycTitle { color: #ffffff; }
 .kycNone .kycDesc  { color: rgba(255,255,255,0.65); }
-.kycNone .kycBtn { background: #ffffff; color: #19263c; }
+.kycNone .kycBtn {
+  background: #ffffff;
+  color: #19263c;
+  border: none;
+}
 .kycNone .kycBtn:hover { background: #f1f5f9; }
 
-.kycPending { background: #7c5a00; color: #ffffff; }
+/* PENDING — kuning */
+.kycPending {
+  background: #7c5a00;
+  color: #ffffff;
+}
 .kycPending .kycTitle { color: #fef3c7; }
 .kycPending .kycDesc  { color: rgba(254,243,199,0.75); }
 
-.kycApproved { background: #14532d; color: #ffffff; }
+/* APPROVED — hijau */
+.kycApproved {
+  background: #14532d;
+  color: #ffffff;
+}
 .kycApproved .kycTitle { color: #bbf7d0; }
 .kycApproved .kycDesc  { color: rgba(187,247,208,0.75); }
-.kycApproved .kycBtn { background: #ffffff; color: #14532d; }
+.kycApproved .kycBtn {
+  background: #ffffff;
+  color: #14532d;
+  border: none;
+}
 .kycApproved .kycBtn:hover { background: #f0fdf4; }
 
-.kycRejected { background: #7f1d1d; color: #ffffff; }
+/* REJECTED — merah */
+.kycRejected {
+  background: #7f1d1d;
+  color: #ffffff;
+}
 .kycRejected .kycTitle { color: #fecaca; }
 .kycRejected .kycDesc  { color: rgba(254,202,202,0.75); }
-.kycRejected .kycBtn { background: #ffffff; color: #7f1d1d; }
+.kycRejected .kycBtn {
+  background: #ffffff;
+  color: #7f1d1d;
+  border: none;
+}
 .kycRejected .kycBtn:hover { background: #fef2f2; }
 
-/* ══════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
-   ══════════════════════════════════════════ */
-
-/* Mobile: show toggle button */
-@media (max-width: 1023px) {
-  .sidebarToggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-}
-
-@media (min-width: 480px) {
-  .contentArea {
-    padding: 7rem 1rem 4.25rem;
-  }
-
-  .sidebar {
-    padding: 1.25rem;
-  }
-
-  .profileCard {
-    padding: 1.25rem;
-  }
-}
-
-@media (min-width: 640px) {
-  .profileCard {
-    padding: 1.5rem;
-  }
-
-  .profileCardInner {
-    flex-direction: row;
-    gap: 1.5rem;
-  }
-
-  .fieldsGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 1.25rem;
-    row-gap: 1rem;
-  }
-
-  .avatarSection {
-    align-items: flex-start;
-  }
-
-  .avatarHelpText {
-    text-align: left;
-  }
-}
-
-@media (min-width: 768px) {
-  .contentArea {
-    padding: 7.5rem 1.5rem 4.5rem;
-  }
-
-  .container {
-    gap: 1.25rem;
-  }
-
-  .sidebar {
-    border-radius: 24px;
-    padding: 1.25rem;
-  }
-
-  .profileCard {
-    border-radius: 24px;
-    padding: 1.75rem;
-  }
-
-  .fieldValueWrapper,
-  .editButton,
-  .ownerModeButton {
-    border-radius: 22px;
-  }
-
-  .kycCard {
-    flex-wrap: nowrap;
-  }
-}
-
-/* ── Desktop: sidebar always visible, layout side-by-side ── */
-@media (min-width: 1024px) {
-  .contentArea {
-    padding: 7.5rem 2rem 4.5rem;
-  }
-
-  .container {
-    flex-direction: row;
-    gap: 1.5rem;
-    align-items: flex-start;
-  }
-
-  .sidebarToggle {
-    display: none; /* hide on desktop */
-  }
-
-  /* Force sidebar visible on desktop regardless of state */
-  .sidebarWrapper,
-  .sidebarHidden,
-  .sidebarVisible {
-    display: block !important;
-    width: 293px;
-    flex-shrink: 0;
-  }
-
-  .sidebar {
-    padding: 1.5rem;
-    position: sticky;
-    top: 7rem; /* stick below navbar */
-  }
-
-  .profileCard {
-    padding: 2rem;
-  }
-
-  /* Full width only applies when below desktop */
-  .mainContentFull {
-    width: auto;
-    max-width: none;
-  }
-}
-
-/* ── Wide desktop: even more padding ── */
-@media (min-width: 1280px) {
-  .contentArea {
-    padding: 7.5rem 3rem 4.5rem;
-  }
-}
-
-/* ── KYC responsive ── */
+/* ── Responsive KYC card ── */
 @media (max-width: 480px) {
   .kycCard {
     flex-direction: column;

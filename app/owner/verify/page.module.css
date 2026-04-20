@@ -1,12 +1,12 @@
 /* ── Root ── */
 .root {
   min-height: 100vh;
-  background: #f4f6fb;
-  padding: 32px 16px 60px;
+  background: #ffffff;
+  padding: 50px 16px 48px;
 }
 
 .inner {
-  max-width: 680px;
+  width: min(100%, 1080px);
   margin: 0 auto;
 }
 
@@ -41,7 +41,7 @@
 .card {
   background: #1a2332;
   border-radius: 20px;
-  padding: 32px 36px 36px;
+  padding: 36px 42px 40px;
   margin-bottom: 16px;
 }
 
@@ -259,7 +259,7 @@
 .successDesc    { font-size: 14px; color: #6b7a8d; line-height: 1.6; margin: 0 0 28px; }
 
 /* ── Loading ── */
-.loadingWrapper { max-width: 680px; margin: 40px auto; display: flex; flex-direction: column; gap: 16px; }
+.loadingWrapper { width: min(100%, 1080px); margin: 12px auto; display: flex; flex-direction: column; gap: 16px; }
 .skeleton {
   border-radius: 14px;
   background: linear-gradient(90deg, #eef0f4 25%, #f8f9fb 50%, #eef0f4 75%);
@@ -271,6 +271,7 @@
 @keyframes spin    { to { transform: rotate(360deg); } }
 
 @media (max-width: 560px) {
+  .root          { padding-top: 14px; }
   .card          { padding: 24px 18px; }
   .uploadRow     { grid-template-columns: 1fr; }
   .rowThree      { grid-template-columns: 1fr; }

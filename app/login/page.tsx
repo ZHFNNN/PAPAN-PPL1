@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast"; // Import Toast
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -180,7 +181,7 @@ export default function LoginPage() {
           {isLoading ? "Memproses..." : "Login"}
         </button>
 
-        <button className={styles.googleBtn}>
+        <button className={styles.googleBtn} onClick={() => signIn("google", { callbackUrl: "/" })}>
           <GoogleIcon />
           <span>Google</span>
         </button>

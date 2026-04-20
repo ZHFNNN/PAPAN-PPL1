@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Sidebar from '@/components/Sidebar';
 import styles from './page.module.css';
 
 const DEFAULT_AVATAR = '/images/default-avatar.png';
@@ -19,9 +20,6 @@ type UserProfile = {
   role: string;
   kycStatus: KycStatus;
   createdAt: string;
-  gender?: string;
-  birthDate?: string;
-  incomeRange?: string;
 };
 
 const KYC_CONFIG: Record<KycStatus, {
@@ -63,7 +61,7 @@ const KYC_CONFIG: Record<KycStatus, {
     colorClass: 'kycRejected',
   },
 };
-
+ 
 function KycStatusCard({ status, onNavigate }: { status: KycStatus; onNavigate: (href: string) => void }) {
   const config = KYC_CONFIG[status];
   return (
@@ -88,11 +86,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarSrc, setAvatarSrc] = useState<string>(DEFAULT_AVATAR);
-  const [activeMenu, setActiveMenu] = useState('Profile');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -118,30 +117,20 @@ export default function ProfilePage() {
     fetchProfile();
   }, [router]);
 
-  // Auto-collapse sidebar on small screens
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
-      }
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const handleLogout = async () => {
-    router.push('/login');
-  };
-
   const handleEditProfile = () => {
     router.push('/profile/edit');
   };
 
   const handleSwitchMode = () => {
-    router.push('/owner/verify');
+    setShowSwitchModal(true);
+  };
+
+  const confirmSwitchMode = () => {
+    setIsSwitchingMode(true);
+    window.setTimeout(() => {
+      const target = profile?.kycStatus === 'APPROVED' ? '/owner/dashboard' : '/owner/verify';
+      router.push(target);
+    }, 450);
   };
 
   const handleAvatarClick = () => {
@@ -160,15 +149,6 @@ export default function ProfilePage() {
     // TODO: Upload ke server
   };
 
-  const menuItems = ['Profile', 'Settings', 'Contact Us', 'Help Center'];
-  
-  const handleMenuClick = (item: string) => {
-  setActiveMenu(item);
-  if (item === 'Settings') router.push('/settings');
-  if (item === 'Contact Us') router.push('/contact');
-  if (item === 'Help Center') router.push('/help');
-};
-
   const kycLabel: Record<KycStatus, string> = {
     NONE: 'Belum Verifikasi',
     PENDING: 'Menunggu Verifikasi',
@@ -179,11 +159,11 @@ export default function ProfilePage() {
   const profileFields = profile
     ? [
         { label: 'Nama', value: profile.name },
+        { label: 'Username', value: `@${profile.username}` },
         { label: 'Email', value: profile.email },
-        { label: 'Jenis Kelamin', value: profile.gender ?? 'Laki-laki' },
-        { label: 'Tanggal Lahir', value: profile.birthDate ?? '14 Februari 1997' },
         { label: 'Nomor Handphone', value: profile.phoneNumber },
-        { label: 'Range Pendapatan', value: profile.incomeRange ?? '5 Juta - 10 Juta' },
+        { label: 'Role', value: profile.role === 'ADMIN' ? 'Admin' : 'Pencari Properti' },
+        { label: 'Status KYC', value: kycLabel[profile.kycStatus] ?? profile.kycStatus },
       ]
     : [];
 
@@ -194,52 +174,15 @@ export default function ProfilePage() {
       <div className={styles.contentArea}>
         <div className={styles.container}>
 
-          {/* ── Sidebar Toggle Button (mobile) ── */}
-          <button
-            className={styles.sidebarToggle}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle sidebar"
-          >
-            <span className={styles.toggleIcon}>
-              {sidebarOpen ? '✕' : '☰'}
-            </span>
-          </button>
-
           {/* ── Left Sidebar ── */}
-          <div className={`${styles.sidebarWrapper} ${sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden}`}>
-            <div className={styles.sidebar}>
-              <h2 className={styles.sidebarTitle}>
-                {profile?.role === 'ADMIN' ? 'Admin' : 'Pencari Properti'}
-              </h2>
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed((prev) => !prev)}
+            onSwitchMode={handleSwitchMode}
+          />
 
-              <div className={styles.menuList}>
-                {menuItems.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => handleMenuClick(item)}
-                    className={`${styles.menuButton} ${
-                      activeMenu === item
-                        ? styles.menuButtonActive
-                        : styles.menuButtonInactive
-                    }`}
-                  >
-                    <p className={`${styles.menuLabel} ${
-                      activeMenu === item ? styles.menuLabelActive : styles.menuLabelInactive
-                    }`}>
-                      {item}
-                    </p>
-                  </button>
-                ))}
-              </div>
-
-              <button onClick={handleLogout} className={styles.logoutButton}>
-                <p className={styles.logoutText}>Log Out</p>
-              </button>
-            </div>
-          </div>
-
-          {/* ── Main Content (Right Panel) ── */}
-          <div className={`${styles.mainContent} ${!sidebarOpen ? styles.mainContentFull : ''}`}>
+          {/* ── Main Content ── */}
+          <div className={styles.mainContent}>
             {isLoading ? (
               <div className={styles.loadingState}>
                 <div className={styles.spinner} />
@@ -305,20 +248,10 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* KYC Status */}
-                {profile && (
-                  <div className={styles.kycSection}>
-                    <KycStatusCard status={profile.kycStatus} onNavigate={(href) => router.push(href)} />
-                  </div>
-                )}
-
                 {/* Action Buttons */}
                 <div className={styles.actionButtons}>
                   <button onClick={handleEditProfile} className={styles.editButton}>
                     <p className={styles.editButtonText}>Edit Profile</p>
-                  </button>
-                  <button onClick={handleSwitchMode} className={styles.ownerModeButton}>
-                    <p className={styles.ownerModeButtonText}>Aktifkan Mode Pemilik Properti</p>
                   </button>
                 </div>
               </>
@@ -327,6 +260,33 @@ export default function ProfilePage() {
 
         </div>
       </div>
+
+      {showSwitchModal && (
+        <div className={styles.modeOverlay} onClick={() => !isSwitchingMode && setShowSwitchModal(false)}>
+          <div className={styles.modeModal} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.modeModalTitle}>Pindah ke Mode Pemilik?</p>
+            <p className={styles.modeModalDesc}>
+              Kamu akan diarahkan ke area pemilik properti untuk verifikasi dan pengelolaan listing.
+            </p>
+            <div className={styles.modeModalActions}>
+              <button
+                className={styles.modeCancelBtn}
+                onClick={() => setShowSwitchModal(false)}
+                disabled={isSwitchingMode}
+              >
+                Batal
+              </button>
+              <button
+                className={styles.modeConfirmBtn}
+                onClick={confirmSwitchMode}
+                disabled={isSwitchingMode}
+              >
+                {isSwitchingMode ? 'Memindahkan...' : 'Ya, lanjut'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

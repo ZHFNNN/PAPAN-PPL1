@@ -184,7 +184,6 @@ export default function VerifyPage() {
   const [kycStatus,          setKycStatus]           = useState<KycStatus>("NONE");
   const [existingSubmission, setExistingSubmission]  = useState<Submission | null>(null);
   const [submitting,         setSubmitting]          = useState(false);
-  const [submitted,          setSubmitted]           = useState(false);
   const [form,               setForm]                = useState<FormState>(EMPTY_FORM);
   const [errors,             setErrors]              = useState<Partial<Record<keyof FormState, string>>>({});
 
@@ -201,15 +200,13 @@ export default function VerifyPage() {
         setKycStatus(data.kycStatus);
         if (data.submission) {
           setExistingSubmission(data.submission);
-          if (data.kycStatus === "REJECTED") {
-            const s = data.submission;
-            setForm({ nik: s.nik, fullName: s.fullName, phoneNumber: s.phoneNumber,
-              province: s.province, cityOrRegency: s.cityOrRegency, district: s.district,
-              rt: s.rt, rw: s.rw, postalCode: s.postalCode,
-              ktpImageUrl: s.ktpImageUrl, selfieImageUrl: s.selfieImageUrl });
-            ktp.setUrl(s.ktpImageUrl);
-            selfie.setUrl(s.selfieImageUrl);
-          }
+          const s = data.submission;
+          setForm({ nik: s.nik, fullName: s.fullName, phoneNumber: s.phoneNumber,
+            province: s.province, cityOrRegency: s.cityOrRegency, district: s.district,
+            rt: s.rt, rw: s.rw, postalCode: s.postalCode,
+            ktpImageUrl: s.ktpImageUrl, selfieImageUrl: s.selfieImageUrl });
+          ktp.setUrl(s.ktpImageUrl);
+          selfie.setUrl(s.selfieImageUrl);
         }
       } catch { toast.error("Gagal memuat status verifikasi."); }
       finally  { setPageLoading(false); }
@@ -253,8 +250,8 @@ export default function VerifyPage() {
       });
       const data = await res.json() as { message?: string };
       if (!res.ok) throw new Error(data.message ?? "Gagal mengirim data.");
-      setSubmitted(true);
       setKycStatus("PENDING");
+      toast.success("Data KYC berhasil dikirim.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Terjadi kesalahan server.");
     } finally {
@@ -281,35 +278,16 @@ export default function VerifyPage() {
     );
   }
 
-  // ── APPROVED ─────────────────────────────────────────────────────────────
-  if (kycStatus === "APPROVED") {
-    return (
-      <div className={styles.root}>
-        <Toaster position="top-center" />
-        <div className={styles.successWrapper}>
-          <div className={styles.successIcon}>🎉</div>
-          <h2 className={styles.successTitle}>Akun Terverifikasi!</h2>
-          <p className={styles.successDesc}>
-            Identitasmu telah berhasil diverifikasi. Kamu sekarang bisa
-            menambahkan properti dan menggunakan semua fitur PAPAN.
-          </p>
-          <button className={styles.submitBtn} onClick={() => router.push("/owner/addProperty")}>
-            Tambah Properti Sekarang
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // ── FORM (ALL STATUS) ─────────────────────────────────────────────────────
+  return (
+    <div className={styles.root}>
+      <Toaster position="top-center" />
+      <div className={styles.inner}>
 
-  // ── SUBMITTED / PENDING ───────────────────────────────────────────────────
-  if ((kycStatus === "PENDING" && !submitted) || submitted) {
-    return (
-      <div className={styles.root}>
-        <Toaster position="top-center" />
-        <div className={styles.inner}>
-          <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
-          <h1 className={styles.pageTitle}>Verifikasi Data Pemilik Properti</h1>
+        <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
+        <h1 className={styles.pageTitle}>Verifikasi Data Pemilik Properti</h1>
 
+        {kycStatus === "PENDING" && (
           <div className={`${styles.statusBanner} ${styles.pending}`}>
             <div className={styles.statusIcon}>⏳</div>
             <div>
@@ -321,46 +299,19 @@ export default function VerifyPage() {
               </p>
             </div>
           </div>
+        )}
 
-          {existingSubmission && (
-            <div className={styles.card}>
-              <div className={styles.summaryGrid}>
-                <div className={styles.summaryField}>
-                  <span className={styles.summaryKey}>Nama Lengkap</span>
-                  <span className={styles.summaryVal}>{existingSubmission.fullName}</span>
-                </div>
-                <div className={styles.summaryField}>
-                  <span className={styles.summaryKey}>NIK</span>
-                  <span className={styles.summaryVal}>{existingSubmission.nik}</span>
-                </div>
-                <div className={styles.summaryField}>
-                  <span className={styles.summaryKey}>Provinsi</span>
-                  <span className={styles.summaryVal}>{existingSubmission.province}</span>
-                </div>
-                <div className={styles.summaryField}>
-                  <span className={styles.summaryKey}>Kota/Kabupaten</span>
-                  <span className={styles.summaryVal}>{existingSubmission.cityOrRegency}</span>
-                </div>
-              </div>
+        {kycStatus === "APPROVED" && (
+          <div className={`${styles.statusBanner} ${styles.approved}`}>
+            <div className={styles.statusIcon}>✅</div>
+            <div>
+              <p className={styles.statusTitle}>Akun Sudah Terverifikasi</p>
+              <p className={styles.statusDesc}>
+                Data terakhirmu tetap ditampilkan di form ini.
+              </p>
             </div>
-          )}
-
-          <button className={styles.submitBtn} onClick={() => router.push("/profile")}>
-            Kembali ke Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── FORM (NONE / REJECTED) ────────────────────────────────────────────────
-  return (
-    <div className={styles.root}>
-      <Toaster position="top-center" />
-      <div className={styles.inner}>
-
-        <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
-        <h1 className={styles.pageTitle}>Verifikasi Data Pemilik Properti</h1>
+          </div>
+        )}
 
         {/* Rejected banner */}
         {kycStatus === "REJECTED" && existingSubmission && (

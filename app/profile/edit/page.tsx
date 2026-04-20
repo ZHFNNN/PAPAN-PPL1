@@ -141,6 +141,10 @@ export default function EditProfilePage() {
       <div className={styles.contentArea}>
         <div className={styles.container}>
 
+          <div className={styles.pageHeader}>
+            <h1 className={styles.pageTitle}>Profile</h1>
+          </div>
+
           {/* Back button */}
           <button
             className={styles.backBtn}

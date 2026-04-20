@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Sidebar from '@/components/Sidebar';
 import styles from './page.module.css';
 
 type ToggleSetting = {
@@ -23,8 +24,7 @@ type SelectSetting = {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [activeMenu, setActiveMenu] = useState('Settings');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const [toggles, setToggles] = useState<ToggleSetting[]>([
@@ -37,17 +37,10 @@ export default function SettingsPage() {
   ]);
 
   const [selects, setSelects] = useState<SelectSetting[]>([
+    { id: 'language', label: 'Bahasa', description: 'Pilih bahasa antarmuka', value: 'Indonesia', options: ['Indonesia', 'English', 'Javanese'] },
+    { id: 'currency', label: 'Mata Uang', description: 'Satuan mata uang untuk harga properti', value: 'IDR (Rp)', options: ['IDR (Rp)', 'USD ($)', 'SGD (S$)'] },
     { id: 'privacy', label: 'Privasi Profil', description: 'Siapa yang dapat melihat profilmu', value: 'Publik', options: ['Publik', 'Hanya Saya', 'Terverifikasi'] },
   ]);
-
-  const menuItems = ['Profile', 'Settings', 'Contact Us', 'Help Center'];
-
-  const handleMenuClick = (item: string) => {
-    setActiveMenu(item);
-    if (item === 'Profile') router.push('/profile');
-    if (item === 'Contact Us') router.push('/contact');
-    if (item === 'Help Center') router.push('/help');
-  };
 
   const handleToggle = (id: string) => {
     setToggles(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
@@ -62,8 +55,6 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleLogout = () => router.push('/login');
-
   return (
     <div className={styles.page}>
       <Navbar />
@@ -71,40 +62,16 @@ export default function SettingsPage() {
       <div className={styles.contentArea}>
         <div className={styles.container}>
 
-          {/* Mobile toggle */}
-          <button
-            className={styles.sidebarToggle}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle sidebar"
-          >
-            <span className={styles.toggleIcon}>{sidebarOpen ? '✕' : '☰'}</span>
-          </button>
-
-          {/* Sidebar */}
-          <div className={`${styles.sidebarWrapper} ${sidebarOpen ? styles.sidebarVisible : styles.sidebarHidden}`}>
-            <div className={styles.sidebar}>
-              <h2 className={styles.sidebarTitle}>Pencari Properti</h2>
-              <div className={styles.menuList}>
-                {menuItems.map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => handleMenuClick(item)}
-                    className={`${styles.menuButton} ${activeMenu === item ? styles.menuButtonActive : styles.menuButtonInactive}`}
-                  >
-                    <p className={`${styles.menuLabel} ${activeMenu === item ? styles.menuLabelActive : styles.menuLabelInactive}`}>
-                      {item}
-                    </p>
-                  </button>
-                ))}
-              </div>
-              <button onClick={handleLogout} className={styles.logoutButton}>
-                <p className={styles.logoutText}>Log Out</p>
-              </button>
-            </div>
+          {/* Shared Sidebar */}
+          <div className={styles.sidebarWrapper}>
+            <Sidebar
+              collapsed={sidebarCollapsed}
+              onToggle={() => setSidebarCollapsed((prev) => !prev)}
+            />
           </div>
 
           {/* Main Content */}
-          <div className={`${styles.mainContent} ${!sidebarOpen ? styles.mainContentFull : ''}`}>
+          <div className={`${styles.mainContent} ${sidebarCollapsed ? styles.mainContentFull : ''}`}>
 
             {/* Header */}
             <div className={styles.pageHeader}>

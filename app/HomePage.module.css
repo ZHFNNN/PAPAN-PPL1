@@ -214,6 +214,35 @@
   border-color: #1a2332;
 }
 
+.recommendationNotice {
+  margin: 6px 0 0;
+  padding: 22px;
+  border: 1px solid #e7e7e7;
+  border-radius: 14px;
+  background: #fafafa;
+  color: #2a2a2a;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recommendationCta {
+  border: none;
+  background: #111827;
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.recommendationCta:hover {
+  background: #1f2937;
+}
+
 /* ── Horizontal scroll track ──────────────── */
 .scrollTrack {
   display: flex;

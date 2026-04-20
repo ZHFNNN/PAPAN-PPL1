@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import styles from './ownerSidebar.module.css';
+import { signOut } from 'next-auth/react';
 
 const MENU_ITEMS = [
   { href: '/profile', label: 'Profile' },
@@ -116,7 +117,7 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
               {isSwitching ? 'Memproses...' : 'Aktifkan Mode Pemilik'}
             </button>
             <button
-              onClick={() => router.push('/login')}
+              onClick={() => signOut({ callbackUrl: '/login' })}
               className={styles.logoutButton}
             >
               <span className={styles.logoutText}>Log Out</span>

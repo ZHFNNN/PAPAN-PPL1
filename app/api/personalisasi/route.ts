@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';   // sesuaikan path auth kamu
 import { prisma } from '@/lib/prisma';       // sesuaikan path prisma client kamu
+import { resolveFacilityCodes } from '@/lib/dss/facility-mapping';
 
 // ── Mapping budget string → angka (min, max) ──────────────────────────────
 const BUDGET_MAP: Record<string, { min: number; max: number }> = {
@@ -48,36 +49,63 @@ export async function POST(req: NextRequest) {
   const budgetRange = BUDGET_MAP[budget] ?? { min: 0, max: 999_999_999 };
 
   // preferences adalah array string, ubah jadi boolean fields
+  const selectedPreferences = Array.isArray(preferences) ? (preferences as string[]) : [];
+
   const prefFields = {
-    prefFurnished:          (preferences as string[]).includes('Furnished'),
-    prefUnfurnished:        (preferences as string[]).includes('Unfurnished'),
-    prefPetFriendly:        (preferences as string[]).includes('Pet-friendly'),
-    prefParkirMobil:        (preferences as string[]).includes('Parkir Mobil'),
-    prefAc:                 (preferences as string[]).includes('AC'),
-    prefWaterHeater:        (preferences as string[]).includes('Water Heater'),
-    prefDekatTransportasi:  (preferences as string[]).includes('Dekat transportasi umum'),
+    prefFurnished:          selectedPreferences.includes('Furnished'),
+    prefUnfurnished:        selectedPreferences.includes('Unfurnished'),
+    prefPetFriendly:        selectedPreferences.includes('Pet-friendly'),
+    prefParkirMobil:        selectedPreferences.includes('Parkir Mobil'),
+    prefAc:                 selectedPreferences.includes('AC'),
+    prefWaterHeater:        selectedPreferences.includes('Water Heater'),
+    prefDekatTransportasi:  selectedPreferences.includes('Dekat transportasi umum'),
   };
 
+  const selectedFacilityCodes = resolveFacilityCodes(selectedPreferences);
+  const facilities = await prisma.facility.findMany({
+    where: { code: { in: selectedFacilityCodes } },
+    select: { id: true },
+  });
+
   // upsert = update kalau sudah ada, create kalau belum ada
-  const personalization = await prisma.userPersonalization.upsert({
-    where:  { userId: session.user.id },
-    update: {
-      location,
-      occupation,
-      budgetMin: budgetRange.min,
-      budgetMax: budgetRange.max,
-      gender,
-      ...prefFields,
-    },
-    create: {
-      userId: session.user.id,
-      location,
-      occupation,
-      budgetMin: budgetRange.min,
-      budgetMax: budgetRange.max,
-      gender,
-      ...prefFields,
-    },
+  const personalization = await prisma.$transaction(async (tx) => {
+    const saved = await tx.userPersonalization.upsert({
+      where:  { userId: session.user.id },
+      update: {
+        location,
+        occupation,
+        budgetMin: budgetRange.min,
+        budgetMax: budgetRange.max,
+        gender,
+        ...prefFields,
+      },
+      create: {
+        userId: session.user.id,
+        location,
+        occupation,
+        budgetMin: budgetRange.min,
+        budgetMax: budgetRange.max,
+        gender,
+        ...prefFields,
+      },
+    });
+
+    await tx.userPreferenceFacility.deleteMany({
+      where: { userId: session.user.id },
+    });
+
+    if (facilities.length > 0) {
+      await tx.userPreferenceFacility.createMany({
+        data: facilities.map((facility) => ({
+          userId: session.user.id,
+          facilityId: facility.id,
+          isRequired: false,
+          weight: 1,
+        })),
+      });
+    }
+
+    return saved;
   });
 
   return NextResponse.json(personalization, { status: 200 });

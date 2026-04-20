@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { properties } from '@/lib/properties';
 import styles from './page.module.css';
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get('q')?.trim() ?? '';
 
@@ -52,5 +52,13 @@ export default function SearchPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<main className={styles.contentArea}>Memuat pencarian...</main>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

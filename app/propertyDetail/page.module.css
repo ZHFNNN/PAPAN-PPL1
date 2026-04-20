@@ -1,0 +1,140 @@
+.page {
+  min-height: 100vh;
+  background: #f6f7fb;
+}
+
+.main {
+  padding: 96px 24px 48px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.stateBox {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  color: #1f2937;
+}
+
+.errorText {
+  color: #b91c1c;
+  margin-bottom: 16px;
+}
+
+.backBtn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #111827;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+}
+
+.heroCard,
+.infoCard {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.imagePlaceholder {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 28px;
+  background: linear-gradient(135deg, #0f172a, #334155 60%, #64748b);
+  color: white;
+}
+
+.imagePlaceholder span {
+  display: inline-flex;
+  width: fit-content;
+  background: rgba(255, 255, 255, 0.16);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.imagePlaceholder h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.1;
+}
+
+.infoCard {
+  padding: 28px;
+}
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.label {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.price {
+  margin: 0;
+  font-size: 30px;
+  color: #111827;
+}
+
+.sectionBlock {
+  margin-bottom: 22px;
+}
+
+.description {
+  margin: 0;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.facilityList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.facilityTag {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #312e81;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.emptyFacility {
+  color: #6b7280;
+}
+
+@media (max-width: 900px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .imagePlaceholder {
+    min-height: 280px;
+  }
+}

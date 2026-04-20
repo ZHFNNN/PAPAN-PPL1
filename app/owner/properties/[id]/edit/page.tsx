@@ -60,32 +60,52 @@ const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = [
   { value: 'KOSAN', label: 'Kosan' },
 ];
 
-function normalizeLoadedCategory(value: unknown): PropertyCategory {
+// ── Helpers normalize nilai dari API ──────────────────────────────────────
+
+function normalizeCategory(value: unknown): PropertyCategory {
   if (typeof value !== 'string') return '';
-  const normalized = value.trim().toUpperCase();
-  if (normalized === 'RUMAH' || normalized === 'APARTEMEN' || normalized === 'KOSAN') {
-    return normalized;
+  switch (value.trim().toUpperCase()) {
+    case 'RUMAH':     return 'RUMAH';
+    case 'APARTEMEN': return 'APARTEMEN';
+    case 'KOSAN':     return 'KOSAN';
+    default:          return '';
   }
-  return '';
 }
 
-function normalizeLoadedListingType(value: unknown): ListingType {
+// API DB pakai SELL/RENT, form pakai JUAL/SEWA — normalize saat load
+function normalizeListingType(value: unknown): ListingType {
   if (typeof value !== 'string') return '';
-  const normalized = value.trim().toUpperCase();
-  if (normalized === 'JUAL' || normalized === 'SELL') return 'JUAL';
-  if (normalized === 'SEWA' || normalized === 'RENT' || normalized === 'KOSAN') return 'SEWA';
+  switch (value.trim().toUpperCase()) {
+    case 'JUAL':
+    case 'SELL':  return 'JUAL';
+    case 'SEWA':
+    case 'RENT':  return 'SEWA';
+    default:      return '';
+  }
+}
+
+// API DB pakai SELL/RENT — konversi balik saat submit
+function listingTypeToApi(value: ListingType): string {
+  switch (value) {
+    case 'JUAL': return 'SELL';
+    case 'SEWA': return 'RENT';
+    default:     return '';
+  }
+}
+
+function inferCategory(data: PropertyResponse): PropertyCategory {
+  // Coba dari field category dulu
+  const cat = normalizeCategory(data.category);
+  if (cat !== '') return cat;
+
+  // Fallback: beberapa API encode kosan sebagai listingType
+  const lt = typeof data.listingType === 'string' ? data.listingType.trim().toUpperCase() : '';
+  if (lt === 'KOSAN') return 'KOSAN';
+
   return '';
 }
 
-function inferCategoryFromData(data: PropertyResponse): PropertyCategory {
-  const byCategory = normalizeLoadedCategory(data.category);
-  if (byCategory) return byCategory;
-
-  const listing = typeof data.listingType === 'string' ? data.listingType.trim().toUpperCase() : '';
-  if (listing === 'KOSAN') return 'KOSAN';
-
-  return '';
-}
+// ── Komponen utama ────────────────────────────────────────────────────────
 
 export default function EditPropertyPage() {
   const router = useRouter();
@@ -106,119 +126,90 @@ export default function EditPropertyPage() {
     category: '',
     facilities: [],
   });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [facilityOptions, setFacilityOptions] = useState<FacilityOption[]>([]);
-  const [isLoadingFacilities, setIsLoadingFacilities] = useState(true);
-  const [facilityLoadError, setFacilityLoadError] = useState<string | null>(null);
-  const [showMap, setShowMap] = useState(false);
-  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
-  const [newPhotos, setNewPhotos] = useState<File[]>([]);
-  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
-  const [isDragOver, setIsDragOver] = useState(false);
 
+  const [errors, setErrors]                     = useState<FormErrors>({});
+  const [isLoading, setIsLoading]               = useState(true);
+  const [isSubmitting, setIsSubmitting]         = useState(false);
+  const [loadError, setLoadError]               = useState<string | null>(null);
+  const [submitError, setSubmitError]           = useState<string | null>(null);
+  const [facilityOptions, setFacilityOptions]   = useState<FacilityOption[]>([]);
+  const [isLoadingFacilities, setIsLoadingFacilities] = useState(true);
+  const [facilityLoadError, setFacilityLoadError]     = useState<string | null>(null);
+  const [showMap, setShowMap]                   = useState(false);
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [newPhotos, setNewPhotos]               = useState<File[]>([]);
+  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
+  const [isDragOver, setIsDragOver]             = useState(false);
+
+  // ── Upload ke Cloudinary ─────────────────────────────────────────────────
   const uploadPhotosToCloudinary = async (files: File[]) => {
     const uploadedUrls: string[] = [];
-
     for (const file of files) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const uploadRes = await fetch('/api/uploads/property', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const uploadJson = await uploadRes.json().catch(() => ({}));
-      if (!uploadRes.ok) {
-        throw new Error(uploadJson.message ?? 'Gagal upload foto properti.');
-      }
-
-      const url = typeof uploadJson?.data?.url === 'string' ? uploadJson.data.url : '';
-      if (!url) {
-        throw new Error('URL foto dari Cloudinary tidak valid.');
-      }
-
+      const fd = new FormData();
+      fd.append('file', file);
+      const res  = await fetch('/api/uploads/property', { method: 'POST', body: fd });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.message ?? 'Gagal upload foto properti.');
+      const url = typeof json?.data?.url === 'string' ? json.data.url : '';
+      if (!url) throw new Error('URL foto dari Cloudinary tidak valid.');
       uploadedUrls.push(url);
     }
-
     return uploadedUrls;
   };
 
+  // ── Load fasilitas ───────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
-
-    const loadFacilities = async () => {
+    const run = async () => {
       setIsLoadingFacilities(true);
       setFacilityLoadError(null);
-
       try {
-        const res = await fetch('/api/facilities');
+        const res  = await fetch('/api/facilities');
         const json = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(json.message ?? 'Gagal memuat daftar fasilitas.');
-        }
-
-        const data = Array.isArray(json.data) ? (json.data as FacilityOption[]) : [];
-        if (!cancelled) {
-          setFacilityOptions(data);
-        }
+        if (!res.ok) throw new Error(json.message ?? 'Gagal memuat daftar fasilitas.');
+        if (!cancelled) setFacilityOptions(Array.isArray(json.data) ? json.data : []);
       } catch (err) {
-        if (!cancelled) {
-          setFacilityLoadError(err instanceof Error ? err.message : 'Gagal memuat daftar fasilitas.');
-        }
+        if (!cancelled) setFacilityLoadError(err instanceof Error ? err.message : 'Gagal memuat fasilitas.');
       } finally {
-        if (!cancelled) {
-          setIsLoadingFacilities(false);
-        }
+        if (!cancelled) setIsLoadingFacilities(false);
       }
     };
-
-    loadFacilities();
-
-    return () => {
-      cancelled = true;
-    };
+    run();
+    return () => { cancelled = true; };
   }, []);
 
+  // ── Load data properti ───────────────────────────────────────────────────
   useEffect(() => {
+    if (!propertyId) return;
     let cancelled = false;
 
-    const load = async () => {
-      if (!propertyId) return;
+    const run = async () => {
       setIsLoading(true);
       setLoadError(null);
-
       try {
-        const res = await fetch(`/api/owner/properties/${propertyId}`, { cache: 'no-store' });
+        const res  = await fetch(`/api/owner/properties/${propertyId}`, { cache: 'no-store' });
         const data = (await res.json().catch(() => ({}))) as PropertyResponse;
-
-        if (!res.ok) {
-          throw new Error(data.message ?? 'Gagal memuat properti.');
-        }
+        if (!res.ok) throw new Error(data.message ?? 'Gagal memuat properti.');
+        if (cancelled) return;
 
         const addressFromParts = [data.neighbourhood, data.district, data.city]
-          .filter((value) => Boolean(value && value.trim()))
+          .filter((v) => Boolean(v?.trim()))
           .join(', ');
 
-        if (cancelled) return;
         setForm({
-          title: data.title ?? '',
-          address: data.address ?? addressFromParts,
-          locationLat: typeof data.latitude === 'number' ? data.latitude : null,
-          locationLng: typeof data.longitude === 'number' ? data.longitude : null,
-          locationCity: data.city ?? '',
-          locationDistrict: data.district ?? '',
+          title:               data.title ?? '',
+          address:             data.address ?? addressFromParts,
+          locationLat:         typeof data.latitude  === 'number' ? data.latitude  : null,
+          locationLng:         typeof data.longitude === 'number' ? data.longitude : null,
+          locationCity:        data.city         ?? '',
+          locationDistrict:    data.district     ?? '',
           locationNeighbourhood: data.neighbourhood ?? '',
-          price: String(data.price ?? ''),
-          description: data.description ?? '',
-          listingType: normalizeLoadedListingType(data.listingType),
-          category: inferCategoryFromData(data),
-          facilities: Array.isArray(data.facilities)
+          price:               String(data.price ?? ''),
+          description:         data.description ?? '',
+          // ▼ Ini yang penting: gunakan helper yang benar, bukan handleChange
+          listingType:         normalizeListingType(data.listingType),
+          category:            inferCategory(data),
+          facilities:          Array.isArray(data.facilities)
             ? data.facilities
                 .map((item) => item?.facility?.code)
                 .filter((code): code is string => typeof code === 'string' && code.length > 0)
@@ -232,156 +223,133 @@ export default function EditPropertyPage() {
       }
     };
 
-    load();
-    return () => {
-      cancelled = true;
-    };
+    run();
+    return () => { cancelled = true; };
   }, [propertyId]);
 
+  // ── Handlers form ────────────────────────────────────────────────────────
+
+  // Handler untuk field teks biasa
   const handleChange = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  // Handler khusus category — pakai type yang benar agar React state pasti terupdate
+  const handleCategoryChange = (value: PropertyCategory) => {
+    setForm((prev) => ({ ...prev, category: value }));
+    setErrors((prev) => ({ ...prev, category: undefined }));
+  };
+
+  // Handler khusus listingType — sama alasannya
+  const handleListingTypeChange = (value: ListingType) => {
+    setForm((prev) => ({ ...prev, listingType: value }));
+    setErrors((prev) => ({ ...prev, listingType: undefined }));
+  };
+
   const toggleFacility = (code: string) => {
-    setForm((prev) => {
-      const selected = prev.facilities.includes(code);
-      return {
-        ...prev,
-        facilities: selected ? prev.facilities.filter((item) => item !== code) : [...prev.facilities, code],
-      };
-    });
+    setForm((prev) => ({
+      ...prev,
+      facilities: prev.facilities.includes(code)
+        ? prev.facilities.filter((c) => c !== code)
+        : [...prev.facilities, code],
+    }));
   };
 
   const handleLocationPicked = (loc: PickedLocation) => {
-    const parts = [loc.neighbourhood, loc.district, loc.city].filter(Boolean);
+    const parts    = [loc.neighbourhood, loc.district, loc.city].filter(Boolean);
     const shortName = parts.join(', ') || loc.displayName;
-
     setForm((prev) => ({
       ...prev,
-      address: shortName,
-      locationLat: loc.lat,
-      locationLng: loc.lng,
-      locationCity: loc.city,
-      locationDistrict: loc.district,
+      address:              shortName,
+      locationLat:          loc.lat,
+      locationLng:          loc.lng,
+      locationCity:         loc.city,
+      locationDistrict:     loc.district,
       locationNeighbourhood: loc.neighbourhood,
     }));
-
     setErrors((prev) => ({ ...prev, address: undefined }));
   };
 
   const appendPhotoFiles = (files: File[]) => {
-    if (!files.length) return;
-    const validFiles = files.filter((f) => f.type.startsWith('image/'));
-    if (!validFiles.length) return;
-    const newPreviews = validFiles.map((f) => URL.createObjectURL(f));
-    setNewPhotos((prev) => [...prev, ...validFiles]);
-    setNewPhotoPreviews((prev) => [...prev, ...newPreviews]);
+    const valid = files.filter((f) => f.type.startsWith('image/'));
+    if (!valid.length) return;
+    setNewPhotos((prev)        => [...prev, ...valid]);
+    setNewPhotoPreviews((prev) => [...prev, ...valid.map((f) => URL.createObjectURL(f))]);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    appendPhotoFiles(files);
+  const handlePhotoChange  = (e: React.ChangeEvent<HTMLInputElement>) => appendPhotoFiles(Array.from(e.target.files ?? []));
+  const handleDragOver     = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(true);  };
+  const handleDragLeave    = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(false); };
+  const handleDrop         = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(false); appendPhotoFiles(Array.from(e.dataTransfer.files ?? [])); };
+
+  const removeExistingImage = (i: number) => setExistingImageUrls((prev) => prev.filter((_, j) => j !== i));
+  const removeNewPhoto      = (i: number) => {
+    URL.revokeObjectURL(newPhotoPreviews[i]);
+    setNewPhotos((prev)        => prev.filter((_, j) => j !== i));
+    setNewPhotoPreviews((prev) => prev.filter((_, j) => j !== i));
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
+  useEffect(() => () => { newPhotoPreviews.forEach((u) => URL.revokeObjectURL(u)); }, [newPhotoPreviews]);
 
-  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = Array.from(e.dataTransfer.files ?? []);
-    appendPhotoFiles(files);
-  };
-
-  const removeExistingImage = (index: number) => {
-    setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const removeNewPhoto = (index: number) => {
-    URL.revokeObjectURL(newPhotoPreviews[index]);
-    setNewPhotos((prev) => prev.filter((_, i) => i !== index));
-    setNewPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  useEffect(() => {
-    return () => {
-      newPhotoPreviews.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [newPhotoPreviews]);
-
+  // ── Validasi ─────────────────────────────────────────────────────────────
   const validate = () => {
     const next: FormErrors = {};
-
-    if (!form.title.trim()) next.title = 'Nama properti wajib diisi.';
-    if (!form.address.trim() || form.locationLat == null || form.locationLng == null) {
-      next.address = 'Lokasi wajib dipilih lewat peta.';
-    }
-    if (!form.price.trim()) next.price = 'Harga wajib diisi.';
-    else if (Number.isNaN(Number(form.price.replace(/[^0-9]/g, '')))) {
-      next.price = 'Harga harus berupa angka.';
-    }
-    if (!form.description.trim()) next.description = 'Deskripsi wajib diisi.';
-    if (!form.listingType) next.listingType = 'Tipe listing wajib dipilih.';
-    if (!form.category) next.category = 'Kategori properti wajib dipilih.';
-    if (existingImageUrls.length + newPhotos.length === 0) {
-      next.facilities = 'Minimal harus ada 1 foto properti.';
-    }
-
+    if (!form.title.trim())       next.title       = 'Nama properti wajib diisi.';
+    if (!form.address.trim() || form.locationLat == null || form.locationLng == null)
+                                   next.address     = 'Lokasi wajib dipilih lewat peta.';
+    if (!form.price.trim())        next.price       = 'Harga wajib diisi.';
+    else if (Number.isNaN(Number(form.price.replace(/[^0-9]/g, ''))))
+                                   next.price       = 'Harga harus berupa angka.';
+    if (!form.description.trim())  next.description = 'Deskripsi wajib diisi.';
+    if (!form.listingType)         next.listingType = 'Tipe listing wajib dipilih.';
+    if (!form.category)            next.category    = 'Kategori properti wajib dipilih.';
+    if (existingImageUrls.length + newPhotos.length === 0)
+                                   next.facilities  = 'Minimal harus ada 1 foto properti.';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
   const formatPrice = (val: string) => {
     const num = val.replace(/[^0-9]/g, '');
-    if (!num) return '';
-    return Number(num).toLocaleString('id-ID');
+    return num ? Number(num).toLocaleString('id-ID') : '';
   };
 
+  // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validate()) return;
-
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      const uploadedPhotoUrls = newPhotos.length > 0 ? await uploadPhotosToCloudinary(newPhotos) : [];
-      const allImageUrls = [...existingImageUrls, ...uploadedPhotoUrls];
+      const uploadedUrls  = newPhotos.length > 0 ? await uploadPhotosToCloudinary(newPhotos) : [];
+      const allImageUrls  = [...existingImageUrls, ...uploadedUrls];
 
       const res = await fetch(`/api/owner/properties/${propertyId}`, {
-        method: 'PATCH',
+        method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: form.title,
+          title:       form.title,
           description: form.description,
-          price: Number(form.price.replace(/[^0-9]/g, '')),
-          listingType: form.listingType,
-          category: form.category,
-          address: form.address,
+          price:       Number(form.price.replace(/[^0-9]/g, '')),
+          // ▼ Konversi balik ke format DB (SELL/RENT) sebelum dikirim
+          listingType: listingTypeToApi(form.listingType),
+          category:    form.category,
+          address:     form.address,
           location: {
-            lat: form.locationLat,
-            lng: form.locationLng,
-            city: form.locationCity,
-            district: form.locationDistrict,
+            lat:          form.locationLat,
+            lng:          form.locationLng,
+            city:         form.locationCity,
+            district:     form.locationDistrict,
             neighbourhood: form.locationNeighbourhood,
           },
-          imageUrls: allImageUrls,
+          imageUrls:  allImageUrls,
           facilities: form.facilities,
         }),
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.message ?? 'Gagal menyimpan perubahan.');
-      }
-
+      if (!res.ok) throw new Error(data.message ?? 'Gagal menyimpan perubahan.');
       router.push('/owner/dashboard');
     } catch (err: any) {
       setSubmitError(err.message ?? 'Terjadi kesalahan. Coba lagi.');
@@ -390,6 +358,7 @@ export default function EditPropertyPage() {
     }
   };
 
+  // ── Render ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className={styles.contentArea}>
@@ -413,7 +382,10 @@ export default function EditPropertyPage() {
       </div>
 
       <div className={styles.formCard}>
+        {/* ── Kiri: Form Fields ── */}
         <div className={styles.formLeft}>
+
+          {/* Nama Properti */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Nama Properti</label>
             <input
@@ -425,6 +397,7 @@ export default function EditPropertyPage() {
             {errors.title && <p className={styles.errorText}>{errors.title}</p>}
           </div>
 
+          {/* Lokasi */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Lokasi Properti</label>
             <div
@@ -432,25 +405,13 @@ export default function EditPropertyPage() {
               onClick={() => setShowMap(true)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setShowMap(true);
-                }
-              }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowMap(true); } }}
             >
               {form.address ? (
                 <>
                   <span className={styles.locationIcon}>📍</span>
                   <span className={styles.locationValue}>{form.address}</span>
-                  <button
-                    type="button"
-                    className={styles.changeLocationBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowMap(true);
-                    }}
-                  >
+                  <button type="button" className={styles.changeLocationBtn} onClick={(e) => { e.stopPropagation(); setShowMap(true); }}>
                     Ganti
                   </button>
                 </>
@@ -464,6 +425,7 @@ export default function EditPropertyPage() {
             {errors.address && <p className={styles.errorText}>{errors.address}</p>}
           </div>
 
+          {/* Kategori — pakai handleCategoryChange, bukan handleChange */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Kategori Properti</label>
             <div className={styles.listingTypeGroup}>
@@ -471,7 +433,7 @@ export default function EditPropertyPage() {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => handleChange('category', opt.value)}
+                  onClick={() => handleCategoryChange(opt.value)}
                   className={`${styles.listingTypeBtn} ${form.category === opt.value ? styles.listingTypeBtnActive : ''}`}
                 >
                   {opt.label}
@@ -481,6 +443,7 @@ export default function EditPropertyPage() {
             {errors.category && <p className={styles.errorText}>{errors.category}</p>}
           </div>
 
+          {/* Tipe Listing — pakai handleListingTypeChange, bukan handleChange */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Tipe Listing</label>
             <div className={styles.listingTypeGroup}>
@@ -488,7 +451,7 @@ export default function EditPropertyPage() {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => handleChange('listingType', opt.value)}
+                  onClick={() => handleListingTypeChange(opt.value)}
                   className={`${styles.listingTypeBtn} ${form.listingType === opt.value ? styles.listingTypeBtnActive : ''}`}
                 >
                   {opt.label}
@@ -498,6 +461,7 @@ export default function EditPropertyPage() {
             {errors.listingType && <p className={styles.errorText}>{errors.listingType}</p>}
           </div>
 
+          {/* Harga */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Harga</label>
             <div className={styles.priceWrapper}>
@@ -512,6 +476,7 @@ export default function EditPropertyPage() {
             {errors.price && <p className={styles.errorText}>{errors.price}</p>}
           </div>
 
+          {/* Deskripsi */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Deskripsi</label>
             <textarea
@@ -524,6 +489,7 @@ export default function EditPropertyPage() {
             {errors.description && <p className={styles.errorText}>{errors.description}</p>}
           </div>
 
+          {/* Fasilitas */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Fasilitas</label>
             {isLoadingFacilities ? (
@@ -551,6 +517,7 @@ export default function EditPropertyPage() {
           </div>
         </div>
 
+        {/* ── Kanan: Upload Foto ── */}
         <div className={styles.formRight}>
           <label className={styles.label}>Upload Foto-foto Properti</label>
           <label
@@ -576,47 +543,20 @@ export default function EditPropertyPage() {
                 {existingImageUrls.map((src, i) => (
                   <div key={`existing-${i}`} className={styles.photoThumb}>
                     <img src={src} alt={`existing-${i}`} className={styles.thumbImg} />
-                    <button
-                      type="button"
-                      className={styles.removePhotoBtn}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeExistingImage(i);
-                      }}
-                    >
-                      ×
-                    </button>
+                    <button type="button" className={styles.removePhotoBtn} onClick={(e) => { e.preventDefault(); removeExistingImage(i); }}>×</button>
                   </div>
                 ))}
                 {newPhotoPreviews.map((src, i) => (
                   <div key={`new-${i}`} className={styles.photoThumb}>
                     <img src={src} alt={`new-${i}`} className={styles.thumbImg} />
-                    <button
-                      type="button"
-                      className={styles.removePhotoBtn}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        removeNewPhoto(i);
-                      }}
-                    >
-                      ×
-                    </button>
+                    <button type="button" className={styles.removePhotoBtn} onClick={(e) => { e.preventDefault(); removeNewPhoto(i); }}>×</button>
                   </div>
                 ))}
-                <div className={styles.addMorePhoto}>
-                  <span>+ Tambah</span>
-                </div>
+                <div className={styles.addMorePhoto}><span>+ Tambah</span></div>
               </div>
             )}
           </label>
-          <input
-            id="photo-upload-edit"
-            type="file"
-            accept="image/*"
-            multiple
-            className={styles.hiddenInput}
-            onChange={handlePhotoChange}
-          />
+          <input id="photo-upload-edit" type="file" accept="image/*" multiple className={styles.hiddenInput} onChange={handlePhotoChange} />
           <p className={styles.uploadCount}>
             {existingImageUrls.length + newPhotos.length > 0
               ? `${existingImageUrls.length + newPhotos.length} foto dipilih`
@@ -633,20 +573,11 @@ export default function EditPropertyPage() {
             <span className={styles.btnSpinner} />
             Menyimpan...
           </span>
-        ) : (
-          'Simpan Perubahan'
-        )}
+        ) : 'Simpan Perubahan'}
       </button>
 
       {showMap && (
-        <Suspense
-          fallback={
-            <div className={styles.mapLoadingOverlay}>
-              <div className={styles.mapLoadingSpinner} />
-              <p>Memuat peta...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<div className={styles.mapLoadingOverlay}><div className={styles.mapLoadingSpinner} /><p>Memuat peta...</p></div>}>
           <MapPicker onLocationPicked={handleLocationPicked} onClose={() => setShowMap(false)} />
         </Suspense>
       )}

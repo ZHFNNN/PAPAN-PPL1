@@ -6,9 +6,32 @@
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { resolveFacilityCodes } from '@/lib/dss/facility-mapping';
+
+const ALLOWED_CATEGORIES = ['RUMAH', 'APARTEMEN', 'KOSAN'] as const;
+const ALLOWED_LISTING_TYPES = ['JUAL', 'SEWA'] as const;
+type CategoryRow = { category: 'RUMAH' | 'APARTEMEN' | 'KOSAN' | null };
+
+function normalizeCategory(category: unknown): (typeof ALLOWED_CATEGORIES)[number] | null {
+  if (typeof category !== 'string') return null;
+  const normalized = category.trim().toUpperCase();
+  return ALLOWED_CATEGORIES.includes(normalized as (typeof ALLOWED_CATEGORIES)[number])
+    ? (normalized as (typeof ALLOWED_CATEGORIES)[number])
+    : null;
+}
+
+function normalizeListingType(listingType: unknown): (typeof ALLOWED_LISTING_TYPES)[number] | null {
+  if (typeof listingType !== 'string') return null;
+  const normalized = listingType.trim().toUpperCase();
+  if (normalized === 'SELL') return 'JUAL';
+  if (normalized === 'RENT' || normalized === 'KOSAN') return 'SEWA';
+  return ALLOWED_LISTING_TYPES.includes(normalized as (typeof ALLOWED_LISTING_TYPES)[number])
+    ? (normalized as (typeof ALLOWED_LISTING_TYPES)[number])
+    : null;
+}
 
 export async function GET(
   req: NextRequest,
@@ -45,7 +68,21 @@ export async function GET(
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 
-  return NextResponse.json(property);
+  const categoryRow = await prisma.$queryRaw<CategoryRow[]>(
+    Prisma.sql`SELECT "category" FROM "Property" WHERE "id" = ${id} LIMIT 1`,
+  );
+
+  return NextResponse.json(
+    {
+      ...property,
+      category: categoryRow[0]?.category ?? null,
+    },
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      },
+    },
+  );
 }
 
 export async function PATCH(
@@ -73,10 +110,16 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const { title, description, price, listingType, facilities, address, location, imageUrls } = body;
+  const { title, description, price, listingType, category, facilities, address, location, imageUrls } = body;
+  const normalizedCategory = normalizeCategory(category);
+  const normalizedListingType = normalizeListingType(listingType);
 
-  if (!title || !price || !listingType) {
+  if (!title || !price || !normalizedListingType) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
+  }
+
+  if (category !== undefined && !normalizedCategory) {
+    return NextResponse.json({ message: 'Kategori properti tidak valid.' }, { status: 400 });
   }
 
   const latitude = typeof location?.lat === 'number' ? location.lat : null;
@@ -114,7 +157,7 @@ export async function PATCH(
       ...(photoUrls ? { imageUrls: photoUrls } : {}),
       description: description ?? null,
       price: Number(price),
-      listingType,
+      listingType: normalizedListingType,
       ...(facilityItems
         ? {
             facilities: {
@@ -141,7 +184,27 @@ export async function PATCH(
     },
   });
 
-  return NextResponse.json(updated);
+  if (category !== undefined && normalizedCategory) {
+    await prisma.$executeRaw(
+      Prisma.sql`UPDATE "Property" SET "category" = ${normalizedCategory}::"PropertyCategory" WHERE "id" = ${id}`,
+    );
+  }
+
+  const categoryRow = await prisma.$queryRaw<CategoryRow[]>(
+    Prisma.sql`SELECT "category" FROM "Property" WHERE "id" = ${id} LIMIT 1`,
+  );
+
+  return NextResponse.json(
+    {
+      ...updated,
+      category: categoryRow[0]?.category ?? null,
+    },
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      },
+    },
+  );
 }
 
 export async function DELETE(

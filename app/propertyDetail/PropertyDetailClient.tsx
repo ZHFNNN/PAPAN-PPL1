@@ -18,6 +18,8 @@ type PropertyDetail = {
   description: string | null;
   price: string;
   listingType: string;
+  lat?: number | null;
+  lng?: number | null;
   owner?: {
     name?: string | null;
     username?: string | null;
@@ -44,6 +46,8 @@ type DisplayProperty = {
   fasilitas: string[];
   images: string[];
   description: string;
+  lat: number | null;
+  lng: number | null;
 };
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200&q=80';
@@ -73,6 +77,8 @@ function mapApiProperty(data: PropertyDetail): DisplayProperty {
     fasilitas: data.facilities.map((item) => item.name),
     images: data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls : [FALLBACK_IMAGE],
     description: data.description ?? 'Tidak ada deskripsi.',
+    lat: data.lat ?? null,
+    lng: data.lng ?? null,
   };
 }
 
@@ -91,6 +97,8 @@ function mapLocalProperty(data: Properti): DisplayProperty {
     fasilitas: data.fasilitas,
     images: data.images.length > 0 ? data.images : [FALLBACK_IMAGE],
     description: `Hunian ${data.kategori.toLowerCase()} seluas ${data.luas} di kawasan ${data.lokasi}. Properti ini menawarkan ${data.kt} dan ${data.km} dengan berbagai fasilitas unggulan termasuk ${data.fasilitas.join(', ')}. Dengan ${data.lantai}, hunian ini memberikan ruang yang luas dan nyaman bagi seluruh keluarga. Lokasi yang strategis menjadikannya pilihan ideal bagi mereka yang menginginkan kenyamanan urban dengan nuansa eksklusif.`,
+    lat: null,
+    lng: null,
   };
 }
 
@@ -177,7 +185,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
 
   const handleShare = async () => {
     if (!prop) return;
-
     try {
       if (navigator.share) {
         await navigator.share({ title: prop.title, url: window.location.href });
@@ -222,11 +229,17 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
     );
   }
 
-  const thumbnails = prop.images.slice(1, 5);
   const SHORT = 220;
   const deskripsi = prop.description;
   const displayDesc = descExpanded || deskripsi.length <= SHORT ? deskripsi : `${deskripsi.slice(0, SHORT)}…`;
   const activeImageSrc = prop.images[activeImage] ?? prop.images[0];
+
+  // Map embed — zoom ke lokasi kalau ada koordinat, fallback ke nama kota
+  const mapQuery = prop.lat && prop.lng
+    ? `${prop.lat},${prop.lng}`
+    : encodeURIComponent(prop.lokasi);
+  const mapZoom = prop.lat && prop.lng ? 15 : 12;
+  const mapSrc = `https://maps.google.com/maps?q=${mapQuery}&z=${mapZoom}&output=embed`;
 
   return (
     <div className={styles.page}>
@@ -238,99 +251,100 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
             ← Kembali
           </button>
 
-          <div className={styles.galleryWrapper}>
-            <div className={styles.mainImage}>
-              <img src={activeImageSrc} alt={prop.title} />
-            </div>
-            {thumbnails.length > 0 && (
+          {/* ── TOP: Gallery (kiri) + Price Card biru (kanan) ── */}
+          <div className={styles.topSection}>
+
+            {/* Gallery: foto besar + thumbnail kolom kanan bisa scroll */}
+            <div className={styles.galleryWrapper}>
+              <div className={styles.mainImage}>
+                <img src={activeImageSrc} alt={prop.title} />
+              </div>
               <div className={styles.thumbnailColumn}>
-                {thumbnails.map((src, i) => (
+                {prop.images.map((src, i) => (
                   <div
                     key={`${src}-${i}`}
-                    className={`${styles.thumbnail} ${activeImage === i + 1 ? styles.thumbnailActive : ''}`}
-                    onClick={() => setActiveImage(i + 1)}
+                    className={`${styles.thumbnail} ${activeImage === i ? styles.thumbnailActive : ''}`}
+                    onClick={() => setActiveImage(i)}
                   >
-                    <img src={src} alt={`Foto ${i + 2}`} />
+                    <img src={src} alt={`Foto ${i + 1}`} />
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-
-          <div className={styles.mainLayout}>
-            <div className={styles.leftColumn}>
-              <div className={styles.card}>
-                <h1 className={styles.propertyTitle}>{prop.title}</h1>
-                <div className={styles.lokasi}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span>{prop.lokasi}</span>
-                </div>
-                <div className={styles.chipsRow}>
-                  <span className={styles.chip}>Luas {prop.luas}</span>
-                  <span className={styles.chip}>{prop.km} Kamar Mandi</span>
-                  <span className={styles.chip}>{prop.kt} Kamar Tidur</span>
-                  {prop.fasilitas.map((facility) => (
-                    <span key={facility} className={styles.chip}>
-                      {facility}
-                    </span>
-                  ))}
-                  <span className={styles.chip}>{prop.lantai}</span>
-                </div>
-              </div>
-
-              <div className={styles.card}>
-                <h2 className={styles.sectionTitle}>Deskripsi</h2>
-                <p className={styles.descText}>{displayDesc}</p>
-                {deskripsi.length > SHORT && (
-                  <button className={styles.readMoreBtn} onClick={() => setDescExpanded((prev) => !prev)}>
-                    {descExpanded ? 'Tampilkan lebih sedikit' : 'Baca selengkapnya'}
-                  </button>
-                )}
-              </div>
-
-              <div className={styles.card}>
-                <h2 className={styles.sectionTitle}>Lokasi</h2>
-                <div className={styles.mapPlaceholder}>
-                  <span>🗺️</span>
-                  <span>{prop.lokasi}</span>
-                </div>
-              </div>
             </div>
 
-            <div className={styles.rightColumn}>
-              <div className={styles.priceCard}>
-                <p className={styles.priceLabel}>Harga</p>
-                <p className={styles.priceValue}>{prop.price}</p>
-                <p className={styles.priceEstimate}>{prop.biayaHidup}</p>
+            {/* Price Card — sejajar gallery */}
+            <div className={styles.priceCard}>
+              <p className={styles.priceLabel}>Harga</p>
+              <p className={styles.priceValue}>{prop.price}</p>
+              <p className={styles.priceEstimate}>{prop.biayaHidup}</p>
 
-                <button className={styles.btnBuy} onClick={handleBuy}>
-                  Beli Sekarang
-                </button>
-                <button className={styles.btnOutline} onClick={() => setBookmarked((prev) => !prev)}>
-                  {bookmarked ? '✓ Disimpan' : 'Simpan'}
-                </button>
-                <button className={styles.btnOutline} onClick={handleShare}>
-                  Bagikan
-                </button>
+              <button className={styles.btnBuy} onClick={handleBuy}>
+                Beli Sekarang
+              </button>
+              <button className={styles.btnOutline} onClick={() => setBookmarked((prev) => !prev)}>
+                {bookmarked ? '✓ Disimpan' : 'Simpan'}
+              </button>
+              <button className={styles.btnOutline} onClick={handleShare}>
+                Bagikan
+              </button>
 
-                <hr className={styles.divider} />
+              <hr className={styles.divider} />
 
-                <div className={styles.agentRow}>
-                  <div className={styles.agentAvatar}>👤</div>
-                  <div className={styles.agentInfo}>
-                    <p className={styles.agentName}>Budi Santoso</p>
-                    <p className={styles.agentRole}>Pemilik Properti</p>
-                  </div>
-                  <button className={styles.agentContactBtn}>Hubungi</button>
+              <div className={styles.agentRow}>
+                <div className={styles.agentAvatar}>👤</div>
+                <div className={styles.agentInfo}>
+                  <p className={styles.agentName}>Budi Santoso</p>
+                  <p className={styles.agentRole}>Pemilik Properti</p>
                 </div>
+                <button className={styles.agentContactBtn}>Hubungi</button>
               </div>
             </div>
           </div>
+
+          {/* ── Judul + Lokasi + Chips — langsung di bawah gallery, tanpa card ── */}
+          <h1 className={styles.propertyTitle}>{prop.title}</h1>
+          <div className={styles.lokasi}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>{prop.lokasi}</span>
+          </div>
+          <div className={styles.chipsRow}>
+            <span className={styles.chip}>Luas {prop.luas}</span>
+            <span className={styles.chip}>{prop.km} Kamar Mandi</span>
+            <span className={styles.chip}>{prop.kt} Kamar Tidur</span>
+            {prop.fasilitas.map((facility) => (
+              <span key={facility} className={styles.chip}>
+                {facility}
+              </span>
+            ))}
+            <span className={styles.chip}>{prop.lantai}</span>
+          </div>
+
+          {/* ── Deskripsi — tanpa card wrapper ── */}
+          <h2 className={styles.sectionTitle}>Deskripsi</h2>
+          <p className={styles.descText}>{displayDesc}</p>
+          {deskripsi.length > SHORT && (
+            <button className={styles.readMoreBtn} onClick={() => setDescExpanded((prev) => !prev)}>
+              {descExpanded ? 'Tampilkan lebih sedikit' : 'Baca selengkapnya'}
+            </button>
+          )}
+
+          {/* ── Lokasi + Map embed kecil di kiri ── */}
+          <div className={styles.mapSection}>
+            <h2 className={styles.sectionTitle}>Lokasi</h2>
+            <iframe
+              title="Lokasi properti"
+              src={mapSrc}
+              className={styles.mapFrame}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+
         </div>
       </div>
 

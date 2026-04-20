@@ -5,9 +5,31 @@
 // ============================================================
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { resolveFacilityCodes } from '@/lib/dss/facility-mapping';
+
+const ALLOWED_CATEGORIES = ['RUMAH', 'APARTEMEN', 'KOSAN'] as const;
+const ALLOWED_LISTING_TYPES = ['JUAL', 'SEWA'] as const;
+
+function normalizeCategory(category: unknown): (typeof ALLOWED_CATEGORIES)[number] | null {
+  if (typeof category !== 'string') return null;
+  const normalized = category.trim().toUpperCase();
+  return ALLOWED_CATEGORIES.includes(normalized as (typeof ALLOWED_CATEGORIES)[number])
+    ? (normalized as (typeof ALLOWED_CATEGORIES)[number])
+    : null;
+}
+
+function normalizeListingType(listingType: unknown): (typeof ALLOWED_LISTING_TYPES)[number] | null {
+  if (typeof listingType !== 'string') return null;
+  const normalized = listingType.trim().toUpperCase();
+  if (normalized === 'SELL') return 'JUAL';
+  if (normalized === 'RENT' || normalized === 'KOSAN') return 'SEWA';
+  return ALLOWED_LISTING_TYPES.includes(normalized as (typeof ALLOWED_LISTING_TYPES)[number])
+    ? (normalized as (typeof ALLOWED_LISTING_TYPES)[number])
+    : null;
+}
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -29,9 +51,11 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { title, description, price, listingType, address, facilities, location, imageUrls } = body;
+  const { title, description, price, listingType, category, address, facilities, location, imageUrls } = body;
+  const normalizedCategory = normalizeCategory(category);
+  const normalizedListingType = normalizeListingType(listingType);
 
-  if (!title || !price || !listingType || !address) {
+  if (!title || !price || !normalizedListingType || !address || !normalizedCategory) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
 
@@ -51,27 +75,29 @@ export async function POST(req: NextRequest) {
     select: { id: true },
   });
 
-  const property = await prisma.property.create({
-    data: {
-      ownerId: session.user.id,
-      title,
-      address,
-      city,
-      district,
-      neighbourhood,
-      latitude,
-      longitude,
-      imageUrls: photoUrls,
-      description: description ?? null,
-      price: Number(price),
-      listingType,
-      facilities: {
-        createMany: {
-          data: facilityRecords.map((facility) => ({ facilityId: facility.id })),
-          skipDuplicates: true,
-        },
+  const propertyData = {
+    ownerId: session.user.id,
+    title,
+    address,
+    city,
+    district,
+    neighbourhood,
+    latitude,
+    longitude,
+    imageUrls: photoUrls,
+    description: description ?? null,
+    price: Number(price),
+    listingType: normalizedListingType,
+    facilities: {
+      createMany: {
+        data: facilityRecords.map((facility) => ({ facilityId: facility.id })),
+        skipDuplicates: true,
       },
     },
+  };
+
+  const property = await prisma.property.create({
+    data: propertyData,
     include: {
       facilities: {
         include: {
@@ -80,6 +106,10 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  await prisma.$executeRaw(
+    Prisma.sql`UPDATE "Property" SET "category" = ${normalizedCategory}::"PropertyCategory" WHERE "id" = ${property.id}`,
+  );
 
   return NextResponse.json(property, { status: 201 });
 }

@@ -90,6 +90,7 @@ model Property {
   id          String             @id @default(cuid())
   ownerId     String
   title       String
+  category    PropertyCategory   @default(RUMAH)
   address     String?
   city        String?
   district    String?
@@ -190,4 +191,10 @@ enum DssCriteria {
   LOCATION
   FACILITIES
   GENDER
+}
+
+enum PropertyCategory {
+  RUMAH
+  APARTEMEN
+  KOSAN
 }

@@ -1,67 +1,126 @@
-.page { background-color: #f5f5f5; min-height: 100vh; display: flex; flex-direction: column; font-family: 'Poppins', sans-serif; }
+.page { background-color: #fff; min-height: 100vh; display: flex; flex-direction: column; font-family: 'Poppins', sans-serif; }
 
 .contentArea { flex: 1; padding: 6.5rem 1.25rem 4rem; }
 
-.container { max-width: 1200px; margin: 0 auto; }
+.container { max-width: 1100px; margin: 0 auto; }
 
 .backBtn { background: none; border: none; color: #19263c; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; padding: 0 0 1rem; display: flex; align-items: center; gap: 0.25rem; transition: opacity 0.2s; }
 .backBtn:hover { opacity: 0.7; }
 
-.galleryWrapper { display: grid; grid-template-columns: 1fr 120px; gap: 10px; border-radius: 20px; overflow: hidden; height: 380px; margin-bottom: 1.5rem; }
+/* ── Top Section: Gallery + Price Card ── */
+.topSection {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+  margin-bottom: 1.25rem;
+  align-items: start;
+}
+
+/* ── Gallery ── */
+.galleryWrapper {
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  gap: 10px;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 370px;
+}
+
 .mainImage { overflow: hidden; background: #ddd; }
-.mainImage img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.mainImage img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
 .mainImage:hover img { transform: scale(1.03); }
-.thumbnailColumn { display: flex; flex-direction: column; gap: 10px; }
-.thumbnail { flex: 1; overflow: hidden; cursor: pointer; background: #ccc; border: 3px solid transparent; border-radius: 4px; transition: border-color 0.2s; }
-.thumbnail img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-.thumbnail:hover img { transform: scale(1.06); }
+
+.thumbnailColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 370px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.thumbnailColumn::-webkit-scrollbar { display: none; }
+
+.thumbnail {
+  flex-shrink: 0;
+  width: 100%;
+  height: 108px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #e8e8e8;
+  border: 2.5px solid transparent;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumbnail:hover img { transform: scale(1.05); }
 .thumbnailActive { border-color: #19263c; }
 
-.mainLayout { display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; align-items: start; }
-.leftColumn { display: flex; flex-direction: column; gap: 1.25rem; }
-.rightColumn { position: sticky; top: 7rem; }
-
-.card { background: #fff; border-radius: 20px; padding: 1.5rem; }
-.propertyTitle { font-size: clamp(20px, 2.2vw, 28px); font-weight: 700; color: #19263c; margin: 0 0 0.5rem; }
-.lokasi { display: flex; align-items: center; gap: 0.4rem; color: #666; font-size: 14px; margin-bottom: 1rem; }
-.chipsRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.chip { background: #f0f0f0; border-radius: 50px; padding: 0.4rem 1rem; font-size: 13px; font-weight: 500; color: #19263c; }
-
-.sectionTitle { font-size: 18px; font-weight: 700; color: #19263c; margin: 0 0 0.75rem; }
-.descText { font-size: 14px; color: #555; line-height: 1.75; margin: 0; }
-.readMoreBtn { background: none; border: none; color: #19263c; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0.5rem 0 0; text-decoration: underline; }
-
-.mapPlaceholder { height: 200px; border-radius: 14px; background: linear-gradient(135deg, #e0e7ef 0%, #c9d6e3 100%); display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #19263c; font-size: 14px; font-weight: 500; }
-
-.priceCard { background: #19263c; border-radius: 20px; padding: 1.5rem; color: #fff; }
-.priceLabel { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.65); margin: 0 0 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.priceValue { font-size: clamp(18px, 2vw, 24px); font-weight: 800; color: #fff; margin: 0 0 0.25rem; }
-.priceEstimate { font-size: 12px; color: rgba(255,255,255,0.55); margin: 0 0 1.25rem; }
-.btnBuy { width: 100%; background: #fff; color: #19263c; border: none; border-radius: 50px; padding: 0.75rem; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 0.5rem; transition: background 0.2s, transform 0.1s; }
+/* ── Price Card ── */
+.priceCard {
+  background: #19263c;
+  border-radius: 16px;
+  padding: 1.4rem 1.5rem;
+  color: #fff;
+  height: 370px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.priceLabel { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.65); margin: 0 0 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.priceValue { font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 0.2rem; line-height: 1.2; }
+.priceEstimate { font-size: 11px; color: rgba(255,255,255,0.55); margin: 0 0 1.1rem; }
+.btnBuy { width: 100%; background: #fff; color: #19263c; border: none; border-radius: 50px; padding: 0.7rem; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 0.45rem; transition: background 0.2s, transform 0.1s; }
 .btnBuy:hover { background: #f0f0f0; transform: translateY(-1px); }
-.btnOutline { width: 100%; background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.4); border-radius: 50px; padding: 0.65rem; font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 0.5rem; transition: border-color 0.2s, background 0.2s; }
+.btnOutline { width: 100%; background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.35); border-radius: 50px; padding: 0.6rem; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 0.45rem; transition: border-color 0.2s, background 0.2s; }
 .btnOutline:hover { border-color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.08); }
-.divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 1rem 0; }
-.agentRow { display: flex; align-items: center; gap: 0.75rem; }
-.agentAvatar { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 0.85rem 0; }
+.agentRow { display: flex; align-items: center; gap: 0.6rem; margin-top: auto; }
+.agentAvatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; overflow: hidden; }
+.agentAvatar img { width: 100%; height: 100%; object-fit: cover; }
 .agentInfo { flex: 1; }
-.agentName { font-size: 14px; font-weight: 600; color: #fff; margin: 0 0 0.1rem; }
-.agentRole { font-size: 12px; color: rgba(255,255,255,0.55); margin: 0; }
-.agentContactBtn { background: rgba(255,255,255,0.15); border: none; border-radius: 50px; padding: 0.4rem 0.9rem; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 600; color: #fff; cursor: pointer; transition: background 0.2s; }
+.agentName { font-size: 13px; font-weight: 600; color: #fff; margin: 0; }
+.agentRole { font-size: 11px; color: rgba(255,255,255,0.55); margin: 0; }
+.agentContactBtn { background: rgba(255,255,255,0.15); border: none; border-radius: 50px; padding: 0.35rem 0.8rem; font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 600; color: #fff; cursor: pointer; transition: background 0.2s; }
 .agentContactBtn:hover { background: rgba(255,255,255,0.25); }
 
+/* ── Below gallery: title, lokasi, chips — NO card wrapper ── */
+.propertyTitle { font-size: 22px; font-weight: 700; color: #19263c; margin: 0 0 0.3rem; }
+.lokasi { display: flex; align-items: center; gap: 0.35rem; color: #666; font-size: 13px; margin-bottom: 1rem; }
+
+.chipsRow { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.75rem; }
+.chip { background: #fff; border: 1.5px solid #d0d0d0; border-radius: 50px; padding: 0.4rem 1.1rem; font-size: 13px; font-weight: 500; color: #19263c; }
+
+/* ── Deskripsi & Lokasi — NO card wrapper ── */
+.sectionTitle { font-size: 18px; font-weight: 700; color: #19263c; margin: 0 0 0.65rem; }
+.descText { font-size: 13.5px; color: #444; line-height: 1.75; margin: 0; text-align: justify; }
+.readMoreBtn { background: none; border: none; color: #19263c; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0.5rem 0 0; text-decoration: underline; }
+
+.mapSection { margin-top: 1.75rem; }
+
+/* Map: small, left-aligned, matches personalisasi style */
+.mapFrame {
+  width: 280px;
+  height: 180px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  display: block;
+}
+
+/* ── Loading ── */
 .loadingWrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 5rem; }
 .spinner { width: 40px; height: 40px; border: 3px solid #e0e0e0; border-top-color: #19263c; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loadingText { font-size: 15px; color: #666; margin: 0; }
 
 @media (max-width: 900px) {
-  .mainLayout { grid-template-columns: 1fr; }
-  .rightColumn { position: static; }
-  .galleryWrapper { grid-template-columns: 1fr 90px; height: 260px; }
+  .topSection { grid-template-columns: 1fr; }
+  .priceCard { height: auto; }
+  .galleryWrapper { height: 280px; }
+  .thumbnailColumn { height: 280px; }
 }
 @media (max-width: 600px) {
   .galleryWrapper { grid-template-columns: 1fr; height: 220px; }
   .thumbnailColumn { display: none; }
   .contentArea { padding: 5.5rem 0.75rem 3rem; }
+  .mapFrame { width: 100%; height: 200px; }
 }

@@ -19,6 +19,7 @@ const DUMMY_OWNER_EMAIL = "owner-demo@papan.local";
 
 type DummyTemplate = {
   titlePrefix: string;
+  category: 'RUMAH' | 'APARTEMEN' | 'KOSAN';
   description: string;
   price: number;
   listingType: string;
@@ -36,6 +37,7 @@ type DummyArea = {
 
 type DummyProperty = {
   title: string;
+  category: 'RUMAH' | 'APARTEMEN' | 'KOSAN';
   description: string;
   price: number;
   listingType: string;
@@ -52,6 +54,7 @@ type DummyProperty = {
 const DUMMY_TEMPLATES: DummyTemplate[] = [
   {
     titlePrefix: "Kost AC dekat kampus",
+    category: 'KOSAN',
     description: "Kosan nyaman untuk mahasiswa. AC, WiFi, Water Heater, dan akses transportasi umum.",
     price: 2_100_000,
     listingType: "RENT",
@@ -63,6 +66,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Apartemen furnished premium",
+    category: 'APARTEMEN',
     description: "Apartemen furnished dengan dapur modern, parkir mobil, dan keamanan 24 jam.",
     price: 4_800_000,
     listingType: "RENT",
@@ -74,6 +78,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Rumah pet-friendly keluarga",
+    category: 'RUMAH',
     description: "Rumah sewa untuk keluarga kecil, pet-friendly, carport luas, dan kamar mandi dalam.",
     price: 3_900_000,
     listingType: "RENT",
@@ -85,6 +90,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Studio hemat strategis",
+    category: 'APARTEMEN',
     description: "Studio hemat dengan akses ke halte dan stasiun, cocok untuk pekerja dan mahasiswa.",
     price: 1_650_000,
     listingType: "RENT",
@@ -96,6 +102,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Apartemen modern view kota",
+    category: 'APARTEMEN',
     description: "Unit modern dengan AC, WiFi, water heater, dan dapur. Cocok untuk profesional muda.",
     price: 5_200_000,
     listingType: "RENT",
@@ -107,6 +114,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Kost putri dekat transportasi",
+    category: 'KOSAN',
     description: "Kost putri aman dan nyaman, dekat MRT/KRL, AC dan WiFi tersedia.",
     price: 2_750_000,
     listingType: "RENT",
@@ -118,6 +126,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Rumah siap huni",
+    category: 'RUMAH',
     description: "Rumah siap huni dengan dapur, AC, kamar mandi dalam, dan lingkungan tenang.",
     price: 4_400_000,
     listingType: "RENT",
@@ -129,6 +138,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Unit commuter dekat stasiun",
+    category: 'APARTEMEN',
     description: "Unit cocok untuk commuter, dekat stasiun, tersedia furnished dan water heater.",
     price: 3_300_000,
     listingType: "RENT",
@@ -140,6 +150,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Kost pet-friendly",
+    category: 'KOSAN',
     description: "Kost pet-friendly dengan internet cepat, cocok untuk yang bawa hewan peliharaan.",
     price: 2_450_000,
     listingType: "RENT",
@@ -151,6 +162,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Apartemen unfurnished nyaman",
+    category: 'APARTEMEN',
     description: "Apartemen unfurnished dengan parkir mobil dan akses transportasi umum.",
     price: 3_000_000,
     listingType: "RENT",
@@ -162,6 +174,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Rumah keluarga luas",
+    category: 'RUMAH',
     description: "Rumah keluarga luas dengan carport, dapur lengkap, dan ventilasi baik.",
     price: 5_500_000,
     listingType: "RENT",
@@ -173,6 +186,7 @@ const DUMMY_TEMPLATES: DummyTemplate[] = [
   },
   {
     titlePrefix: "Kost super hemat",
+    category: 'KOSAN',
     description: "Kost hemat untuk mahasiswa, dekat kampus dan akses transportasi umum.",
     price: 1_250_000,
     listingType: "RENT",
@@ -216,6 +230,7 @@ function buildDummyProperties(total: number): DummyProperty[] {
 
     result.push({
       title: `[DUMMY] ${template.titlePrefix} ${area.neighbourhood} #${i + 1}`,
+      category: template.category,
       description: `${template.description} Lokasi ${area.neighbourhood}, ${area.district}, ${area.city}.`,
       price: template.price + variation,
       listingType: template.listingType,
@@ -303,21 +318,25 @@ async function main() {
   });
 
   for (const item of DUMMY_PROPERTIES) {
+    const propertyData = {
+      ownerId: dummyOwner.id,
+      title: item.title,
+      address: item.address,
+      city: item.city,
+      district: item.district,
+      neighbourhood: item.neighbourhood,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      imageUrls: item.imageUrls,
+      description: item.description,
+      price: item.price,
+      listingType: item.listingType,
+    };
+
+    Object.assign(propertyData, { category: item.category });
+
     const property = await prisma.property.create({
-      data: {
-        ownerId: dummyOwner.id,
-        title: item.title,
-        address: item.address,
-        city: item.city,
-        district: item.district,
-        neighbourhood: item.neighbourhood,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        imageUrls: item.imageUrls,
-        description: item.description,
-        price: item.price,
-        listingType: item.listingType,
-      },
+      data: propertyData,
     });
 
     const facilityIds = item.facilityCodes

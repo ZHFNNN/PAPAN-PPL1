@@ -7,7 +7,8 @@ import type { PickedLocation } from '@/components/MapPicker';
 
 const MapPicker = lazy(() => import('@/components/MapPicker'));
 
-type ListingType = 'JUAL' | 'SEWA' | 'KOSAN' | '';
+type ListingType = 'JUAL' | 'SEWA' | '';
+type PropertyCategory = 'RUMAH' | 'APARTEMEN' | 'KOSAN' | '';
 
 type FormData = {
   title: string;
@@ -20,6 +21,7 @@ type FormData = {
   price: string;
   description: string;
   listingType: ListingType;
+  category: PropertyCategory;
   facilities: string[];
 };
 
@@ -33,6 +35,11 @@ type FacilityOption = {
 const LISTING_TYPE_OPTIONS: { value: ListingType; label: string }[] = [
   { value: 'JUAL', label: 'Dijual' },
   { value: 'SEWA', label: 'Disewa' },
+];
+
+const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = [
+  { value: 'RUMAH', label: 'Rumah' },
+  { value: 'APARTEMEN', label: 'Apartemen' },
   { value: 'KOSAN', label: 'Kosan' },
 ];
 
@@ -49,6 +56,7 @@ export default function AddPropertyPage() {
     price: '',
     description: '',
     listingType: '',
+    category: '',
     facilities: [],
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -208,6 +216,7 @@ export default function AddPropertyPage() {
     else if (isNaN(Number(form.price.replace(/[^0-9]/g, '')))) newErrors.price = 'Harga harus berupa angka.';
     if (!form.description.trim()) newErrors.description = 'Deskripsi wajib diisi.';
     if (!form.listingType) newErrors.listingType = 'Tipe listing wajib dipilih.';
+    if (!form.category) newErrors.category = 'Kategori properti wajib dipilih.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -230,6 +239,7 @@ export default function AddPropertyPage() {
           description: form.description,
           price: priceNum,
           listingType: form.listingType,
+          category: form.category,
           address: form.address,
           location: {
             lat: form.locationLat,
@@ -321,6 +331,24 @@ export default function AddPropertyPage() {
                 )}
               </div>
               {errors.address && <p className={styles.errorText}>{errors.address}</p>}
+            </div>
+
+            {/* Kategori Properti */}
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Kategori Properti</label>
+              <div className={styles.listingTypeGroup}>
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleChange('category', opt.value)}
+                    className={`${styles.listingTypeBtn} ${form.category === opt.value ? styles.listingTypeBtnActive : ''}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {errors.category && <p className={styles.errorText}>{errors.category}</p>}
             </div>
 
             {/* Tipe Listing */}

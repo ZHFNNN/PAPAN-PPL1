@@ -66,6 +66,7 @@ export async function GET() {
   }
 
   const userId = auth.session.user.id;
+  const now = new Date();
 
   const [personalization, preferenceFacilities] = await Promise.all([
     prisma.userPersonalization.findUnique({
@@ -127,6 +128,23 @@ export async function GET() {
           },
         },
       },
+      boosts: {
+        where: {
+          endsAt: {
+            gt: now,
+          },
+        },
+        select: {
+          id: true,
+          packageId: true,
+          packageTitle: true,
+          endsAt: true,
+        },
+        orderBy: {
+          endsAt: "desc",
+        },
+        take: 1,
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -158,6 +176,9 @@ export async function GET() {
       locationScore * FIXED_CRITERIA_WEIGHTS.location +
       facilityResult.score * FIXED_CRITERIA_WEIGHTS.facilities;
 
+    const activeBoost = property.boosts[0] ?? null;
+    const isBoosted = Boolean(activeBoost);
+
     return {
       id: property.id,
       title: property.title,
@@ -165,6 +186,15 @@ export async function GET() {
       coverImageUrl: property.imageUrls[0] ?? null,
       price: priceNumber,
       score: Number(totalScore.toFixed(4)),
+      isBoosted,
+      boost: activeBoost
+        ? {
+            id: activeBoost.id,
+            packageId: activeBoost.packageId,
+            packageTitle: activeBoost.packageTitle,
+            endDate: activeBoost.endsAt.toISOString(),
+          }
+        : null,
       breakdown: {
         budgetScore: Number(budgetScore.toFixed(4)),
         locationScore: Number(locationScore.toFixed(4)),
@@ -177,9 +207,14 @@ export async function GET() {
   });
 
   scored.sort((a, b) => {
+    if (a.isBoosted !== b.isBoosted) {
+      return a.isBoosted ? -1 : 1;
+    }
+
     if (b.score !== a.score) {
       return b.score - a.score;
     }
+
     return a.price - b.price;
   });
 
@@ -191,6 +226,7 @@ export async function GET() {
       weights: FIXED_CRITERIA_WEIGHTS,
       totalCandidates: properties.length,
       selectedFacilitySource: relationalPreferredCodes.length > 0 ? "user_preference_facility" : "user_personalization_booleans",
+      boosterRule: "Active booster always first, then by DSS score",
     },
   });
 }

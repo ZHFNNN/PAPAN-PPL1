@@ -23,6 +23,7 @@ model User {
   accounts            Account[]
   kycSubmission       KycSubmission?
   properties          Property[]
+  propertyBoosts      PropertyBoost[]
   sessions            Session[]
   criteriaWeights     UserCriteriaWeight[]
   personalization     UserPersonalization?
@@ -105,6 +106,27 @@ model Property {
   updatedAt   DateTime           @updatedAt
   owner       User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   facilities  PropertyFacility[]
+  boosts      PropertyBoost[]
+}
+
+model PropertyBoost {
+  id           String   @id @default(cuid())
+  propertyId   String
+  ownerId      String
+  packageId    String
+  packageTitle String
+  days         Int
+  price        Int
+  startsAt     DateTime @map("start_date")
+  endsAt       DateTime @map("end_date")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, endsAt])
+  @@index([ownerId, endsAt])
 }
 
 model Facility {

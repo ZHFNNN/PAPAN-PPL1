@@ -28,6 +28,7 @@ model User {
   criteriaWeights     UserCriteriaWeight[]
   personalization     UserPersonalization?
   preferredFacilities UserPreferenceFacility[]
+  boostCart BoostCart[]
 }
 
 model Account {
@@ -107,6 +108,7 @@ model Property {
   owner       User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   facilities  PropertyFacility[]
   boosts      PropertyBoost[]
+  boostCart   BoostCart[]
 }
 
 model PropertyBoost {
@@ -219,4 +221,21 @@ enum PropertyCategory {
   RUMAH
   APARTEMEN
   KOSAN
+}
+
+model BoostCart {
+  id           String   @id @default(cuid())
+  ownerId      String
+  propertyId   String
+  packageId    String
+  packageTitle String
+  days         Int
+  price        Int
+  createdAt    DateTime @default(now())
+
+  owner    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@index([propertyId])
 }

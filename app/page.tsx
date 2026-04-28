@@ -14,6 +14,11 @@ type RecommendationItem = {
   title: string;
   listingType: string;
   coverImageUrl?: string | null;
+  images?: string[];    
+  address?: string | null;        
+  neighbourhood?: string | null;  
+  district?: string | null;       
+  city?: string | null;       
   price: number;
   score: number;
   breakdown: {
@@ -63,6 +68,17 @@ function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Proper
     }, 1200);
     return () => clearInterval(id);
   }, [isHovered, prop.images.length]);
+
+const formatListingType = () => {
+    if ((prop as any).listingType) {
+      const normalized = String((prop as any).listingType).trim().toUpperCase();
+      if (normalized === 'RENT') return 'Sewa';
+      if (normalized === 'SELL') return 'Jual';
+    }
+    // fallback: cek dari biayaHidup atau label lain
+    if (prop.biayaHidup?.toLowerCase().includes('beli')) return 'Jual';
+    return 'Sewa';
+  };
 
   return (
     <div
@@ -168,6 +184,101 @@ function PropertySection({ title }: { title: string }) {
   );
 }
 
+function RecommendationCard({
+  item,
+  images,
+  onOpen,
+  formatPrice,
+  formatListingType,
+  formatFacilityCode,
+}: {
+  item: RecommendationItem;
+  images: string[];
+  onOpen: () => void;
+  formatPrice: (price: number) => string;
+  formatListingType: (type: string) => string;
+  formatFacilityCode: (code: string) => string;
+}) {
+  const [imgIndex, setImgIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (!isHovered || images.length <= 1) return;
+    const id = setInterval(() => {
+      setImgIndex((prev) => (prev + 1) % images.length);
+    }, 1200);
+    return () => clearInterval(id);
+  }, [isHovered, images.length]);
+
+  return (
+    <article
+      className={styles.card}
+      role="button"
+      tabIndex={0}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      <div className={styles.cardImageWrapper}>
+        <div
+          className={styles.cardImageTrack}
+          style={{ transform: `translateX(-${imgIndex * 100}%)` }}
+        >
+          {images.map((src, i) => (
+            <img key={i} src={src} alt={item.title} className={styles.cardImage} />
+          ))}
+        </div>
+        <div className={styles.dots}>
+          {images.map((_, i) => (
+            <button
+              key={i}
+              className={`${styles.dot} ${i === imgIndex ? styles.dotActive : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIndex(i);
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.cardBody}>
+        <h3 className={styles.cardTitle}>{item.title}</h3>
+        <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
+        <p className={styles.cardBiaya}>Tipe: {formatListingType(item.listingType)}</p>
+
+        <div className={styles.cardLokasi}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+          {[item.address, item.neighbourhood, item.district, item.city]
+            .filter((v) => Boolean(v && v.trim()))
+            .join(', ') || 'Lokasi belum tersedia'}
+        </span>
+        </div>
+
+        <hr className={styles.divider} />
+
+        <div className={styles.cardFasilitas}>
+          {(item.breakdown.matchedFacilityCodes ?? []).slice(0, 4).map((code) => (
+            <span key={code}>{formatFacilityCode(code)}</span>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function RecommendationSection() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -267,40 +378,22 @@ function RecommendationSection() {
         </div>
       ) : (
         <div className={styles.scrollTrack} ref={scrollRef}>
-          {items.map((item, idx) => (
-            <article
-              key={item.id}
-              className={styles.card}
-              role="button"
-              tabIndex={0}
-              onClick={() => openPropertyDetail(item.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openPropertyDetail(item.id);
-                }
-              }}
-            >
-              <div className={styles.cardImageWrapper}>
-                <img
-                  src={item.coverImageUrl ?? (idx % 2 === 0 ? '/images/bgHomeKosan.jpeg' : '/images/bgHomeApart.png')}
-                  alt={item.title}
-                  className={styles.cardImage}
-                />
-              </div>
-
-              <div className={styles.cardBody}>
-                <h3 className={styles.cardTitle}>{item.title}</h3>
-                <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
-                <p className={styles.cardBiaya}>Tipe: {formatListingType(item.listingType)}</p>
-                <div className={styles.cardFasilitas}>
-                  {(item.breakdown.matchedFacilityCodes ?? []).slice(0, 4).map((code) => (
-                    <span key={code}>{formatFacilityCode(code)}</span>
-                  ))}
-                </div>
-              </div>
-            </article>
-          ))}
+          {items.map((item, idx) => {
+            const images = item.images && item.images.length > 0
+              ? item.images
+              : [item.coverImageUrl ?? (idx % 2 === 0 ? '/images/bgHomeKosan.jpeg' : '/images/bgHomeApart.png')];
+            return (
+              <RecommendationCard
+                key={item.id}
+                item={item}
+                images={images}
+                onOpen={() => openPropertyDetail(item.id)}
+                formatPrice={formatPrice}
+                formatListingType={formatListingType}
+                formatFacilityCode={formatFacilityCode}
+              />
+            );
+          })}
         </div>
       )}
     </section>

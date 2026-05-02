@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import { formatPrice } from '../../../lib/format-price';
 
 type Property = {
   id: string;
@@ -100,19 +101,6 @@ export default function OwnerDashboardPage() {
     }
   };
 
-  const formatPrice = (price: string) => {
-    const num = Number(price);
-    if (isNaN(num)) return price;
-    if (num >= 1_000_000_000) return `Rp${(num / 1_000_000_000).toFixed(1).replace('.0', '')} M`;
-    if (num >= 1_000_000) return `Rp${(num / 1_000_000).toFixed(0)} Jt`;
-    return `Rp${num.toLocaleString('id-ID')}`;
-  };
-
-  const formatRevenue = (num: number) => {
-    if (num >= 1_000_000_000) return `Rp${(num / 1_000_000_000).toFixed(1).replace('.0', '')} M`;
-    if (num >= 1_000_000) return `Rp${(num / 1_000_000).toFixed(0)} Jt`;
-    return `Rp${num.toLocaleString('id-ID')}`;
-  };
 
   return (
     <div className={styles.contentArea}>
@@ -150,7 +138,7 @@ export default function OwnerDashboardPage() {
               <StatCard title="Properti Aktif" value={data.stats.activeProperties} />
               <StatCard title="Kamar Kosan Tersewa" value={data.stats.rentedRooms} />
               <StatCard title="Properti Terjual" value={data.stats.soldProperties} />
-              <StatCard title="Total Pendapatan" value={formatRevenue(data.stats.totalRevenue)} />
+              <StatCard title="Total Pendapatan" value={formatPrice(data.stats.totalRevenue)} />
             </div>
 
             {/* ── Properties List ── */}

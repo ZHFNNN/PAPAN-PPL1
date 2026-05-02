@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl= env("DIRECT_URL")
 }
 
 model User {
@@ -23,6 +24,7 @@ model User {
   accounts            Account[]
   kycSubmission       KycSubmission?
   properties          Property[]
+  notifications       Notification[]
   propertyBoosts      PropertyBoost[]
   sessions            Session[]
   criteriaWeights     UserCriteriaWeight[]
@@ -109,6 +111,19 @@ model Property {
   facilities  PropertyFacility[]
   boosts      PropertyBoost[]
   boostCart   BoostCart[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  ownerId   String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String
+  createdAt DateTime @default(now())
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, createdAt])
 }
 
 model PropertyBoost {
@@ -200,6 +215,7 @@ model UserPersonalization {
 
 enum Role {
   USER
+  OWNER
   ADMIN
 }
 

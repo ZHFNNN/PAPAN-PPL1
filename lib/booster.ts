@@ -1,16 +1,60 @@
-export type BoosterPackageId = "basic" | "premium" | "featured";
+export type BoosterPackageId = "harian" | "mingguan" | "bulanan";
 
 export type BoosterPackage = {
   id: BoosterPackageId;
   title: string;
+  label: string;
   days: number;
   price: number;
+  features: string[];
+  highlighted?: boolean;
 };
 
 export const BOOST_PACKAGES: BoosterPackage[] = [
-  { id: "basic", title: "Basic", days: 7, price: 25000 },
-  { id: "premium", title: "Premium", days: 14, price: 55000 },
-  { id: "featured", title: "Featured", days: 30, price: 99000 },
+  {
+    id: "harian",
+    title: "Paket Harian",
+    label: "Harian",
+    days: 1,
+    price: 20000,
+    features: [
+      "Tampil di halaman utama",
+      "Badge Booster emas",
+      "Prioritas dalam pencarian",
+      "Highlight visual khusus",
+    ],
+  },
+  {
+    id: "mingguan",
+    title: "Paket Mingguan",
+    label: "Mingguan",
+    days: 7,
+    price: 100000,
+    highlighted: true,
+    features: [
+      "Tampil di halaman utama",
+      "Badge Booster emas",
+      "Prioritas dalam pencarian",
+      "Highlight visual khusus",
+      "Email notifikasi views",
+    ],
+  },
+  {
+    id: "bulanan",
+    title: "Paket Bulanan",
+    label: "Bulanan",
+    days: 30,
+    price: 300000,
+    features: [
+      "Tampil di halaman utama",
+      "Badge Booster emas",
+      "Prioritas dalam pencarian",
+      "Highlight visual khusus",
+      "Email notifikasi views",
+      "Analitik mendalam",
+      "Support prioritas",
+    ],
+  },
 ];
 
 export function getBoosterPackage(packageId: string): BoosterPackage | null {

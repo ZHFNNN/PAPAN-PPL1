@@ -6,6 +6,7 @@ import styles from './HomePage.module.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { properties, type Properti } from '../lib/properties';
+import { formatPrice } from '../lib/format-price';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
@@ -332,9 +333,6 @@ function RecommendationSection() {
       scrollRef.current.scrollBy({ left: dir === 'right' ? 370 : -370, behavior: 'smooth' });
     }
   };
-
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
 
   const formatListingType = (listingType: string) => {
     const normalized = listingType.trim().toUpperCase();

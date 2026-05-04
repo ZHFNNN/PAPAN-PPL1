@@ -31,12 +31,29 @@ export default function AdminNotificationsPage() {
   const router = useRouter();
   const [hasMounted, setHasMounted] = useState(false);
 
+  const sanitizeImageUrl = (rawUrl: string): string => {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return '';
+
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return parsed.toString();
+      }
+    } catch {
+      // Invalid URL; ignore for preview safety
+    }
+
+    return '';
+  };
+
   // Form state
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [filterCategory, setFilterCategory] = useState<PropertyCategory | 'ALL'>('ALL');
   const [filterCity, setFilterCity] = useState('');
+  const safeImageUrl = sanitizeImageUrl(imageUrl);
 
   // Data state
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -218,10 +235,10 @@ export default function AdminNotificationsPage() {
                   value={imageUrl}
                   onChange={e => setImageUrl(e.target.value)}
                 />
-                {imageUrl.trim() && (
+                {safeImageUrl && (
                   <div className={styles.imagePreviewBox}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imageUrl} alt="preview" className={styles.imagePreview}
+                    <img src={safeImageUrl} alt="preview" className={styles.imagePreview}
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   </div>
                 )}

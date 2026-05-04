@@ -14,6 +14,10 @@ export default function LoginPage() {
 
   const router = useRouter();
 
+  const handleGoogleLogin = async () => {
+    await signIn("google", { callbackUrl: "/auth/post-login" });
+  };
+
   const handleLogin = async () => {
     // 1. Validasi frontend
     if (!email || !password) {
@@ -181,7 +185,7 @@ export default function LoginPage() {
           {isLoading ? "Memproses..." : "Login"}
         </button>
 
-        <button className={styles.googleBtn} onClick={() => signIn("google", { callbackUrl: "/" })}>
+        <button className={styles.googleBtn} onClick={handleGoogleLogin}>
           <GoogleIcon />
           <span>Google</span>
         </button>

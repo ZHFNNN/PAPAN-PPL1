@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import styles from './HomePage.module.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { properties, type Properti } from '../lib/properties';
 import { formatPrice } from '../lib/format-price';
+import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
@@ -54,7 +54,7 @@ const HOTSPOTS = [
 const HERO_HOVER_STORAGE_KEY = 'hero-hover-spot';
 
 /* ── Property Card ── */
-function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Properti) => void }) {
+function PropertyCard({ prop, onOpen }: { prop: PropertyCardData; onOpen?: (prop: PropertyCardData) => void }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -69,17 +69,6 @@ function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Proper
     }, 1200);
     return () => clearInterval(id);
   }, [isHovered, prop.images.length]);
-
-const formatListingType = () => {
-    if ((prop as any).listingType) {
-      const normalized = String((prop as any).listingType).trim().toUpperCase();
-      if (normalized === 'RENT') return 'Sewa';
-      if (normalized === 'SELL') return 'Jual';
-    }
-    // fallback: cek dari biayaHidup atau label lain
-    if (prop.biayaHidup?.toLowerCase().includes('beli')) return 'Jual';
-    return 'Sewa';
-  };
 
   return (
     <div
@@ -121,7 +110,7 @@ const formatListingType = () => {
 
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
-        <p className={styles.cardPrice}>{prop.price}</p>
+        <p className={styles.cardPrice}>{formatPrice(prop.price)}</p>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
 
         <div className={styles.cardLokasi}>
@@ -153,7 +142,17 @@ const formatListingType = () => {
 }
 
 /* ── Property Section ── */
-function PropertySection({ title }: { title: string }) {
+function PropertySection({
+  title,
+  items,
+  isLoading,
+  error,
+}: {
+  title: string;
+  items: PropertyCardData[];
+  isLoading: boolean;
+  error: string | null;
+}) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -177,9 +176,17 @@ function PropertySection({ title }: { title: string }) {
         </div>
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
-        {properties.map((p) => (
-          <PropertyCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
-        ))}
+        {isLoading ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>Memuat properti...</p>
+        ) : error ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>{error}</p>
+        ) : items.length === 0 ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>Belum ada properti tersedia.</p>
+        ) : (
+          items.map((p) => (
+            <PropertyCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
+          ))
+        )}
       </div>
     </section>
   );
@@ -403,8 +410,8 @@ function DiscountCard({
   prop,
   onOpen,
 }: {
-  prop: Properti & { discount: number; originalPrice: string };
-  onOpen?: (prop: Properti) => void;
+  prop: PropertyCardData & { discount: number; originalPrice: string };
+  onOpen?: (prop: PropertyCardData) => void;
 }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -464,8 +471,8 @@ function DiscountCard({
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
         <div className={styles.discountPriceRow}>
-          <p className={styles.discountOriginalPrice}>{prop.originalPrice}</p>
-          <p className={styles.discountNewPrice}>{prop.price}</p>
+          <p className={styles.discountOriginalPrice}>{formatPrice(prop.originalPrice)}</p>
+          <p className={styles.discountNewPrice}>{formatPrice(prop.price)}</p>
         </div>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
 
@@ -498,14 +505,22 @@ function DiscountCard({
 }
 
 /* ── Discount Section ── */
-function DiscountSection() {
+function DiscountSection({
+  items,
+  isLoading,
+  error,
+}: {
+  items: PropertyCardData[];
+  isLoading: boolean;
+  error: string | null;
+}) {
   const router = useRouter();
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasPlayedIntro, setHasPlayedIntro] = useState(false);
   const tickerItems = Array.from({ length: 5 });
 
-  const discountProperties = properties.map((p, i) => ({
+  const discountProperties = items.map((p, i) => ({
     ...p,
     discount: [15, 20, 10, 25, 30, 18][i % 6],
     originalPrice: p.price,
@@ -636,9 +651,17 @@ function DiscountSection() {
 
         <div className={styles.discountTrackWrap}>
           <div className={styles.discountTrack}>
-            {discountProperties.map((p) => (
-              <DiscountCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
-            ))}
+            {isLoading ? (
+              <p style={{ color: '#fff', padding: '24px 6px' }}>Memuat promo...</p>
+            ) : error ? (
+              <p style={{ color: '#fff', padding: '24px 6px' }}>{error}</p>
+            ) : discountProperties.length === 0 ? (
+              <p style={{ color: '#fff', padding: '24px 6px' }}>Belum ada promo tersedia.</p>
+            ) : (
+              discountProperties.map((p) => (
+                <DiscountCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
+              ))
+            )}
           </div>
         </div>
 
@@ -675,11 +698,47 @@ function DiscountSection() {
 export default function HomePage() {
   const router = useRouter();
 
+  const [propertyItems, setPropertyItems] = useState<PropertyCardData[]>([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
+  const [propertiesError, setPropertiesError] = useState<string | null>(null);
   const [charaX, setCharaX] = useState(50);
   const heroRef = useRef<HTMLDivElement>(null);
   const [hoveredSpot, setHoveredSpot] = useState<string | null>(null);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProperties = async () => {
+      setPropertiesLoading(true);
+      setPropertiesError(null);
+
+      try {
+        const res = await fetch('/api/properties?take=18');
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        if (!cancelled) {
+          setPropertyItems(data.map(mapApiPropertyToCard));
+        }
+      } catch {
+        if (!cancelled) {
+          setPropertiesError('Gagal memuat properti.');
+          setPropertyItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setPropertiesLoading(false);
+        }
+      }
+    };
+
+    loadProperties();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     router.prefetch('/kategori/apartemen');
@@ -784,8 +843,13 @@ export default function HomePage() {
       {/* ── Konten ── */}
       <div className={styles.content}>
         <RecommendationSection />
-        <DiscountSection />
-        <PropertySection title="Best Seller" />
+        <DiscountSection items={propertyItems} isLoading={propertiesLoading} error={propertiesError} />
+        <PropertySection
+          title="Best Seller"
+          items={propertyItems}
+          isLoading={propertiesLoading}
+          error={propertiesError}
+        />
       </div>
       <Footer />
     </div>

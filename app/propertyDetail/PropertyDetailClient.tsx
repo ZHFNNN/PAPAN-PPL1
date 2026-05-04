@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
-import { properties, type Properti } from '@/lib/properties';
 import { formatPrice } from '@/lib/format-price';
 
 type PropertyDetail = {
@@ -77,31 +76,10 @@ function mapApiProperty(data: PropertyDetail): DisplayProperty {
   };
 }
 
-function mapLocalProperty(data: Properti): DisplayProperty {
-  return {
-    id: String(data.id),
-    title: data.title,
-    kategori: data.kategori,
-    price: data.price,
-    biayaHidup: data.biayaHidup,
-    lokasi: data.lokasi,
-    luas: data.luas,
-    lantai: data.lantai,
-    kt: data.kt,
-    km: data.km,
-    fasilitas: data.fasilitas,
-    images: data.images.length > 0 ? data.images : [FALLBACK_IMAGE],
-    description: `Hunian ${data.kategori.toLowerCase()} seluas ${data.luas} di kawasan ${data.lokasi}. Properti ini menawarkan ${data.kt} dan ${data.km} dengan berbagai fasilitas unggulan termasuk ${data.fasilitas.join(', ')}. Dengan ${data.lantai}, hunian ini memberikan ruang yang luas dan nyaman bagi seluruh keluarga. Lokasi yang strategis menjadikannya pilihan ideal bagi mereka yang menginginkan kenyamanan urban dengan nuansa eksklusif.`,
-    lat: null,
-    lng: null,
-  };
-}
-
 export default function PropertyDetailClient({ propertyId }: PropertyDetailClientProps) {
   const router = useRouter();
 
   const [data, setData] = useState<PropertyDetail | null>(null);
-  const [localData, setLocalData] = useState<Properti | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
@@ -126,32 +104,19 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
         const json = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          if (res.status === 404) {
-            const numericId = Number(propertyId);
-            const fallback = Number.isNaN(numericId) ? null : properties.find((item) => item.id === numericId) ?? null;
-
-            if (fallback) {
-              if (!cancelled) {
-                setLocalData(fallback);
-                setData(null);
-                setError(null);
-              }
-              return;
-            }
-          }
-
-          throw new Error(json.message ?? 'Gagal memuat detail properti.');
+          const message = json.message ?? (res.status === 404
+            ? 'Properti tidak ditemukan.'
+            : 'Gagal memuat detail properti.');
+          throw new Error(message);
         }
 
         if (!cancelled) {
           setData(json.data as PropertyDetail);
-          setLocalData(null);
           setError(null);
         }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
-          setLocalData(null);
         }
       } finally {
         if (!cancelled) {
@@ -168,10 +133,9 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
   }, [propertyId]);
 
   const prop = useMemo<DisplayProperty | null>(() => {
-    if (localData) return mapLocalProperty(localData);
     if (data) return mapApiProperty(data);
     return null;
-  }, [data, localData]);
+  }, [data]);
 
   useEffect(() => {
     setActiveImage(0);

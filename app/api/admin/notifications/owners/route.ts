@@ -18,17 +18,24 @@ export async function GET(request: Request) {
   });
   const cities = allCities.map(p => p.city).filter(Boolean) as string[];
 
-  // Ambil owners yang punya properti sesuai filter
-  const owners = await prisma.user.findMany({
-    where: {
-      role: 'OWNER',
-      properties: {
-        some: {
-          ...(category ? { category } : {}),
-          ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
-        },
+  // Ambil owner yang sudah KYC APPROVED.
+  // Jika ada filter kategori atau kota, tetap pakai properti untuk menyaring.
+  const ownerWhere: any = {
+    role: 'OWNER' as any,
+    kycStatus: 'APPROVED' as any,
+  };
+
+  if (category || city) {
+    ownerWhere.properties = {
+      some: {
+        ...(category ? { category } : {}),
+        ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
       },
-    },
+    };
+  }
+
+  const owners = await prisma.user.findMany({
+    where: ownerWhere,
     select: {
       id: true,
       name: true,
@@ -36,12 +43,6 @@ export async function GET(request: Request) {
       username: true,
       properties: {
         select: { category: true, city: true },
-        ...(category || city ? {
-          where: {
-            ...(category ? { category } : {}),
-            ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
-          },
-        } : {}),
       },
     },
   });

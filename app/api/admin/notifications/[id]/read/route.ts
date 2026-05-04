@@ -5,14 +5,14 @@ export async function PATCH(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
-  const user = await requireUser();
-  if ('error' in user) return user.error;
+  const auth = await requireUser();
+  if ('error' in auth) return auth.error;
 
   const notif = await prisma.notification.findUnique({
     where: { id: params.id },
   });
 
-  if (!notif || notif.ownerId !== user.id) {
+  if (!notif || notif.ownerId !== auth.session.user.id) {
     return Response.json({ message: 'Notifikasi tidak ditemukan.' }, { status: 404 });
   }
 

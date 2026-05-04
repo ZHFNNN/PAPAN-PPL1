@@ -2,11 +2,11 @@ import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/require-user';
 
 export async function GET() {
-  const user = await requireUser();
-  if ('error' in user) return user.error;
+  const auth = await requireUser();
+  if ('error' in auth) return auth.error;
 
   const notifications = await prisma.notification.findMany({
-    where: { ownerId: user.id },
+    where: { ownerId: auth.session.user.id },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });

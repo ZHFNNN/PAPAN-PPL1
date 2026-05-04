@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-user';
-import { PropertyCategory } from '@prisma/client';
+import { PropertyCategory, KycStatus } from '@prisma/client';
 
 export async function GET(request: Request) {
   const admin = await requireAdmin();
@@ -21,8 +21,7 @@ export async function GET(request: Request) {
   // Ambil owner yang sudah KYC APPROVED.
   // Jika ada filter kategori atau kota, tetap pakai properti untuk menyaring.
   const ownerWhere: any = {
-    role: 'OWNER' as any,
-    kycStatus: 'APPROVED' as any,
+    kycStatus: KycStatus.APPROVED,
   };
 
   if (category || city) {

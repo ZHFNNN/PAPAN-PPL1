@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-user';
-import { PropertyCategory } from '@prisma/client';
+import { PropertyCategory, KycStatus } from '@prisma/client';
 
 export async function POST(request: Request) {
   const admin = await requireAdmin();
@@ -20,17 +20,22 @@ export async function POST(request: Request) {
     return Response.json({ message: 'Judul dan pesan wajib diisi.' }, { status: 400 });
   }
 
-  // Temukan semua owner yang sesuai filter
-  const owners = await prisma.user.findMany({
-    where: {
-      role: 'OWNER',
-      properties: {
-        some: {
-          ...(category ? { category } : {}),
-          ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
-        },
+  // Temukan semua owner yang sudah KYC APPROVED.
+  const ownerFilter: any = {
+    kycStatus: KycStatus.APPROVED,
+  };
+
+  if (category || city) {
+    ownerFilter.properties = {
+      some: {
+        ...(category ? { category } : {}),
+        ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
       },
-    },
+    };
+  }
+
+  const owners = await prisma.user.findMany({
+    where: ownerFilter,
     select: { id: true },
   });
 

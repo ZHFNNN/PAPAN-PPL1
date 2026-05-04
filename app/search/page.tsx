@@ -8,35 +8,137 @@ import { formatPrice } from '@/lib/format-price';
 import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 import styles from './page.module.css';
 
-const CATEGORY_KEYWORDS: Record<'Rumah' | 'Apartemen' | 'Kosan', string[]> = {
+// ─── Types ───────────────────────────────────────────────────────────────────
+type KategoriType = 'Rumah' | 'Apartemen' | 'Kosan';
+
+type SortPrice = 'asc' | 'desc' | null;
+type SortDistance = 'asc' | 'desc' | null;
+type FilterKategori = KategoriType | null;
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const CATEGORY_KEYWORDS: Record<KategoriType, string[]> = {
   Rumah: ['rumah', 'home', 'house'],
   Apartemen: ['apartemen', 'apartment', 'apt'],
   Kosan: ['kos', 'kost', 'kosan', 'boarding'],
 };
 
+// Target lokasi referensi (bisa diganti sesuai kebutuhan)
+const TARGET_LOCATION = 'Bandung';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function normalizeText(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9\s]/gi, ' ');
 }
 
 function getTokens(value: string) {
-  return normalizeText(value)
-    .split(/\s+/)
-    .filter(Boolean);
+  return normalizeText(value).split(/\s+/).filter(Boolean);
 }
 
-function detectCategory(query: string) {
+function detectCategory(query: string): KategoriType | null {
   const tokens = getTokens(query);
-
-  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS) as Array<[
-    'Rumah' | 'Apartemen' | 'Kosan',
-    string[],
-  ]>) {
-    if (tokens.some((token) => keywords.includes(token))) {
-      return category;
-    }
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS) as Array<[KategoriType, string[]]>) {
+    if (tokens.some((token) => keywords.includes(token))) return category;
   }
-
   return null;
+}
+
+/** Extract numeric price from a formatted string like "Rp 2.500.000/bulan" */
+function parsePrice(priceStr: string): number {
+  const digits = priceStr.replace(/[^0-9]/g, '');
+  return parseInt(digits, 10) || 0;
+}
+
+/**
+ * Very naive "distance" score based on how many words in the property's lokasi
+ * match the target location string. Higher = closer.
+ * Replace with real geo-distance if you have lat/lng data.
+ */
+function distanceScore(lokasi: string, target: string): number {
+  const lokasiTokens = getTokens(lokasi);
+  const targetTokens = getTokens(target);
+  return lokasiTokens.filter((t) => targetTokens.includes(t)).length;
+}
+
+// ─── Dropdown component ───────────────────────────────────────────────────────
+interface DropdownProps {
+  label: string;
+  value: string | null;
+  options: { label: string; value: string }[];
+  onSelect: (value: string | null) => void;
+  active: boolean;
+}
+
+function FilterDropdown({ label, value, options, onSelect, active }: DropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find((o) => o.value === value)?.label ?? null;
+
+  return (
+    <div className={styles.filterChipWrapper} ref={ref}>
+      <button
+        className={`${styles.filterChip} ${active ? styles.filterChipActive : ''}`}
+        onClick={() => setOpen((prev) => !prev)}
+        type="button"
+      >
+        {active && (
+          <span
+            className={styles.filterChipClear}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(null);
+              setOpen(false);
+            }}
+          >
+            ✕
+          </span>
+        )}
+        <span className={styles.filterChipLabel}>{label}</span>
+        {active && selectedLabel && (
+          <>
+            <span className={styles.filterChipDivider}>|</span>
+            <span className={styles.filterChipValue}>{selectedLabel}</span>
+          </>
+        )}
+        <svg
+          className={`${styles.filterChipArrow} ${open ? styles.filterChipArrowOpen : ''}`}
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+        >
+          <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className={styles.filterDropdown}>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              className={`${styles.filterDropdownItem} ${value === opt.value ? styles.filterDropdownItemSelected : ''}`}
+              onClick={() => {
+                onSelect(value === opt.value ? null : opt.value);
+                setOpen(false);
+              }}
+              type="button"
+            >
+              {opt.label}
+              {value === opt.value && <span className={styles.checkmark}>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const CATEGORY_PARAM_MAP: Record<'Rumah' | 'Apartemen' | 'Kosan', string> = {

@@ -318,7 +318,9 @@ export default function AdminKycPage() {
           <button className={`${styles.navItem} ${styles.navItemActive}`}>
             <span>📋</span> Verifikasi KYC
           </button>
-          {/* Tambah menu admin lain di sini jika perlu */}
+          <button className={styles.navItem} onClick={() => router.push('/admin/notifications')}>
+            <span>🔔</span> Kirim Notifikasi
+          </button>
         </nav>
 
         <button className={styles.sidebarLogout} onClick={() => signOut({ callbackUrl: '/login' })}>

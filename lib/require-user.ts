@@ -14,6 +14,8 @@ export async function requireAuth() {
   return { session };
 }
 
+export const requireUser = requireAuth;
+
 export async function requireAdmin() {
   const auth = await requireAuth();
   if ("error" in auth) {

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import styles from '../../HomePage.module.css'; // ← pakai CSS yang sama!
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
-import { properties, Properti } from '../../../lib/properties';
+import { formatPrice } from '../../../lib/format-price';
+import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 
 // ── Tipe & helper ────────────────────────────────────────────────────────────
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
@@ -15,7 +16,7 @@ function capitalize(s: string): KategoriType {
 }
 
 // ── PropertyCard (sama persis kayak di HomePage) ─────────────────────────────
-function PropertyCard({ prop }: { prop: Properti }) {
+function PropertyCard({ prop }: { prop: PropertyCardData }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -55,7 +56,7 @@ function PropertyCard({ prop }: { prop: Properti }) {
 
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
-        <p className={styles.cardPrice}>{prop.price}</p>
+        <p className={styles.cardPrice}>{formatPrice(prop.price)}</p>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
         <div className={styles.cardLokasi}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -84,7 +85,17 @@ function PropertyCard({ prop }: { prop: Properti }) {
 }
 
 // ── PropertySection ───────────────────────────────────────────────────────────
-function PropertySection({ title, data }: { title: string; data: Properti[] }) {
+function PropertySection({
+  title,
+  data,
+  isLoading,
+  error,
+}: {
+  title: string;
+  data: PropertyCardData[];
+  isLoading: boolean;
+  error: string | null;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: 'left' | 'right') => {
@@ -103,7 +114,11 @@ function PropertySection({ title, data }: { title: string; data: Properti[] }) {
         </div>
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
-        {data.length === 0 ? (
+        {isLoading ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>Memuat properti...</p>
+        ) : error ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>{error}</p>
+        ) : data.length === 0 ? (
           <p style={{ color: '#999', padding: '20px 0' }}>
             Tidak ada properti tersedia.
           </p>
@@ -120,6 +135,9 @@ export default function KategoriPage({ kategori }: { kategori: string }) {
   const router = useRouter();
   const heroRef = useRef<HTMLDivElement>(null);
   const [charaX, setCharaX] = useState(50);
+  const [items, setItems] = useState<PropertyCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
 
@@ -128,7 +146,42 @@ export default function KategoriPage({ kategori }: { kategori: string }) {
   const validKategori = tabs.includes(aktif) ? aktif : 'Apartemen';
 
   // Filter data berdasarkan kategori
-  const filtered = properties.filter((p) => p.kategori === validKategori);
+  const filtered = items;
+  const countLabel = isLoading ? '...' : String(filtered.length);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProperties = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const category = validKategori.toUpperCase();
+        const res = await fetch(`/api/properties?category=${encodeURIComponent(category)}&take=120`);
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        if (!cancelled) {
+          setItems(data.map(mapApiPropertyToCard));
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Gagal memuat properti.');
+          setItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProperties();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [validKategori]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!heroRef.current) return;
@@ -176,12 +229,12 @@ export default function KategoriPage({ kategori }: { kategori: string }) {
             {validKategori}
           </h1>
           <p style={{ color: '#888', fontSize: 14, marginTop: 6 }}>
-            Menampilkan {filtered.length} properti
+            Menampilkan {countLabel} properti
           </p>
         </div>
 
-        <PropertySection title="Rekomendasi" data={filtered} />
-        <PropertySection title="Best Seller" data={filtered} />
+        <PropertySection title="Rekomendasi" data={filtered} isLoading={isLoading} error={error} />
+        <PropertySection title="Best Seller" data={filtered} isLoading={isLoading} error={error} />
       </div>
 
       <Footer />

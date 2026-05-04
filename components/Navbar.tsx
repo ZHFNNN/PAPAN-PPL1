@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { properties, type Properti } from "@/lib/properties";
+import {
+  type ApiProperty,
+  type PropertySuggestion,
+  mapApiPropertyToSuggestion,
+} from "@/types/property";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
@@ -27,15 +31,8 @@ export default function Navbar() {
     opacity: 0,
   });
 
-  const query = searchQuery.trim().toLowerCase();
-  const suggestions: Properti[] = query
-    ? properties
-        .filter((p) => {
-          const haystack = `${p.title} ${p.lokasi} ${p.kategori}`.toLowerCase();
-          return haystack.includes(query);
-        })
-        .slice(0, 6)
-    : [];
+  const [suggestions, setSuggestions] = useState<PropertySuggestion[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   const shouldShowSuggestions = isSearchFocused && searchQuery.trim().length > 0;
 
@@ -47,7 +44,7 @@ export default function Navbar() {
     }
   };
 
-  const handleSuggestionClick = (item: Properti) => {
+  const handleSuggestionClick = (item: PropertySuggestion) => {
     setSearchQuery(item.title);
     setIsSearchFocused(false);
     router.push(`/search?q=${encodeURIComponent(item.title)}`);
@@ -137,6 +134,42 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+
+    if (trimmed.length < 2) {
+      setSuggestions([]);
+      setIsSuggesting(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const res = await fetch(`/api/properties?q=${encodeURIComponent(trimmed)}&take=6`, {
+          signal: controller.signal,
+        });
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        setSuggestions(data.map(mapApiPropertyToSuggestion));
+      } catch {
+        if (!controller.signal.aborted) {
+          setSuggestions([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSuggesting(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
 
   return (
     <div className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-100 w-full max-w-[1040px] px-2.5 sm:px-3 md:px-4">
@@ -228,7 +261,9 @@ export default function Navbar() {
 
             {shouldShowSuggestions && (
               <div className="absolute top-[calc(100%+8px)] left-0 right-0 rounded-2xl border border-[#b9b9b9] bg-[rgba(255,255,255,0.92)] backdrop-blur-md shadow-[0_10px_24px_rgba(0,0,0,0.1)] py-1 z-[120] max-h-72 overflow-y-auto">
-                {suggestions.length > 0 ? (
+                {isSuggesting ? (
+                  <p className="px-3 py-2 text-[10px] md:text-[11px] text-[#5f5f5f]">Mencari...</p>
+                ) : suggestions.length > 0 ? (
                   suggestions.map((item) => (
                     <button
                       key={item.id}

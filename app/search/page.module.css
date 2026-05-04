@@ -15,7 +15,6 @@
   margin: 0 auto;
 }
 
-/* ── Header ── */
 .title {
   margin: 0;
   font-family: 'Poppins', sans-serif;
@@ -25,10 +24,10 @@
 }
 
 .subtitle {
-  margin: 6px 0 20px;
+  margin: 6px 0 18px;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
-  color: rgba(25, 38, 60, 0.6);
+  color: rgba(25, 38, 60, 0.68);
 }
 
 /* ── Filter bar ─────────────────────────────────────────── */
@@ -213,7 +212,7 @@
 .emptyState {
   border: 1px dashed rgba(25, 38, 60, 0.3);
   border-radius: 14px;
-  padding: 24px;
+  padding: 20px;
   color: #334155;
   font-family: 'Poppins', sans-serif;
 }
@@ -238,87 +237,21 @@
 }
 
 .card {
+  border: 1px solid rgba(25, 38, 60, 0.14);
   border-radius: 16px;
   overflow: hidden;
   background: #fff;
-  border: 1px solid rgba(25, 38, 60, 0.12);
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-  outline: none;
-}
-
-.card:hover,
-.card:focus-visible {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(25, 38, 60, 0.12);
-}
-
-/* Image carousel */
-.cardImageWrapper {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-}
-
-.cardImageTrack {
-  display: flex;
-  height: 100%;
-  transition: transform 0.35s ease;
 }
 
 .cardImage {
-  flex-shrink: 0;
   width: 100%;
-  height: 100%;
+  height: 180px;
   object-fit: cover;
+  display: block;
 }
 
-/* Dots */
-.dots {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 5px;
-  z-index: 2;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.2s;
-}
-
-.dotActive {
-  background: #fff;
-}
-
-/* Listing badge */
-.listingBadge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(25, 38, 60, 0.75);
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 20px;
-  backdrop-filter: blur(4px);
-  z-index: 2;
-}
-
-/* Card body */
 .cardBody {
-  padding: 14px;
+  padding: 12px;
 }
 
 .cardTitle {
@@ -327,51 +260,17 @@
   font-size: 14px;
   font-weight: 600;
   color: #19263c;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+}
+
+.cardLocation {
+  margin: 4px 0 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: rgba(25, 38, 60, 0.7);
 }
 
 .cardPrice {
-  margin: 6px 0 0;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f1d33;
-}
-
-.cardLokasi {
-  margin-top: 6px;
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  color: rgba(25, 38, 60, 0.6);
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.cardLokasi svg {
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.divider {
-  border: none;
-  border-top: 1px solid rgba(25, 38, 60, 0.1);
-  margin: 10px 0;
-}
-
-.cardFasilitas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.cardFasilitas span {
-  background: #f1f5f9;
-  color: #334155;
+  margin: 10px 0 0;
   font-family: 'Poppins', sans-serif;
   font-size: 13px;
   font-weight: 600;

@@ -4,6 +4,7 @@ import { Suspense, useMemo, useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { properties } from '@/lib/properties';
 import styles from './page.module.css';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -142,7 +143,6 @@ function FilterDropdown({ label, value, options, onSelect, active }: DropdownPro
 // ─── Main content ─────────────────────────────────────────────────────────────
 function SearchPageContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const q = searchParams.get('q')?.trim() ?? '';
 
   const [sortPrice, setSortPrice] = useState<SortPrice>(null);
@@ -244,14 +244,9 @@ function SearchPageContent() {
 
       <main className={styles.contentArea}>
         <div className={styles.container}>
-          {/* Header */}
           <h1 className={styles.title}>Hasil Pencarian</h1>
           <p className={styles.subtitle}>
-            {q
-              ? isLoading
-                ? `Mencari "${q}"…`
-                : `${results.length} properti ditemukan untuk "${q}"`
-              : 'Masukkan kata kunci di search bar.'}
+            {q ? `Menampilkan hasil untuk "${q}"` : 'Masukkan kata kunci di search bar.'}
           </p>
 
           {/* ── Filter bar ── */}
@@ -311,12 +306,15 @@ function SearchPageContent() {
             </>
           ) : (
             <div className={styles.grid}>
-              {results.map((item) => (
-                <PropertyCard
-                  key={item.id}
-                  item={item}
-                  onOpen={() => openDetail(item.id)}
-                />
+              {filtered.map((item) => (
+                <article key={item.id} className={styles.card}>
+                  <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
+                  <div className={styles.cardBody}>
+                    <p className={styles.cardTitle}>{item.title}</p>
+                    <p className={styles.cardLocation}>{item.lokasi}</p>
+                    <p className={styles.cardPrice}>{item.price}</p>
+                  </div>
+                </article>
               ))}
             </div>
           )}
@@ -328,10 +326,9 @@ function SearchPageContent() {
   );
 }
 
-/* ── Export ── */
 export default function SearchPage() {
   return (
-    <Suspense fallback={<main style={{ padding: '7rem 1rem' }}>Memuat pencarian…</main>}>
+    <Suspense fallback={<main className={styles.contentArea}>Memuat pencarian...</main>}>
       <SearchPageContent />
     </Suspense>
   );

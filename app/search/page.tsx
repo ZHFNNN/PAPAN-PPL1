@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { properties } from '@/lib/properties';
+import { formatPrice } from '@/lib/format-price';
+import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 import styles from './page.module.css';
 
 const CATEGORY_KEYWORDS: Record<'Rumah' | 'Apartemen' | 'Kosan', string[]> = {
@@ -38,50 +39,87 @@ function detectCategory(query: string) {
   return null;
 }
 
+const CATEGORY_PARAM_MAP: Record<'Rumah' | 'Apartemen' | 'Kosan', string> = {
+  Rumah: 'RUMAH',
+  Apartemen: 'APARTEMEN',
+  Kosan: 'KOSAN',
+};
+
+function buildPropertiesUrl(params: Record<string, string | number | undefined | null>) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    searchParams.set(key, String(value));
+  });
+  const query = searchParams.toString();
+  return query ? `/api/properties?${query}` : '/api/properties';
+}
+
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get('q')?.trim() ?? '';
 
-  const filtered = useMemo(() => {
-    if (!q) return properties;
-    const query = q.toLowerCase();
-    return properties.filter((p) => {
-      const text = `${p.title} ${p.lokasi} ${p.kategori} ${p.fasilitas.join(' ')}`.toLowerCase();
-      return text.includes(query);
-    });
+  const [items, setItems] = useState<PropertyCardData[]>([]);
+  const [recommendations, setRecommendations] = useState<PropertyCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      setRecommendations([]);
+
+      try {
+        if (!q) {
+          const res = await fetch(buildPropertiesUrl({ take: 24 }));
+          const json = await res.json().catch(() => ({}));
+          const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+          if (!cancelled) {
+            setItems(data.map(mapApiPropertyToCard));
+          }
+          return;
+        }
+
+        const res = await fetch(buildPropertiesUrl({ q, take: 60 }));
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        const mapped = data.map(mapApiPropertyToCard);
+
+        if (!cancelled) {
+          setItems(mapped);
+        }
+
+        if (mapped.length === 0) {
+          const detectedCategory = detectCategory(q);
+          const categoryParam = detectedCategory ? CATEGORY_PARAM_MAP[detectedCategory] : null;
+          const recRes = await fetch(buildPropertiesUrl({ category: categoryParam, take: 6 }));
+          const recJson = await recRes.json().catch(() => ({}));
+          const recData = Array.isArray(recJson.data) ? (recJson.data as ApiProperty[]) : [];
+          if (!cancelled) {
+            setRecommendations(recData.map(mapApiPropertyToCard));
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Gagal memuat pencarian.');
+          setItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [q]);
-
-  const recommendations = useMemo(() => {
-    if (!q || filtered.length > 0) return [];
-
-    const detectedCategory = detectCategory(q);
-    const categoryTokens = new Set(
-      Object.values(CATEGORY_KEYWORDS)
-        .flat()
-        .map((token) => token.toLowerCase()),
-    );
-    const queryTokens = getTokens(q).filter((token) => !categoryTokens.has(token));
-
-    const candidates = detectedCategory
-      ? properties.filter((property) => property.kategori === detectedCategory)
-      : properties;
-
-    return [...candidates]
-      .map((property) => {
-        const searchableText = normalizeText(
-          `${property.title} ${property.lokasi} ${property.kategori} ${property.fasilitas.join(' ')}`,
-        );
-        const score = queryTokens.reduce(
-          (acc, token) => (searchableText.includes(token) ? acc + 1 : acc),
-          0,
-        );
-
-        return { property, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6)
-      .map((item) => item.property);
-  }, [q, filtered.length]);
 
   return (
     <div className={styles.page}>
@@ -94,7 +132,11 @@ function SearchPageContent() {
             {q ? `Menampilkan hasil untuk "${q}"` : 'Masukkan kata kunci di search bar.'}
           </p>
 
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className={styles.emptyState}>Memuat pencarian...</div>
+          ) : error ? (
+            <div className={styles.emptyState}>{error}</div>
+          ) : items.length === 0 ? (
             <>
               <div className={styles.emptyState}>
                 Properti yang kamu cari tidak ada.
@@ -111,7 +153,7 @@ function SearchPageContent() {
                         <div className={styles.cardBody}>
                           <p className={styles.cardTitle}>{item.title}</p>
                           <p className={styles.cardLocation}>{item.lokasi}</p>
-                          <p className={styles.cardPrice}>{item.price}</p>
+                          <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
                         </div>
                       </article>
                     ))}
@@ -121,13 +163,13 @@ function SearchPageContent() {
             </>
           ) : (
             <div className={styles.grid}>
-              {filtered.map((item) => (
+              {items.map((item) => (
                 <article key={item.id} className={styles.card}>
                   <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
                   <div className={styles.cardBody}>
                     <p className={styles.cardTitle}>{item.title}</p>
                     <p className={styles.cardLocation}>{item.lokasi}</p>
-                    <p className={styles.cardPrice}>{item.price}</p>
+                    <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
                   </div>
                 </article>
               ))}

@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
 import { properties, type Properti } from '@/lib/properties';
+import { formatPrice } from '@/lib/format-price';
 
 type PropertyDetail = {
   id: string;
@@ -51,12 +52,6 @@ type DisplayProperty = {
 };
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200&q=80';
-
-function formatPrice(price: string) {
-  const numeric = Number(price);
-  if (Number.isNaN(numeric)) return price;
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(numeric);
-}
 
 function mapApiProperty(data: PropertyDetail): DisplayProperty {
   const lokasi = [data.address, data.neighbourhood, data.district, data.city]

@@ -31,26 +31,212 @@
   color: rgba(25, 38, 60, 0.6);
 }
 
-/* ── Grid ── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+/* ── Filter bar ─────────────────────────────────────────── */
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-/* ── Empty / Error state ── */
+/* ── Filter chip wrapper (anchor for dropdown) ──────────── */
+.filterChipWrapper {
+  position: relative;
+}
+
+/* ── Chip button ────────────────────────────────────────── */
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1.5px solid rgba(25, 38, 60, 0.22);
+  border-radius: 999px;
+  background: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: #19263c;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.filterChip:hover {
+  border-color: rgba(25, 38, 60, 0.45);
+  box-shadow: 0 1px 4px rgba(25, 38, 60, 0.08);
+}
+
+/* Active state – chip has a value selected */
+.filterChipActive {
+  border-color: #19263c;
+  background: #19263c;
+  color: #ffffff;
+}
+
+.filterChipActive:hover {
+  border-color: #19263c;
+  background: #2a3a55;
+  box-shadow: 0 1px 6px rgba(25, 38, 60, 0.18);
+}
+
+/* ✕ clear button inside chip */
+.filterChipClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.filterChipClear:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.filterChipLabel {
+  font-weight: 500;
+}
+
+/* Divider "|" between label and value */
+.filterChipDivider {
+  opacity: 0.5;
+  font-size: 11px;
+}
+
+.filterChipValue {
+  font-weight: 600;
+  color: #7eb3ff;
+}
+
+/* Arrow icon */
+.filterChipArrow {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+  opacity: 0.7;
+}
+
+.filterChipArrowOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ─────────────────────────────────────── */
+.filterDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  min-width: 170px;
+  background: #ffffff;
+  border: 1.5px solid rgba(25, 38, 60, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(25, 38, 60, 0.12);
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filterDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: #19263c;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  gap: 8px;
+}
+
+.filterDropdownItem:hover {
+  background: rgba(25, 38, 60, 0.05);
+}
+
+.filterDropdownItemSelected {
+  font-weight: 600;
+  background: rgba(25, 38, 60, 0.04);
+}
+
+.checkmark {
+  font-size: 13px;
+  color: #19263c;
+  flex-shrink: 0;
+}
+
+/* ── Clear all button ───────────────────────────────────── */
+.clearAllBtn {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(25, 38, 60, 0.55);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+
+.clearAllBtn:hover {
+  color: #19263c;
+  text-decoration-color: rgba(25, 38, 60, 0.4);
+}
+
+/* ── Empty state ────────────────────────────────────────── */
 .emptyState {
   border: 1px dashed rgba(25, 38, 60, 0.3);
   border-radius: 14px;
   padding: 24px;
   color: #334155;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
 }
 
-/* ───────────────────────────────────────────
-   CARD — sama persis kayak HomePage
-─────────────────────────────────────────── */
+.recommendationSection {
+  margin-top: 20px;
+}
+
+.recommendationTitle {
+  margin: 0 0 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #19263c;
+}
+
+/* ── Grid & Cards ───────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .card {
   border-radius: 16px;
   overflow: hidden;
@@ -187,45 +373,12 @@
   background: #f1f5f9;
   color: #334155;
   font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f1d33;
 }
 
-/* ── Skeleton ── */
-.skeletonCard {
-  border-radius: 16px;
-  overflow: hidden;
-  background: #fff;
-  border: 1px solid rgba(25, 38, 60, 0.1);
-}
-
-.skeletonImage {
-  width: 100%;
-  height: 200px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-.skeletonBody {
-  padding: 14px;
-}
-
-.skeletonLine {
-  height: 12px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ── Responsive ── */
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -241,7 +394,7 @@
     grid-template-columns: 1fr;
   }
 
-  .title {
-    font-size: 22px;
+  .filterBar {
+    gap: 6px;
   }
 }

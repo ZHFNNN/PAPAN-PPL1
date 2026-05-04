@@ -1,205 +1,242 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState, useCallback } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useMemo, useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
 
-/* ── Types ── */
-type PropertyItem = {
-  id: string;
-  title: string;
-  listingType: string;
-  images: string[];
-  coverImageUrl?: string | null;
-  address?: string | null;
-  neighbourhood?: string | null;
-  district?: string | null;
-  city?: string | null;
-  price: number;
-  fasilitas?: string[];
+// ─── Types ───────────────────────────────────────────────────────────────────
+type KategoriType = 'Rumah' | 'Apartemen' | 'Kosan';
+
+type SortPrice = 'asc' | 'desc' | null;
+type SortDistance = 'asc' | 'desc' | null;
+type FilterKategori = KategoriType | null;
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const CATEGORY_KEYWORDS: Record<KategoriType, string[]> = {
+  Rumah: ['rumah', 'home', 'house'],
+  Apartemen: ['apartemen', 'apartment', 'apt'],
+  Kosan: ['kos', 'kost', 'kosan', 'boarding'],
 };
 
-/* ── Helpers ── */
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(price);
+// Target lokasi referensi (bisa diganti sesuai kebutuhan)
+const TARGET_LOCATION = 'Bandung';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function normalizeText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9\s]/gi, ' ');
 }
 
-function formatListingType(type: string) {
-  const n = type.trim().toUpperCase();
-  if (n === 'RENT') return 'Sewa';
-  if (n === 'SELL') return 'Jual';
-  return type;
+function getTokens(value: string) {
+  return normalizeText(value).split(/\s+/).filter(Boolean);
 }
 
-function formatLocation(item: PropertyItem) {
-  return (
-    [item.address, item.neighbourhood, item.district, item.city]
-      .filter((v) => Boolean(v?.trim()))
-      .join(', ') || 'Lokasi belum tersedia'
-  );
+function detectCategory(query: string): KategoriType | null {
+  const tokens = getTokens(query);
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS) as Array<[KategoriType, string[]]>) {
+    if (tokens.some((token) => keywords.includes(token))) return category;
+  }
+  return null;
 }
 
-/* ── Property Card (sama style kayak HomePage) ── */
-function PropertyCard({ item, onOpen }: { item: PropertyItem; onOpen: () => void }) {
-  const images = item.images?.length > 0 ? item.images : [item.coverImageUrl ?? '/images/bgHomeKosan.jpeg'];
-  const [imgIndex, setImgIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+/** Extract numeric price from a formatted string like "Rp 2.500.000/bulan" */
+function parsePrice(priceStr: string): number {
+  const digits = priceStr.replace(/[^0-9]/g, '');
+  return parseInt(digits, 10) || 0;
+}
+
+/**
+ * Very naive "distance" score based on how many words in the property's lokasi
+ * match the target location string. Higher = closer.
+ * Replace with real geo-distance if you have lat/lng data.
+ */
+function distanceScore(lokasi: string, target: string): number {
+  const lokasiTokens = getTokens(lokasi);
+  const targetTokens = getTokens(target);
+  return lokasiTokens.filter((t) => targetTokens.includes(t)).length;
+}
+
+// ─── Dropdown component ───────────────────────────────────────────────────────
+interface DropdownProps {
+  label: string;
+  value: string | null;
+  options: { label: string; value: string }[];
+  onSelect: (value: string | null) => void;
+  active: boolean;
+}
+
+function FilterDropdown({ label, value, options, onSelect, active }: DropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isHovered || images.length <= 1) return;
-    const id = setInterval(() => {
-      setImgIndex((prev) => (prev + 1) % images.length);
-    }, 1200);
-    return () => clearInterval(id);
-  }, [isHovered, images.length]);
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find((o) => o.value === value)?.label ?? null;
 
   return (
-    <article
-      className={styles.card}
-      role="button"
-      tabIndex={0}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
-    >
-      {/* Image carousel */}
-      <div className={styles.cardImageWrapper}>
-        <div
-          className={styles.cardImageTrack}
-          style={{ transform: `translateX(-${imgIndex * 100}%)` }}
-        >
-          {images.map((src, i) => (
-            <img key={i} src={src} alt={item.title} className={styles.cardImage} />
-          ))}
-        </div>
-        {images.length > 1 && (
-          <div className={styles.dots}>
-            {images.map((_, i) => (
-              <button
-                key={i}
-                className={`${styles.dot} ${i === imgIndex ? styles.dotActive : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setImgIndex(i);
-                }}
-              />
-            ))}
-          </div>
+    <div className={styles.filterChipWrapper} ref={ref}>
+      <button
+        className={`${styles.filterChip} ${active ? styles.filterChipActive : ''}`}
+        onClick={() => setOpen((prev) => !prev)}
+        type="button"
+      >
+        {active && (
+          <span
+            className={styles.filterChipClear}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(null);
+              setOpen(false);
+            }}
+          >
+            ✕
+          </span>
         )}
-        <span className={styles.listingBadge}>{formatListingType(item.listingType)}</span>
-      </div>
-
-      {/* Card body */}
-      <div className={styles.cardBody}>
-        <h3 className={styles.cardTitle}>{item.title}</h3>
-        <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
-
-        <div className={styles.cardLokasi}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>{formatLocation(item)}</span>
-        </div>
-
-        {item.fasilitas && item.fasilitas.length > 0 && (
+        <span className={styles.filterChipLabel}>{label}</span>
+        {active && selectedLabel && (
           <>
-            <hr className={styles.divider} />
-            <div className={styles.cardFasilitas}>
-              {item.fasilitas.slice(0, 4).map((f) => (
-                <span key={f}>{f}</span>
-              ))}
-            </div>
+            <span className={styles.filterChipDivider}>|</span>
+            <span className={styles.filterChipValue}>{selectedLabel}</span>
           </>
         )}
-      </div>
-    </article>
-  );
-}
+        <svg
+          className={`${styles.filterChipArrow} ${open ? styles.filterChipArrowOpen : ''}`}
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="none"
+        >
+          <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
-/* ── Skeleton Card ── */
-function SkeletonCard() {
-  return (
-    <div className={styles.skeletonCard}>
-      <div className={styles.skeletonImage} />
-      <div className={styles.skeletonBody}>
-        <div className={styles.skeletonLine} style={{ width: '70%' }} />
-        <div className={styles.skeletonLine} style={{ width: '45%', marginTop: 6 }} />
-        <div className={styles.skeletonLine} style={{ width: '60%', marginTop: 10 }} />
-      </div>
+      {open && (
+        <div className={styles.filterDropdown}>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              className={`${styles.filterDropdownItem} ${value === opt.value ? styles.filterDropdownItemSelected : ''}`}
+              onClick={() => {
+                onSelect(value === opt.value ? null : opt.value);
+                setOpen(false);
+              }}
+              type="button"
+            >
+              {opt.label}
+              {value === opt.value && <span className={styles.checkmark}>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-/* ── Main Content ── */
+// ─── Main content ─────────────────────────────────────────────────────────────
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const q = searchParams.get('q')?.trim() ?? '';
 
-  const [results, setResults] = useState<PropertyItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [sortPrice, setSortPrice] = useState<SortPrice>(null);
+  const [sortDistance, setSortDistance] = useState<SortDistance>(null);
+  const [filterKategori, setFilterKategori] = useState<FilterKategori>(null);
 
-  const abortRef = useRef<AbortController | null>(null);
+  const priceOptions = [
+    { label: 'Termurah', value: 'asc' },
+    { label: 'Termahal', value: 'desc' },
+  ];
 
-  const fetchResults = useCallback(async (query: string) => {
-    if (abortRef.current) abortRef.current.abort();
-    abortRef.current = new AbortController();
+  const distanceOptions = [
+    { label: 'Terdekat', value: 'asc' },
+    { label: 'Terjauh', value: 'desc' },
+  ];
 
-    setIsLoading(true);
-    setError(null);
-    setHasSearched(true);
+  const kategoriOptions: { label: string; value: KategoriType }[] = [
+    { label: 'Rumah', value: 'Rumah' },
+    { label: 'Apartemen', value: 'Apartemen' },
+    { label: 'Kosan', value: 'Kosan' },
+  ];
 
-    try {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(query)}`,
-        { signal: abortRef.current.signal }
-      );
+  // Check if any filter is active
+  const hasActiveFilter = sortPrice !== null || sortDistance !== null || filterKategori !== null;
 
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error ?? 'Gagal mengambil data.');
-      }
+  function clearAllFilters() {
+    setSortPrice(null);
+    setSortDistance(null);
+    setFilterKategori(null);
+  }
 
-      const data = await res.json();
-      setResults(Array.isArray(data.data) ? data.data : []);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
-      setResults([]);
-    } finally {
-      setIsLoading(false);
+  const filtered = useMemo(() => {
+    let result = [...properties];
+
+    // ── Text search: nama properti dan lokasi ──
+    if (q) {
+      const query = q.toLowerCase();
+      result = result.filter((p) => {
+        const text = `${p.title} ${p.lokasi}`.toLowerCase();
+        return text.includes(query);
+      });
     }
-  }, []);
 
-  useEffect(() => {
-    if (!q) {
-      setResults([]);
-      setHasSearched(false);
-      return;
+    // ── Kategori filter ──
+    if (filterKategori) {
+      result = result.filter((p) => p.kategori === filterKategori);
     }
-    fetchResults(q);
-  }, [q, fetchResults]);
 
-  const openDetail = (id: string) => {
-    router.push(`/propertyDetail/${encodeURIComponent(id)}`);
-  };
+    // ── Sorting: price takes priority over distance ──
+    if (sortPrice) {
+      result.sort((a, b) => {
+        const diff = parsePrice(a.price) - parsePrice(b.price);
+        return sortPrice === 'asc' ? diff : -diff;
+      });
+    } else if (sortDistance) {
+      result.sort((a, b) => {
+        const scoreA = distanceScore(a.lokasi, TARGET_LOCATION);
+        const scoreB = distanceScore(b.lokasi, TARGET_LOCATION);
+        // higher score = closer
+        return sortDistance === 'asc' ? scoreB - scoreA : scoreA - scoreB;
+      });
+    }
+
+    return result;
+  }, [q, sortPrice, sortDistance, filterKategori]);
+
+  const recommendations = useMemo(() => {
+    if (!q || filtered.length > 0) return [];
+
+    const detectedCategory = detectCategory(q);
+    const categoryTokens = new Set(
+      Object.values(CATEGORY_KEYWORDS).flat().map((t) => t.toLowerCase()),
+    );
+    const queryTokens = getTokens(q).filter((t) => !categoryTokens.has(t));
+
+    const candidates = detectedCategory
+      ? properties.filter((p) => p.kategori === detectedCategory)
+      : properties;
+
+    return [...candidates]
+      .map((property) => {
+        const searchableText = normalizeText(
+          `${property.title} ${property.lokasi} ${property.kategori} ${property.fasilitas.join(' ')}`,
+        );
+        const score = queryTokens.reduce(
+          (acc, token) => (searchableText.includes(token) ? acc + 1 : acc),
+          0,
+        );
+        return { property, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map((item) => item.property);
+  }, [q, filtered.length]);
 
   return (
     <div className={styles.page}>
@@ -217,32 +254,62 @@ function SearchPageContent() {
               : 'Masukkan kata kunci di search bar.'}
           </p>
 
-          {/* Error */}
-          {error && (
-            <div className={styles.emptyState}>
-              ⚠️ {error}
-            </div>
-          )}
+          {/* ── Filter bar ── */}
+          <div className={styles.filterBar}>
+            <FilterDropdown
+              label="Harga"
+              value={sortPrice}
+              options={priceOptions}
+              onSelect={(v) => setSortPrice(v as SortPrice)}
+              active={sortPrice !== null}
+            />
+            <FilterDropdown
+              label="Jarak"
+              value={sortDistance}
+              options={distanceOptions}
+              onSelect={(v) => setSortDistance(v as SortDistance)}
+              active={sortDistance !== null}
+            />
+            <FilterDropdown
+              label="Jenis Properti"
+              value={filterKategori}
+              options={kategoriOptions}
+              onSelect={(v) => setFilterKategori(v as FilterKategori)}
+              active={filterKategori !== null}
+            />
+            {hasActiveFilter && (
+              <button className={styles.clearAllBtn} onClick={clearAllFilters} type="button">
+                Hapus semua
+              </button>
+            )}
+          </div>
 
-          {/* Loading skeletons */}
-          {isLoading && (
-            <div className={styles.grid}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          )}
+          {filtered.length === 0 ? (
+            <>
+              <div className={styles.emptyState}>
+                Properti yang kamu cari tidak ada.
+                {q ? ` Coba kata kunci lain untuk "${q}".` : ''}
+              </div>
 
-          {/* Empty */}
-          {!isLoading && hasSearched && results.length === 0 && !error && (
-            <div className={styles.emptyState}>
-              Properti yang kamu cari tidak ditemukan.
-              {q ? ` Coba kata kunci lain untuk "${q}".` : ''}
-            </div>
-          )}
-
-          {/* Results */}
-          {!isLoading && results.length > 0 && (
+              {recommendations.length > 0 && (
+                <section className={styles.recommendationSection}>
+                  <h2 className={styles.recommendationTitle}>Rekomendasi properti mirip</h2>
+                  <div className={styles.grid}>
+                    {recommendations.map((item) => (
+                      <article key={`rec-${item.id}`} className={styles.card}>
+                        <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
+                        <div className={styles.cardBody}>
+                          <p className={styles.cardTitle}>{item.title}</p>
+                          <p className={styles.cardLocation}>{item.lokasi}</p>
+                          <p className={styles.cardPrice}>{item.price}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          ) : (
             <div className={styles.grid}>
               {results.map((item) => (
                 <PropertyCard

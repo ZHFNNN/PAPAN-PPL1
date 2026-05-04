@@ -3,18 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import { BOOST_PACKAGES, type BoosterPackage } from '@/lib/booster';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type BoostPackage = {
-  id: string;
-  title: string;
-  label: string;
-  days: number;
-  price: number;
-  features: string[];
-  highlighted?: boolean;
-};
 
 type Property = {
   id: string;
@@ -45,53 +36,6 @@ type Toast = {
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const BOOST_PACKAGES: BoostPackage[] = [
-  {
-    id: 'harian',
-    title: 'Paket Harian',
-    label: 'Harian',
-    days: 1,
-    price: 20000,
-    features: [
-      'Tampil di halaman utama',
-      'Badge Booster emas',
-      'Prioritas dalam pencarian',
-      'Highlight visual khusus',
-    ],
-  },
-  {
-    id: 'mingguan',
-    title: 'Paket Mingguan',
-    label: 'Mingguan',
-    days: 7,
-    price: 100000,
-    highlighted: true,
-    features: [
-      'Tampil di halaman utama',
-      'Badge Booster emas',
-      'Prioritas dalam pencarian',
-      'Highlight visual khusus',
-      'Email notifikasi views',
-    ],
-  },
-  {
-    id: 'bulanan',
-    title: 'Paket Bulanan',
-    label: 'Bulanan',
-    days: 30,
-    price: 300000,
-    features: [
-      'Tampil di halaman utama',
-      'Badge Booster emas',
-      'Prioritas dalam pencarian',
-      'Highlight visual khusus',
-      'Email notifikasi views',
-      'Analitik mendalam',
-      'Support prioritas',
-    ],
-  },
-];
 
 const PAYMENT_METHODS: { id: PaymentMethod; label: string; type: 'qris' | 'va' }[] = [
   { id: 'QRIS', label: 'QRIS', type: 'qris' },
@@ -155,7 +99,7 @@ function CartDrawer({
   onClose: () => void;
   cart: CartItem[];
   onRemove: (idx: number) => void;
-  onChangePackage: (idx: number, pkg: BoostPackage) => void;
+  onChangePackage: (idx: number, pkg: BoosterPackage) => void;
   onChangeProperty: (idx: number, prop: Property) => void;
   onCheckout: (method: PaymentMethod) => void;
   isProcessing: boolean;
@@ -355,8 +299,8 @@ function CartBtn({ count, onClick }: { count: number; onClick: () => void }) {
 // ─── Step 1: Pilih Paket ──────────────────────────────────────────────────────
 
 function StepPackage({ selectedPkg, onSelect, cartCount, onCartClick }: {
-  selectedPkg: BoostPackage | null;
-  onSelect: (pkg: BoostPackage) => void;
+  selectedPkg: BoosterPackage | null;
+  onSelect: (pkg: BoosterPackage) => void;
   cartCount: number;
   onCartClick: () => void;
 }) {
@@ -404,7 +348,7 @@ function StepPackage({ selectedPkg, onSelect, cartCount, onCartClick }: {
 
 function StepProperty({ properties, selectedPkg, isLoading, onAddToCart, cartCount, onCartClick, cart }: {
   properties: Property[];
-  selectedPkg: BoostPackage;
+  selectedPkg: BoosterPackage;
   isLoading: boolean;
   onAddToCart: (property: Property) => void;
   cartCount: number;
@@ -468,7 +412,7 @@ type Step = 'package' | 'property';
 export default function OwnerBoosterPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>('package');
-  const [selectedPkg, setSelectedPkg] = useState<BoostPackage | null>(null);
+  const [selectedPkg, setSelectedPkg] = useState<BoosterPackage | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -493,7 +437,7 @@ export default function OwnerBoosterPage() {
     }
   }, [step]);
 
-  const handleSelectPackage = (pkg: BoostPackage) => {
+  const handleSelectPackage = (pkg: BoosterPackage) => {
     setSelectedPkg(pkg);
     setStep('property');
   };
@@ -515,7 +459,7 @@ export default function OwnerBoosterPage() {
 
   const handleRemoveFromCart = (idx: number) => setCart(prev => prev.filter((_, i) => i !== idx));
 
-  const handleChangePackage = (idx: number, pkg: BoostPackage) => {
+  const handleChangePackage = (idx: number, pkg: BoosterPackage) => {
     setCart(prev => prev.map((item, i) =>
       i === idx ? { ...item, packageId: pkg.id, packageTitle: pkg.title, days: pkg.days, price: pkg.price } : item
     ));

@@ -8,7 +8,6 @@ import { formatPrice } from '@/lib/format-price';
 import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 import styles from './page.module.css';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 type KategoriType = 'Rumah' | 'Apartemen' | 'Kosan';
 
 type SortPrice = 'asc' | 'desc' | null;

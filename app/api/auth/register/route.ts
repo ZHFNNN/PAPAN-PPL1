@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 const registerSchema = z.object({
+  name: z.string().min(1).max(100),
   username: z.string().min(3).max(30),
   email: z.string().email(),
   phoneNumber: z.string().min(8).max(20),
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { username, email, phoneNumber, password } = parsed.data;
+    const { name, username, email, phoneNumber, password } = parsed.data;
 
     const [existingEmail, existingUsername, existingPhone] = await Promise.all([
       prisma.user.findUnique({ where: { email } }),
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     const user = await prisma.user.create({
       data: {
         username,
-        name: username,
+        name,
         email,
         phoneNumber,
         passwordHash

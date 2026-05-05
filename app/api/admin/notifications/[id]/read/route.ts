@@ -3,13 +3,15 @@ import { requireUser } from '@/lib/require-user';
 
 export async function PATCH(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireUser();
   if ('error' in auth) return auth.error;
 
+  const { id } = await params;
+
   const notif = await prisma.notification.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!notif || notif.ownerId !== auth.session.user.id) {
@@ -17,7 +19,7 @@ export async function PATCH(
   }
 
   await prisma.notification.update({
-    where: { id: params.id },
+    where: { id },
     data: { isRead: true },
   });
 

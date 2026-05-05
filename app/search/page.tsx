@@ -7,7 +7,6 @@ import Footer from '@/components/Footer';
 import { properties } from '@/lib/properties';
 import styles from './page.module.css';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 type KategoriType = 'Rumah' | 'Apartemen' | 'Kosan';
 
 type SortPrice = 'asc' | 'desc' | null;

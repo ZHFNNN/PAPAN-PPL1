@@ -48,6 +48,7 @@ type DisplayProperty = {
   description: string;
   lat: number | null;
   lng: number | null;
+  ownerName: string;
 };
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200&q=80';
@@ -73,6 +74,7 @@ function mapApiProperty(data: PropertyDetail): DisplayProperty {
     description: data.description ?? 'Tidak ada deskripsi.',
     lat: data.lat ?? null,
     lng: data.lng ?? null,
+    ownerName: data.owner?.name ?? data.owner?.username ?? 'Pemilik Properti',
   };
 }
 
@@ -252,7 +254,7 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
               <div className={styles.agentRow}>
                 <div className={styles.agentAvatar}>👤</div>
                 <div className={styles.agentInfo}>
-                  <p className={styles.agentName}>Budi Santoso</p>
+                  <p className={styles.agentName}>{prop.ownerName}</p>
                   <p className={styles.agentRole}>Pemilik Properti</p>
                 </div>
                 <button className={styles.agentContactBtn}>Hubungi</button>

@@ -1,7 +1,8 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/format-price';
@@ -9,10 +10,11 @@ import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@
 import styles from './page.module.css';
 
 type KategoriType = 'Rumah' | 'Apartemen' | 'Kosan';
+type CityType = 'Jakarta' | 'Bandung' | 'Yogyakarta' | 'Semarang' | 'Surabaya';
 
 type SortPrice = 'asc' | 'desc' | null;
-type SortDistance = 'asc' | 'desc' | null;
 type FilterKategori = KategoriType | null;
+type FilterCity = CityType | null;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CATEGORY_KEYWORDS: Record<KategoriType, string[]> = {
@@ -21,8 +23,13 @@ const CATEGORY_KEYWORDS: Record<KategoriType, string[]> = {
   Kosan: ['kos', 'kost', 'kosan', 'boarding'],
 };
 
-// Target lokasi referensi (bisa diganti sesuai kebutuhan)
-const TARGET_LOCATION = 'Bandung';
+const CITY_KEYWORDS: Record<CityType, string[]> = {
+  Jakarta: ['jakarta'],
+  Bandung: ['bandung'],
+  Yogyakarta: ['yogyakarta', 'jogja', 'jogjakarta', 'yogya'],
+  Semarang: ['semarang'],
+  Surabaya: ['surabaya'],
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function normalizeText(value: string) {
@@ -41,21 +48,16 @@ function detectCategory(query: string): KategoriType | null {
   return null;
 }
 
+function matchesCity(cityField: string, filterCity: CityType): boolean {
+  const normalized = normalizeText(cityField);
+  const keywords = CITY_KEYWORDS[filterCity].map((k) => k.toLowerCase());
+  return keywords.some((kw) => normalized.includes(kw));
+}
+
 /** Extract numeric price from a formatted string like "Rp 2.500.000/bulan" */
 function parsePrice(priceStr: string): number {
   const digits = priceStr.replace(/[^0-9]/g, '');
   return parseInt(digits, 10) || 0;
-}
-
-/**
- * Very naive "distance" score based on how many words in the property's lokasi
- * match the target location string. Higher = closer.
- * Replace with real geo-distance if you have lat/lng data.
- */
-function distanceScore(lokasi: string, target: string): number {
-  const lokasiTokens = getTokens(lokasi);
-  const targetTokens = getTokens(target);
-  return lokasiTokens.filter((t) => targetTokens.includes(t)).length;
 }
 
 // ─── Dropdown component ───────────────────────────────────────────────────────
@@ -140,12 +142,7 @@ function FilterDropdown({ label, value, options, onSelect, active }: DropdownPro
   );
 }
 
-const CATEGORY_PARAM_MAP: Record<'Rumah' | 'Apartemen' | 'Kosan', string> = {
-  Rumah: 'RUMAH',
-  Apartemen: 'APARTEMEN',
-  Kosan: 'KOSAN',
-};
-
+// ─── URL builder ──────────────────────────────────────────────────────────────
 function buildPropertiesUrl(params: Record<string, string | number | undefined | null>) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -156,15 +153,49 @@ function buildPropertiesUrl(params: Record<string, string | number | undefined |
   return query ? `/api/properties?${query}` : '/api/properties';
 }
 
+// ─── Main content ─────────────────────────────────────────────────────────────
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get('q')?.trim() ?? '';
 
-  const [items, setItems] = useState<PropertyCardData[]>([]);
+  const [allItems, setAllItems] = useState<PropertyCardData[]>([]);
   const [recommendations, setRecommendations] = useState<PropertyCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter & sort states
+  const [sortPrice, setSortPrice] = useState<SortPrice>(null);
+  const [filterKategori, setFilterKategori] = useState<FilterKategori>(null);
+  const [filterCity, setFilterCity] = useState<FilterCity>(null);
+
+  const priceOptions = [
+    { label: 'Termurah', value: 'asc' },
+    { label: 'Termahal', value: 'desc' },
+  ];
+
+  const kategoriOptions: { label: string; value: KategoriType }[] = [
+    { label: 'Rumah', value: 'Rumah' },
+    { label: 'Apartemen', value: 'Apartemen' },
+    { label: 'Kosan', value: 'Kosan' },
+  ];
+
+  const cityOptions: { label: string; value: CityType }[] = [
+    { label: 'Jakarta', value: 'Jakarta' },
+    { label: 'Bandung', value: 'Bandung' },
+    { label: 'Yogyakarta', value: 'Yogyakarta' },
+    { label: 'Semarang', value: 'Semarang' },
+    { label: 'Surabaya', value: 'Surabaya' },
+  ];
+
+  const hasActiveFilter = sortPrice !== null || filterKategori !== null || filterCity !== null;
+
+  function clearAllFilters() {
+    setSortPrice(null);
+    setFilterKategori(null);
+    setFilterCity(null);
+  }
+
+  // Fetch data from API
   useEffect(() => {
     let cancelled = false;
 
@@ -175,11 +206,11 @@ function SearchPageContent() {
 
       try {
         if (!q) {
-          const res = await fetch(buildPropertiesUrl({ take: 24 }));
+          const res = await fetch(buildPropertiesUrl({ take: 60 }));
           const json = await res.json().catch(() => ({}));
           const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
           if (!cancelled) {
-            setItems(data.map(mapApiPropertyToCard));
+            setAllItems(data.map(mapApiPropertyToCard));
           }
           return;
         }
@@ -190,13 +221,15 @@ function SearchPageContent() {
         const mapped = data.map(mapApiPropertyToCard);
 
         if (!cancelled) {
-          setItems(mapped);
+          setAllItems(mapped);
         }
 
+        // Fetch recommendations only if no results at all (before client filters)
         if (mapped.length === 0) {
           const detectedCategory = detectCategory(q);
-          const categoryParam = detectedCategory ? CATEGORY_PARAM_MAP[detectedCategory] : null;
-          const recRes = await fetch(buildPropertiesUrl({ category: categoryParam, take: 6 }));
+          const recRes = await fetch(
+            buildPropertiesUrl({ kategori: detectedCategory ?? undefined, take: 6 }),
+          );
           const recJson = await recRes.json().catch(() => ({}));
           const recData = Array.isArray(recJson.data) ? (recJson.data as ApiProperty[]) : [];
           if (!cancelled) {
@@ -206,7 +239,7 @@ function SearchPageContent() {
       } catch {
         if (!cancelled) {
           setError('Gagal memuat pencarian.');
-          setItems([]);
+          setAllItems([]);
         }
       } finally {
         if (!cancelled) {
@@ -216,11 +249,36 @@ function SearchPageContent() {
     };
 
     load();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [q]);
+
+  // Client-side filter + sort on top of fetched data
+  const filteredItems = useMemo(() => {
+    let result = [...allItems];
+
+    // Filter by city
+    if (filterCity) {
+      result = result.filter((p) => matchesCity(p.lokasi ?? '', filterCity));
+    }
+
+    // Filter by kategori
+    if (filterKategori) {
+      result = result.filter((p) => p.kategori === filterKategori);
+    }
+
+    // Sort by price
+    if (sortPrice) {
+      result.sort((a, b) => {
+        const diff = parsePrice(String(a.price)) - parsePrice(String(b.price));
+        return sortPrice === 'asc' ? diff : -diff;
+      });
+    }
+
+    return result;
+  }, [allItems, filterCity, filterKategori, sortPrice]);
+
+  // Show "no results" only if API also returned nothing (recommendations are API-based)
+  const apiReturnedEmpty = !isLoading && !error && allItems.length === 0 && q !== '';
 
   return (
     <div className={styles.page}>
@@ -233,11 +291,41 @@ function SearchPageContent() {
             {q ? `Menampilkan hasil untuk "${q}"` : 'Masukkan kata kunci di search bar.'}
           </p>
 
+          {/* ── Filter bar ── */}
+          <div className={styles.filterBar}>
+            <FilterDropdown
+              label="Harga"
+              value={sortPrice}
+              options={priceOptions}
+              onSelect={(v) => setSortPrice(v as SortPrice)}
+              active={sortPrice !== null}
+            />
+            <FilterDropdown
+              label="Lokasi"
+              value={filterCity}
+              options={cityOptions}
+              onSelect={(v) => setFilterCity(v as FilterCity)}
+              active={filterCity !== null}
+            />
+            <FilterDropdown
+              label="Jenis Properti"
+              value={filterKategori}
+              options={kategoriOptions}
+              onSelect={(v) => setFilterKategori(v as FilterKategori)}
+              active={filterKategori !== null}
+            />
+            {hasActiveFilter && (
+              <button className={styles.clearAllBtn} onClick={clearAllFilters} type="button">
+                Hapus semua
+              </button>
+            )}
+          </div>
+
           {isLoading ? (
             <div className={styles.emptyState}>Memuat pencarian...</div>
           ) : error ? (
             <div className={styles.emptyState}>{error}</div>
-          ) : items.length === 0 ? (
+          ) : apiReturnedEmpty ? (
             <>
               <div className={styles.emptyState}>
                 Properti yang kamu cari tidak ada.
@@ -249,30 +337,41 @@ function SearchPageContent() {
                   <h2 className={styles.recommendationTitle}>Rekomendasi properti mirip</h2>
                   <div className={styles.grid}>
                     {recommendations.map((item) => (
-                      <article key={`rec-${item.id}`} className={styles.card}>
-                        <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
-                        <div className={styles.cardBody}>
-                          <p className={styles.cardTitle}>{item.title}</p>
-                          <p className={styles.cardLocation}>{item.lokasi}</p>
-                          <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
-                        </div>
-                      </article>
+                      <Link key={`rec-${item.id}`} href={`/propertyDetail/${item.id}`} className={styles.cardLink}>
+                        <article className={styles.card}>
+                          <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
+                          <div className={styles.cardBody}>
+                            <p className={styles.cardTitle}>{item.title}</p>
+                            <p className={styles.cardLocation}>{item.lokasi}</p>
+                            <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
+                          </div>
+                        </article>
+                      </Link>
                     ))}
                   </div>
                 </section>
               )}
             </>
+          ) : filteredItems.length === 0 ? (
+            <div className={styles.emptyState}>
+              Tidak ada properti yang cocok dengan filter yang dipilih.{' '}
+              <button className={styles.clearAllBtn} onClick={clearAllFilters} type="button">
+                Hapus semua filter
+              </button>
+            </div>
           ) : (
             <div className={styles.grid}>
-              {items.map((item) => (
-                <article key={item.id} className={styles.card}>
-                  <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
-                  <div className={styles.cardBody}>
-                    <p className={styles.cardTitle}>{item.title}</p>
-                    <p className={styles.cardLocation}>{item.lokasi}</p>
-                    <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
-                  </div>
-                </article>
+              {filteredItems.map((item) => (
+                <Link key={item.id} href={`/propertyDetail/${item.id}`} className={styles.cardLink}>
+                  <article className={styles.card}>
+                    <img src={item.images[0]} alt={item.title} className={styles.cardImage} />
+                    <div className={styles.cardBody}>
+                      <p className={styles.cardTitle}>{item.title}</p>
+                      <p className={styles.cardLocation}>{item.lokasi}</p>
+                      <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
+                    </div>
+                  </article>
+                </Link>
               ))}
             </div>
           )}

@@ -236,11 +236,26 @@
   gap: 14px;
 }
 
+/* Link wrapper — reset anchor styles, stretch to fill grid cell */
+.cardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 16px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cardLink:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(25, 38, 60, 0.1);
+}
+
 .card {
   border: 1px solid rgba(25, 38, 60, 0.14);
   border-radius: 16px;
   overflow: hidden;
   background: #fff;
+  height: 100%;
 }
 
 .cardImage {

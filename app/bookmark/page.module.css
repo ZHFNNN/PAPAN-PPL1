@@ -1,0 +1,335 @@
+/* ═══════════════════════════════════════════
+   PAPAN — Bookmark Page Styles
+   ═══════════════════════════════════════════ */
+
+/* Layout */
+.page {
+  background-color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentArea {
+  flex: 1;
+  padding: 6.5rem 0.875rem 4rem;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+/* Main content */
+.mainContent {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Page Header ── */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #19263c;
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+}
+
+.headerIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(16px, 1.4vw, 20px);
+  color: #ffffff;
+  margin: 0;
+}
+
+.headerSubtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(12px, 1vw, 14px);
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* ── Card List ── */
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+/* ── Bookmark Card ── */
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Thumbnail */
+.cardThumb {
+  flex-shrink: 0;
+  width: 120px;
+  height: 90px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.cardImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardImgFallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background: #f5f5f5;
+}
+
+/* Info */
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: clamp(14px, 1.1vw, 16px);
+  color: #1a1a1a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardLocation {
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(11px, 0.9vw, 13px);
+  color: #888;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.locationIcon {
+  font-size: 11px;
+}
+
+.cardPrice {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: clamp(13px, 1.05vw, 15px);
+  color: #1a6ef5;
+  margin: 0.15rem 0 0;
+}
+
+/* Actions */
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btnPrimary {
+  background: #19263c;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1.2rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: clamp(12px, 0.9vw, 14px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.btnPrimary:hover {
+  background: #0f1d33;
+}
+
+.btnSecondary {
+  background: transparent;
+  color: #19263c;
+  border: 1.5px solid #19263c;
+  border-radius: 10px;
+  padding: 0.5rem 1.2rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: clamp(11px, 0.85vw, 13px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btnSecondary:hover {
+  background: #19263c;
+  color: #ffffff;
+}
+
+/* Remove button */
+.removeBtn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: #bbb;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+  line-height: 1;
+}
+
+.removeBtn:hover {
+  color: #e53935;
+  background: #fef2f2;
+}
+
+/* ── Loading State ── */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: #888;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8e8e8;
+  border-top-color: #19263c;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Empty State ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3.5rem 2rem;
+  background: #fafafa;
+  border-radius: 20px;
+  border: 2px dashed #e0e0e0;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin: 0;
+}
+
+.emptyTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.emptyDesc {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  max-width: 300px;
+}
+
+.emptyBtn {
+  margin-top: 0.5rem;
+  background: #19263c;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.7rem 1.75rem;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.emptyBtn:hover {
+  background: #0f1d33;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    flex-wrap: wrap;
+  }
+
+  .cardThumb {
+    width: 100%;
+    height: 180px;
+  }
+
+  .cardActions {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 600px) {
+  .cardActions {
+    flex-direction: column;
+  }
+
+  .btnPrimary,
+  .btnSecondary {
+    width: 100%;
+    text-align: center;
+  }
+}

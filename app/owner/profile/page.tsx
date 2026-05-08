@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 
-const DEFAULT_AVATAR = '/images/default-avatar.png';
+const DEFAULT_AVATAR = '/images/ppdefault.png';
 
 type KycStatus = 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -13,6 +13,7 @@ type OwnerProfile = {
   name: string;
   username: string;
   email: string;
+  image?: string | null;
   phoneNumber: string;
   role: string;
   kycStatus: KycStatus;
@@ -62,7 +63,6 @@ const KYC_CONFIG: Record<KycStatus, {
 
 export default function OwnerProfilePage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarSrc, setAvatarSrc] = useState<string>(DEFAULT_AVATAR);
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,6 +78,7 @@ export default function OwnerProfilePage() {
         }
         const data: OwnerProfile = await res.json();
         setProfile(data);
+        setAvatarSrc(data.image ?? DEFAULT_AVATAR);
       } catch (err) {
         setError('Tidak dapat memuat data profil. Coba lagi nanti.');
         console.error(err);
@@ -88,12 +89,8 @@ export default function OwnerProfilePage() {
     fetchProfile();
   }, [router]);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { alert('Hanya file gambar yang diperbolehkan.'); return; }
-    setAvatarSrc(URL.createObjectURL(file));
-    // TODO: upload ke server
+  const handleAvatarClick = () => {
+    router.push('/owner/profile/edit');
   };
 
   const profileFields = profile ? [
@@ -108,9 +105,19 @@ export default function OwnerProfilePage() {
   return (
     <div className={styles.mainContent}>
             {isLoading ? (
-              <div className={styles.loadingState}>
-                <div className={styles.spinner} />
-                <p>Memuat profil...</p>
+              <div className={styles.skeletonWrap} aria-hidden>
+                <div className={styles.skeletonCard}>
+                  <div className={styles.skeletonRow}>
+                    <div className={`${styles.skeletonAvatar} ${styles.skeletonShimmer}`} />
+                    <div className={styles.skeletonFields}>
+                      <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                      <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w60}`} />
+                      <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.w40}`} />
+                      <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.w60}`} />
+                    </div>
+                  </div>
+                </div>
+                <div className={`${styles.skeletonButton} ${styles.skeletonShimmer}`} />
               </div>
             ) : error ? (
               <div className={styles.errorState}>
@@ -128,8 +135,8 @@ export default function OwnerProfilePage() {
                     <div className={styles.avatarSection}>
                       <div
                         className={styles.avatarWrapper}
-                        onClick={() => fileInputRef.current?.click()}
-                        title="Klik untuk ganti foto"
+                        onClick={handleAvatarClick}
+                        title="Klik untuk edit profil"
                       >
                         <img
                           alt="Profile"
@@ -141,18 +148,10 @@ export default function OwnerProfilePage() {
                           <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
                             <path d="M12 15.2A3.2 3.2 0 1 1 12 8.8a3.2 3.2 0 0 1 0 6.4zm6.4-10.4H5.6A2.4 2.4 0 0 0 3.2 7.2v9.6a2.4 2.4 0 0 0 2.4 2.4h12.8a2.4 2.4 0 0 0 2.4-2.4V7.2a2.4 2.4 0 0 0-2.4-2.4zm-1.6-2.4H7.2L8.8.8h6.4l1.6 2.4z" />
                           </svg>
-                          <p className={styles.overlayText}>Ganti Foto</p>
+                          <p className={styles.overlayText}>Edit Profil</p>
                         </div>
                       </div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className={styles.hiddenInput}
-                        onChange={handleFileChange}
-                      />
-                      {profile && <p className={styles.avatarName}>{profile.name}</p>}
-                      <p className={styles.avatarHelpText}>Klik foto untuk mengubah</p>
+                      <p className={styles.avatarHelpText}>Klik foto untuk edit profil</p>
                     </div>
 
                     <div className={styles.fieldsGrid}>

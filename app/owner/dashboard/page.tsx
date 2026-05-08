@@ -113,9 +113,35 @@ export default function OwnerDashboardPage() {
         </div>
 
         {isLoading ? (
-          <div className={styles.loadingState}>
-            <div className={styles.spinner} />
-            <p>Memuat dashboard...</p>
+          <div className={styles.skeletonWrap} aria-hidden>
+            <div className={styles.skeletonStats}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={`stat-skeleton-${i}`} className={`${styles.skeletonCard} ${styles.skeletonShimmer}`} />
+              ))}
+            </div>
+
+            <div className={styles.skeletonSectionHeader}>
+              <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w40}`} />
+              <div className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+            </div>
+
+            <div className={styles.skeletonList}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={`list-skeleton-${i}`} className={styles.skeletonPropertyCard}>
+                  <div className={`${styles.skeletonThumb} ${styles.skeletonShimmer}`} />
+                  <div className={styles.skeletonInfo}>
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w60}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.w40}`} />
+                  </div>
+                  <div className={styles.skeletonActions}>
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className={styles.errorState}>

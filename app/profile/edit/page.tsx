@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
+
+const DEFAULT_AVATAR = '/images/ppdefault.png';
 
 type EditForm = {
   name: string;
@@ -16,11 +18,16 @@ type FormErrors = Partial<EditForm>;
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<EditForm>({
     name: '',
     username: '',
     phoneNumber: '',
   });
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+  const [avatarPreview, setAvatarPreview] = useState<string>(DEFAULT_AVATAR);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +52,9 @@ export default function EditProfilePage() {
           username: data.username ?? '',
           phoneNumber: data.phoneNumber ?? '',
         });
+        const imageValue = typeof data.image === 'string' ? data.image : '';
+        setAvatarUrl(imageValue);
+        setAvatarPreview(imageValue || DEFAULT_AVATAR);
       } catch (err) {
         setServerError('Tidak dapat memuat data profil.');
         console.error(err);
@@ -106,7 +116,7 @@ export default function EditProfilePage() {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, image: avatarUrl }),
       });
 
       const data = await res.json();
@@ -134,18 +144,57 @@ export default function EditProfilePage() {
     { key: 'phoneNumber', label: 'Nomor Handphone', placeholder: '08xx xxxx xxxx', type: 'tel' },
   ];
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Hanya file gambar yang diperbolehkan.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setServerError(null);
+    setSuccessMsg(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/uploads/profile', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUploadError(data.message || 'Gagal upload foto profil.');
+        return;
+      }
+
+      const url = data?.data?.url as string | undefined;
+      if (!url) {
+        setUploadError('Gagal mendapatkan URL foto profil.');
+        return;
+      }
+
+      setAvatarUrl(url);
+      setAvatarPreview(url);
+    } catch (err) {
+      setUploadError('Terjadi kesalahan saat upload. Coba lagi nanti.');
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <Navbar />
 
       <div className={styles.contentArea}>
         <div className={styles.container}>
-
-          <div className={styles.pageHeader}>
-            <h1 className={styles.pageTitle}>Profile</h1>
-          </div>
-
-          {/* Back button */}
           <button
             className={styles.backBtn}
             onClick={() => router.push('/profile')}
@@ -174,93 +223,89 @@ export default function EditProfilePage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className={styles.form} noValidate>
+  <div className={styles.formMainLayout}>
+    
+    {/* BAGIAN KIRI: Khusus Foto */}
+    <div className={styles.sideProfile}>
+      <div className={styles.avatarBlock}>
+        <p className={styles.labelCentered}>Foto Profil</p>
+        <button
+          type="button"
+          className={styles.avatarButtonBig}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <img
+            src={avatarPreview}
+            alt="Foto profil"
+            className={styles.avatarImage}
+            onError={() => setAvatarPreview(DEFAULT_AVATAR)}
+          />
+          <span className={styles.avatarOverlay}>Ubah Foto</span>
+        </button>
+        <div className={styles.avatarInfoCentered}>
+          <p className={styles.avatarNote}>Format JPG/PNG, maks 5MB.</p>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className={styles.hiddenInput}
+          onChange={handleAvatarChange}
+          disabled={isUploading}
+        />
+        {isUploading && <p className={styles.uploadingText}>Mengunggah...</p>}
+      </div>
+    </div>
 
-                {/* Fields */}
-                {fields.map(({ key, label, placeholder, type }) => (
-                  <div key={key} className={styles.fieldGroup}>
-                    <label htmlFor={key} className={styles.label}>
-                      {label}
-                    </label>
-                    <input
-                      id={key}
-                      name={key}
-                      type={type ?? 'text'}
-                      value={form[key]}
-                      onChange={handleChange}
-                      placeholder={placeholder}
-                      className={`${styles.input} ${errors[key] ? styles.inputError : ''}`}
-                      disabled={isSaving}
-                    />
-                    {errors[key] && (
-                      <p className={styles.errorMsg}>{errors[key]}</p>
-                    )}
-                  </div>
-                ))}
+    {/* BAGIAN KANAN: Input Tulisan */}
+    <div className={styles.formFields}>
+      {fields.map(({ key, label, placeholder, type }) => (
+        <div key={key} className={styles.fieldGroup}>
+          <label htmlFor={key} className={styles.label}>{label}</label>
+          <input
+            id={key}
+            name={key}
+            type={type ?? 'text'}
+            value={form[key]}
+            onChange={handleChange}
+            placeholder={placeholder}
+            className={`${styles.input} ${errors[key] ? styles.inputError : ''}`}
+            disabled={isSaving}
+          />
+          {errors[key] && <p className={styles.errorMsg}>{errors[key]}</p>}
+        </div>
+      ))}
 
-                {/* Email — readonly, tidak bisa diubah */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Email</label>
-                  <div className={styles.readonlyWrapper}>
-                    <input
-                      type="email"
-                      className={`${styles.input} ${styles.inputReadonly}`}
-                      disabled
-                      placeholder="Email tidak dapat diubah"
-                    />
-                    <span className={styles.readonlyBadge}>Terkunci</span>
-                  </div>
-                  <p className={styles.helperText}>
-                    Email tidak dapat diubah. Hubungi support jika diperlukan.
-                  </p>
-                </div>
+      {/* Email Readonly */}
+      <div className={styles.fieldGroup}>
+        <label className={styles.label}>Email</label>
+        <div className={styles.readonlyWrapper}>
+          <input
+            type="email"
+            className={`${styles.input} ${styles.inputReadonly}`}
+            disabled
+            placeholder="Email tidak dapat diubah"
+          />
+          <span className={styles.readonlyBadge}>Terkunci</span>
+        </div>
+      </div>
+      
+      {/* Feedback & Actions pindah ke bawah sini agar sejajar kolom kanan */}
+      {serverError && <div className={styles.alertError}>{serverError}</div>}
+      {successMsg && <div className={styles.alertSuccess}>{successMsg}</div>}
 
-                {/* Feedback messages */}
-                {serverError && (
-                  <div className={styles.alertError}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                      <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    {serverError}
-                  </div>
-                )}
+      <div className={styles.actions}>
+        <button type="button" onClick={() => router.push('/profile')} className={styles.cancelBtn}>
+          Batal
+        </button>
+        <button type="submit" className={styles.saveBtn} disabled={isSaving}>
+          {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
+        </button>
+      </div>
+    </div>
 
-                {successMsg && (
-                  <div className={styles.alertSuccess}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2"
-                        strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    {successMsg}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className={styles.actions}>
-                  <button
-                    type="button"
-                    onClick={() => router.push('/profile')}
-                    className={styles.cancelBtn}
-                    disabled={isSaving}
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className={styles.saveBtn}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <>
-                        <span className={styles.btnSpinner} />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      'Simpan Perubahan'
-                    )}
-                  </button>
-                </div>
-              </form>
+  </div>
+</form>
             )}
           </div>
 

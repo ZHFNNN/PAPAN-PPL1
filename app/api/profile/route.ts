@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
         name: true,
         username: true,
         email: true,
+        image: true,
         phoneNumber: true,
         role: true,
         kycStatus: true,
@@ -50,7 +51,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, username, phoneNumber } = body;
+    const { name, username, phoneNumber, image } = body;
 
     // Validasi minimal
     if (!name || !username || !phoneNumber) {
@@ -90,14 +91,17 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const imageValue = typeof image === 'string' && image.trim().length > 0 ? image.trim() : null;
+
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
-      data: { name, username, phoneNumber },
+      data: { name, username, phoneNumber, image: imageValue },
       select: {
         id: true,
         name: true,
         username: true,
         email: true,
+        image: true,
         phoneNumber: true,
         role: true,
         kycStatus: true,

@@ -278,7 +278,7 @@ model Review {
   id         String        @id @default(cuid())
   userId     String
   propertyId String
-  rating     Int           // 1–5
+  rating     Int          
   comment    String?
   imageUrls  String[]      @default([])
   createdAt  DateTime      @default(now())

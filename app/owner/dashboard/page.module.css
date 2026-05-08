@@ -395,6 +395,124 @@
   font-size: 15px;
 }
 
+/* ── Skeleton ── */
+.skeletonWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.skeletonStats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .skeletonStats { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .skeletonStats { grid-template-columns: repeat(2, 1fr); }
+}
+
+.skeletonCard {
+  background: #eef2f7;
+  border-radius: 24px;
+  height: 110px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine.lg { height: 18px; }
+.skeletonLine.md { height: 14px; }
+.skeletonLine.w40 { width: 40%; }
+.skeletonLine.w60 { width: 60%; }
+.skeletonLine.w70 { width: 70%; }
+
+.skeletonShimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skeletonPill {
+  width: 80px;
+  height: 20px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeletonPropertyCard {
+  background: #f7f9fc;
+  border-radius: 20px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonThumb {
+  width: 110px;
+  height: 80px;
+  border-radius: 12px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonInfo {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.skeletonActions {
+  display: grid;
+  gap: 8px;
+  width: 120px;
+}
+
+.skeletonBtn {
+  height: 32px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 .spinner {
   width: 40px;
   height: 40px;

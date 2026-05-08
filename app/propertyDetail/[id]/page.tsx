@@ -1,3 +1,5 @@
+
+//propertyDetail/[id]/page.tsx
 import { Suspense } from 'react';
 import PropertyDetailClient from '../PropertyDetailClient';
 

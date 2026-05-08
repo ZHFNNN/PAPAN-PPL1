@@ -110,12 +110,6 @@ export default function OwnerDashboardPage() {
             <h1 className={styles.pageTitle}>Dashboard</h1>
             <p className={styles.pageSubtitle}>Hai! Yuk cek properti-properti kamu!</p>
           </div>
-          <button
-            className={styles.addPropertyBtn}
-            onClick={() => router.push('/owner/addProperty')}
-          >
-            + Tambah Properti
-          </button>
         </div>
 
         {isLoading ? (
@@ -210,7 +204,12 @@ export default function OwnerDashboardPage() {
 
                     {/* Actions */}
                     <div className={styles.propertyActions}>
-                      <button className={styles.boostBtn}>Boost</button>
+                      <button
+                        className={styles.boostBtn}
+                        onClick={() => router.push(`/propertyDetail/${property.id}#reviews`)}
+                      >
+                        Review
+                      </button>
                       <button
                         className={styles.editBtn}
                         onClick={() => router.push(`/owner/properties/${property.id}/edit`)}

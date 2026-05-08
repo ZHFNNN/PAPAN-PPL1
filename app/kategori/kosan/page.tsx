@@ -125,7 +125,21 @@ function PropertySection({
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
         {isLoading ? (
-          <p style={{ color: '#999', padding: '20px 0' }}>Memuat properti...</p>
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={`skeleton-${i}`} className={styles.skeletonCard} aria-hidden>
+              <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+              <div className={styles.skeletonBody}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                <div className={styles.skeletonRow}>
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                </div>
+              </div>
+            </div>
+          ))
         ) : error ? (
           <p style={{ color: '#999', padding: '20px 0' }}>{error}</p>
         ) : data.length === 0 ? (

@@ -171,10 +171,7 @@ export default function OwnerProfilePage() {
                 <div className={styles.actionButtons}>
                   <button onClick={() => router.push('/owner/profile/edit')} className={styles.editButton}>
                     <p className={styles.editButtonText}>Edit Profile</p>
-                  </button>
-                  <button onClick={() => router.push('/owner/addProperty')} className={styles.addPropertyButton}>
-                    <p className={styles.addPropertyButtonText}>+ Tambah Properti</p>
-                  </button>
+                  </button>                 
                 </div>
               </>
             )}

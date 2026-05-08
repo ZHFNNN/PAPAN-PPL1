@@ -1,3 +1,4 @@
+//propertyDetail/page.tsx
 import { redirect } from 'next/navigation';
 
 type LegacyPropertyDetailPageProps = {

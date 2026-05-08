@@ -265,6 +265,84 @@
   display: none;
 }
 
+/* ── Skeletons ────────────────────────────── */
+.skeletonCard {
+  flex: 0 0 clamp(240px, 30vw, 310px);
+  background: #f1f1f1;
+  border-radius: 15px;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 480px) {
+  .skeletonCard {
+    flex: 0 0 clamp(220px, 80vw, 300px);
+  }
+}
+
+.skeletonImg {
+  height: clamp(140px, 14vw, 200px);
+  background: #e7e7e7;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .skeletonImg {
+    height: 160px;
+  }
+}
+
+.skeletonBody {
+  padding: clamp(12px, 1.5vw, 18px) clamp(14px, 1.8vw, 20px) clamp(12px, 1.5vw, 18px);
+  display: grid;
+  gap: 8px;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 8px;
+  background: #e7e7e7;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine.lg { height: 16px; }
+.skeletonLine.md { height: 13px; }
+.skeletonLine.sm { height: 10px; }
+.skeletonLine.w70 { width: 70%; }
+.skeletonLine.w60 { width: 60%; }
+.skeletonLine.w50 { width: 50%; }
+.skeletonLine.w40 { width: 40%; }
+
+.skeletonRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skeletonPill {
+  height: 16px;
+  width: 54px;
+  border-radius: 999px;
+  background: #e7e7e7;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonShimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
 /* ── Property card ────────────────────────── */
 .card {
   /* fluid card width: 240px min, 310px preferred, capped at 90vw on very small screens */

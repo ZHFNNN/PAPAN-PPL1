@@ -40,6 +40,8 @@ export async function GET(_request: Request, { params }: RouteContext) {
     data: {
       ...property,
       price: property.price.toString(),
+      lat: property.latitude,   
+      lng: property.longitude,  
       facilities: property.facilities.map((entry) => ({
         code: entry.facility.code,
         name: entry.facility.name,

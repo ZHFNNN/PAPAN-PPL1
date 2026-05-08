@@ -22,7 +22,7 @@ type PropertyDetail = {
   listingType: string;
   lat?: number | null;
   lng?: number | null;
-  owner?: { id?: string | null; name?: string | null; username?: string | null };
+  owner?: { id?: string | null; name?: string | null; username?: string | null; image?: string | null };
   facilities: Array<{ code: string; name: string }>;
   createdAt: string;
 };
@@ -80,6 +80,7 @@ type DisplayProperty = {
   lng: number | null;
   ownerName: string;
   ownerId: string | null;
+  ownerImage: string | null;
 };
 
 type CurrentUser = {
@@ -129,8 +130,9 @@ function mapApiProperty(data: PropertyDetail): DisplayProperty {
     lat: data.lat ?? null,
     lng: data.lng ?? null,
     ownerName:
-      data.owner?.name ?? data.owner?.username ?? 'Pemilik Properti',
+      data.owner?.name ?? data.owner?.username ?? data.owner?.image ??'Pemilik Properti',
     ownerId: data.owner?.id ?? null,
+    ownerImage: data.owner?.image ?? null,
   };
 }
 
@@ -542,7 +544,17 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
               <button className={styles.btnOutline} onClick={handleShare}>Bagikan</button>
               <hr className={styles.divider} />
               <div className={styles.agentRow}>
-                <div className={styles.agentAvatar}>👤</div>
+                <div className={styles.agentAvatar}>
+                  {prop.ownerImage ? (
+                    <img
+                      src={prop.ownerImage}
+                      alt={prop.ownerName}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                    />
+                  ) : (
+                    <span>👤</span>
+                  )}
+                </div>
                 <div className={styles.agentInfo}>
                   <p className={styles.agentName}>{prop.ownerName}</p>
                   <p className={styles.agentRole}>Pemilik Properti</p>
@@ -562,11 +574,11 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
           </div>
 
           <div className={styles.chipsRow}>
-            <span className={styles.chip}>Luas {prop.luas}</span>
-            <span className={styles.chip}>{prop.km} Kamar Mandi</span>
-            <span className={styles.chip}>{prop.kt} Kamar Tidur</span>
+            {prop.luas !== '-' && <span className={styles.chip}>Luas {prop.luas}</span>}
+            {prop.km !== '-' && <span className={styles.chip}>{prop.km} Kamar Mandi</span>}
+            {prop.kt !== '-' && <span className={styles.chip}>{prop.kt} Kamar Tidur</span>}
             {prop.fasilitas.map((f) => <span key={f} className={styles.chip}>{f}</span>)}
-            <span className={styles.chip}>{prop.lantai}</span>
+            {prop.lantai !== '-' && <span className={styles.chip}>{prop.lantai}</span>}
           </div>
 
           <h2 className={styles.sectionTitle}>Deskripsi</h2>
@@ -582,9 +594,7 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
             <iframe title="Lokasi properti" src={mapSrc} className={styles.mapFrame} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
           </div>
 
-          {/* ════════════════════════════════════════════════════
-              REVIEW SECTION
-          ════════════════════════════════════════════════════ */}
+          {/* REVIEW SECTION */}
           <div className={styles.reviewSection} id="reviews">
             <div className={styles.reviewSectionHeader}>
               <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Ulasan</h2>

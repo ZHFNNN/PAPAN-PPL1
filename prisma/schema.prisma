@@ -31,6 +31,7 @@ model User {
   personalization     UserPersonalization?
   preferredFacilities UserPreferenceFacility[]
   boostCart BoostCart[]
+  bookmarks Bookmark[]
 }
 
 model Account {
@@ -111,6 +112,7 @@ model Property {
   facilities  PropertyFacility[]
   boosts      PropertyBoost[]
   boostCart   BoostCart[]
+  bookmarks   Bookmark[]
 }
 
 model Notification {
@@ -255,4 +257,16 @@ model BoostCart {
 
   @@index([ownerId])
   @@index([propertyId])
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])  // 1 user tidak bisa bookmark properti yang sama 2x
 }

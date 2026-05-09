@@ -85,9 +85,14 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState(0);
+
+  // bookmark states
   const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+
   const [descExpanded, setDescExpanded] = useState(false);
 
+  // Fetch property data
   useEffect(() => {
     let cancelled = false;
 
@@ -121,17 +126,34 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
           setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
         }
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     load();
+    return () => { cancelled = true; };
+  }, [propertyId]);
 
-    return () => {
-      cancelled = true;
+  // Cek status bookmark saat propertyId tersedia
+  useEffect(() => {
+    if (!propertyId) return;
+    let cancelled = false;
+
+    const checkBookmark = async () => {
+      try {
+        const res = await fetch(`/api/bookmarks/${encodeURIComponent(propertyId)}`);
+        // 401 = belum login, skip saja tanpa error
+        if (res.status === 401) return;
+        if (!res.ok) return;
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled) setBookmarked(Boolean(json.isBookmarked));
+      } catch {
+        // silent fail — fitur bookmark tidak krusial
+      }
     };
+
+    checkBookmark();
+    return () => { cancelled = true; };
   }, [propertyId]);
 
   const prop = useMemo<DisplayProperty | null>(() => {
@@ -160,6 +182,47 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
 
   const handleBuy = () => {
     alert('Fitur pembelian akan segera hadir!');
+  };
+
+  const handleBookmark = async () => {
+    if (bookmarkLoading || !propertyId) return;
+    setBookmarkLoading(true);
+
+    try {
+      if (bookmarked) {
+        // Hapus bookmark
+        const res = await fetch(`/api/bookmarks/${encodeURIComponent(propertyId)}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.status === 401) { router.push('/login'); return; }
+        if (!res.ok) {
+          alert(json.message ?? 'Gagal menghapus bookmark.');
+          return;
+        }
+        setBookmarked(false);
+      } else {
+        // Tambah bookmark
+        const res = await fetch('/api/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ propertyId }),
+          credentials: 'include',
+        });
+        const json = await res.json().catch(() => ({}));
+        if (res.status === 401) { router.push('/login'); return; }
+        if (!res.ok) {
+          alert(json.message ?? 'Gagal menyimpan bookmark.');
+          return;
+        }
+        setBookmarked(true);
+      }
+    } catch {
+      alert('Terjadi kesalahan saat memperbarui bookmark.');
+    } finally {
+      setBookmarkLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -195,7 +258,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
   const displayDesc = descExpanded || deskripsi.length <= SHORT ? deskripsi : `${deskripsi.slice(0, SHORT)}…`;
   const activeImageSrc = prop.images[activeImage] ?? prop.images[0];
 
-  // Map embed — zoom ke lokasi kalau ada koordinat, fallback ke nama kota
   const mapQuery = prop.lat && prop.lng
     ? `${prop.lat},${prop.lng}`
     : encodeURIComponent(prop.lokasi);
@@ -212,10 +274,7 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
             ← Kembali
           </button>
 
-          {/* ── TOP: Gallery (kiri) + Price Card biru (kanan) ── */}
           <div className={styles.topSection}>
-
-            {/* Gallery: foto besar + thumbnail kolom kanan bisa scroll */}
             <div className={styles.galleryWrapper}>
               <div className={styles.mainImage}>
                 <img src={activeImageSrc} alt={prop.title} />
@@ -233,7 +292,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
               </div>
             </div>
 
-            {/* Price Card — sejajar gallery */}
             <div className={styles.priceCard}>
               <p className={styles.priceLabel}>Harga</p>
               <p className={styles.priceValue}>{prop.price}</p>
@@ -242,9 +300,20 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
               <button className={styles.btnBuy} onClick={handleBuy}>
                 Beli Sekarang
               </button>
-              <button className={styles.btnOutline} onClick={() => setBookmarked((prev) => !prev)}>
-                {bookmarked ? '✓ Disimpan' : 'Simpan'}
+
+              {/* Tombol Simpan/Hapus Bookmark */}
+              <button
+                className={`${styles.btnOutline} ${bookmarked ? styles.btnOutlineActive : ''}`}
+                onClick={handleBookmark}
+                disabled={bookmarkLoading}
+              >
+                {bookmarkLoading
+                  ? '...'
+                  : bookmarked
+                    ? '✓ Hapus dari Simpanan'
+                    : '🔖 Simpan'}
               </button>
+
               <button className={styles.btnOutline} onClick={handleShare}>
                 Bagikan
               </button>
@@ -262,7 +331,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
             </div>
           </div>
 
-          {/* ── Judul + Lokasi + Chips — langsung di bawah gallery, tanpa card ── */}
           <h1 className={styles.propertyTitle}>{prop.title}</h1>
           <div className={styles.lokasi}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -278,14 +346,11 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
             <span className={styles.chip}>{prop.km} Kamar Mandi</span>
             <span className={styles.chip}>{prop.kt} Kamar Tidur</span>
             {prop.fasilitas.map((facility) => (
-              <span key={facility} className={styles.chip}>
-                {facility}
-              </span>
+              <span key={facility} className={styles.chip}>{facility}</span>
             ))}
             <span className={styles.chip}>{prop.lantai}</span>
           </div>
 
-          {/* ── Deskripsi — tanpa card wrapper ── */}
           <h2 className={styles.sectionTitle}>Deskripsi</h2>
           <p className={styles.descText}>{displayDesc}</p>
           {deskripsi.length > SHORT && (
@@ -294,7 +359,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
             </button>
           )}
 
-          {/* ── Lokasi + Map embed kecil di kiri ── */}
           <div className={styles.mapSection}>
             <h2 className={styles.sectionTitle}>Lokasi</h2>
             <iframe
@@ -305,7 +369,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
               referrerPolicy="no-referrer-when-downgrade"
             />
           </div>
-
         </div>
       </div>
 

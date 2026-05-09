@@ -69,6 +69,8 @@ export default function AddPropertyPage() {
   const [isLoadingFacilities, setIsLoadingFacilities] = useState(true);
   const [facilityLoadError, setFacilityLoadError] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [customFacility, setCustomFacility] = useState('');
+  const [customFacilities, setCustomFacilities] = useState<string[]>([]);
 
   const uploadPhotosToCloudinary = async (files: File[]) => {
     const uploadedUrls: string[] = [];
@@ -399,29 +401,98 @@ export default function AddPropertyPage() {
 
             {/* Fasilitas */}
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Fasilitas</label>
-              {isLoadingFacilities ? (
-                <p className={styles.facilityHint}>Memuat daftar fasilitas...</p>
-              ) : facilityLoadError ? (
-                <p className={styles.errorText}>{facilityLoadError}</p>
-              ) : (
-                <div className={styles.facilityOptionGrid}>
-                  {facilityOptions.map((facility) => {
-                    const selected = form.facilities.includes(facility.code);
-                    return (
+            <label className={styles.label}>Fasilitas</label>
+            {isLoadingFacilities ? (
+              <p className={styles.facilityHint}>Memuat daftar fasilitas...</p>
+            ) : facilityLoadError ? (
+              <p className={styles.errorText}>{facilityLoadError}</p>
+            ) : (
+              <div className={styles.facilityOptionGrid}>
+                {/* Preset facilities */}
+                {facilityOptions.map((facility) => {
+                  const selected = form.facilities.includes(facility.code);
+                  return (
+                    <button
+                      key={facility.code}
+                      type="button"
+                      onClick={() => toggleFacility(facility.code)}
+                      className={`${styles.facilityOptionBtn} ${selected ? styles.facilityOptionBtnActive : ''}`}
+                    >
+                      {facility.name}
+                    </button>
+                  );
+                })}
+
+                {/* Custom facilities — tampil di grid yang sama */}
+                {customFacilities.map((name) => {
+                  const selected = form.facilities.includes(name);
+                  return (
+                    <div
+                      key={name}
+                      className={`${styles.facilityOptionBtn} ${selected ? styles.facilityOptionBtnActive : ''}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    >
                       <button
-                        key={facility.code}
                         type="button"
-                        onClick={() => toggleFacility(facility.code)}
-                        className={`${styles.facilityOptionBtn} ${selected ? styles.facilityOptionBtnActive : ''}`}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', font: 'inherit' }}
+                        onClick={() => toggleFacility(name)}
                       >
-                        {facility.name}
+                        {name}
                       </button>
-                    );
-                  })}
-                </div>
-              )}
+                      <button
+                        type="button"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: 'inherit', fontSize: 12 }}
+                        onClick={() => {
+                          setCustomFacilities((prev) => prev.filter((f) => f !== name));
+                          setForm((prev) => ({
+                            ...prev,
+                            facilities: prev.facilities.filter((f) => f !== name),
+                          }));
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Input tambah custom */}
+            <div className={styles.customFacilityRow}>
+              <input
+                className={styles.input}
+                placeholder="Tambah fasilitas lainnya..."
+                value={customFacility}
+                onChange={(e) => setCustomFacility(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = customFacility.trim();
+                    if (val && !customFacilities.includes(val) && !facilityOptions.some(o => o.name === val)) {
+                      setCustomFacilities((prev) => [...prev, val]);
+                      setForm((prev) => ({ ...prev, facilities: [...prev.facilities, val] }));
+                    }
+                    setCustomFacility('');
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className={styles.listingTypeBtn}
+                onClick={() => {
+                  const val = customFacility.trim();
+                  if (val && !customFacilities.includes(val) && !facilityOptions.some(o => o.name === val)) {
+                    setCustomFacilities((prev) => [...prev, val]);
+                    setForm((prev) => ({ ...prev, facilities: [...prev.facilities, val] }));
+                  }
+                  setCustomFacility('');
+                }}
+              >
+                + Tambah
+              </button>
             </div>
+          </div>
           </div>
 
           {/* ── Kanan: Upload Foto ── */}

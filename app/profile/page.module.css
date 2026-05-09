@@ -100,6 +100,79 @@
 	min-width: 0;
 }
 
+/* ── Skeleton ── */
+.skeletonWrap {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.skeletonCard {
+	background: #19263c;
+	border-radius: 20px;
+	padding: 1rem;
+	position: relative;
+	overflow: hidden;
+}
+
+.skeletonRow {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.skeletonAvatar {
+	width: clamp(96px, 11vw, 168px);
+	height: clamp(96px, 11vw, 168px);
+	border-radius: 9999px;
+	background: rgba(255,255,255,0.2);
+	position: relative;
+	overflow: hidden;
+}
+
+.skeletonFields {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
+}
+
+.skeletonLine {
+	height: 12px;
+	border-radius: 8px;
+	background: rgba(255,255,255,0.18);
+	position: relative;
+	overflow: hidden;
+}
+
+.skeletonLine.lg { height: 16px; }
+.skeletonLine.md { height: 14px; }
+.skeletonLine.w40 { width: 40%; }
+.skeletonLine.w60 { width: 60%; }
+.skeletonLine.w70 { width: 70%; }
+
+.skeletonButton {
+	width: 240px;
+	height: 44px;
+	border-radius: 16px;
+	background: rgba(25, 38, 60, 0.2);
+	border: 2px solid rgba(25, 38, 60, 0.3);
+	position: relative;
+	overflow: hidden;
+}
+
+.skeletonShimmer::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	transform: translateX(-100%);
+	background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+	animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+	100% { transform: translateX(100%); }
+}
+
 .profileCard {
 	background: #19263c;
 	border-radius: 20px;
@@ -166,9 +239,11 @@
 
 .avatarHelpText {
 	color: rgba(255, 255, 255, 0.5);
-	font-size: 10px;
+	font-size: 12px;
 	font-family: 'Poppins', sans-serif;
 	text-align: center;
+	margin-left: 12px;
+	margin-top: 10px;
 }
 
 .fieldsGrid {

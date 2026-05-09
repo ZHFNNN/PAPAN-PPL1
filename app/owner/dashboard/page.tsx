@@ -110,18 +110,38 @@ export default function OwnerDashboardPage() {
             <h1 className={styles.pageTitle}>Dashboard</h1>
             <p className={styles.pageSubtitle}>Hai! Yuk cek properti-properti kamu!</p>
           </div>
-          <button
-            className={styles.addPropertyBtn}
-            onClick={() => router.push('/owner/addProperty')}
-          >
-            + Tambah Properti
-          </button>
         </div>
 
         {isLoading ? (
-          <div className={styles.loadingState}>
-            <div className={styles.spinner} />
-            <p>Memuat dashboard...</p>
+          <div className={styles.skeletonWrap} aria-hidden>
+            <div className={styles.skeletonStats}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={`stat-skeleton-${i}`} className={`${styles.skeletonCard} ${styles.skeletonShimmer}`} />
+              ))}
+            </div>
+
+            <div className={styles.skeletonSectionHeader}>
+              <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w40}`} />
+              <div className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+            </div>
+
+            <div className={styles.skeletonList}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={`list-skeleton-${i}`} className={styles.skeletonPropertyCard}>
+                  <div className={`${styles.skeletonThumb} ${styles.skeletonShimmer}`} />
+                  <div className={styles.skeletonInfo}>
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w60}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.w40}`} />
+                  </div>
+                  <div className={styles.skeletonActions}>
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className={styles.errorState}>
@@ -210,7 +230,12 @@ export default function OwnerDashboardPage() {
 
                     {/* Actions */}
                     <div className={styles.propertyActions}>
-                      <button className={styles.boostBtn}>Boost</button>
+                      <button
+                        className={styles.boostBtn}
+                        onClick={() => router.push(`/propertyDetail/${property.id}#reviews`)}
+                      >
+                        Review
+                      </button>
                       <button
                         className={styles.editBtn}
                         onClick={() => router.push(`/owner/properties/${property.id}/edit`)}

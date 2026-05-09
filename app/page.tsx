@@ -177,7 +177,21 @@ function PropertySection({
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
         {isLoading ? (
-          <p style={{ color: '#999', padding: '20px 0' }}>Memuat properti...</p>
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={`skeleton-${i}`} className={styles.skeletonCard} aria-hidden>
+              <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+              <div className={styles.skeletonBody}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                <div className={styles.skeletonRow}>
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                </div>
+              </div>
+            </div>
+          ))
         ) : error ? (
           <p style={{ color: '#999', padding: '20px 0' }}>{error}</p>
         ) : items.length === 0 ? (
@@ -370,7 +384,23 @@ function RecommendationSection() {
       </div>
 
       {isLoading ? (
-        <div className={styles.recommendationNotice}>Menghitung rekomendasi...</div>
+        <div className={styles.scrollTrack} ref={scrollRef}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={`skeleton-rec-${i}`} className={styles.skeletonCard} aria-hidden>
+              <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+              <div className={styles.skeletonBody}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                <div className={styles.skeletonRow}>
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : items.length === 0 ? (
         <div className={styles.recommendationNotice}>
           <p>{message ?? 'Belum ada rekomendasi.'}</p>
@@ -652,7 +682,21 @@ function DiscountSection({
         <div className={styles.discountTrackWrap}>
           <div className={styles.discountTrack}>
             {isLoading ? (
-              <p style={{ color: '#fff', padding: '24px 6px' }}>Memuat promo...</p>
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={`skeleton-disc-${i}`} className={styles.skeletonCard} aria-hidden>
+                  <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+                  <div className={styles.skeletonBody}>
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                    <div className={styles.skeletonRow}>
+                      <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                      <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                      <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                    </div>
+                  </div>
+                </div>
+              ))
             ) : error ? (
               <p style={{ color: '#fff', padding: '24px 6px' }}>{error}</p>
             ) : discountProperties.length === 0 ? (

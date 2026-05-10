@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
 
+// Dummy data tidak lagi digunakan, sekarang menggunakan API
 type BookmarkedProperty = {
   id: string;
   title: string;
@@ -55,11 +56,7 @@ function BookmarkCard({
   const handleRemove = async () => {
     setRemoving(true);
     try {
-      await fetch(`/api/bookmarks/${item.id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      onRemove(item.id);
+      await onRemove(item.id);
     } catch {
       setRemoving(false);
     }
@@ -118,36 +115,41 @@ export default function BookmarkPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const res = await fetch('/api/bookmarks', {
-          credentials: 'include',
-          cache: 'no-store',
-        });
-        if (res.status === 401) {
-          router.push('/login');
-          return;
-        }
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setError(json.message ?? 'Gagal memuat bookmark.');
-          return;
-        }
-        setBookmarks(Array.isArray(json.data) ? json.data : []);
-      } catch {
-        setError('Terjadi kesalahan saat memuat bookmark.');
-      } finally {
-        setIsLoading(false);
+  const fetchBookmarks = async () => {
+    try {
+      const res = await fetch('/api/bookmarks');
+      const json = await res.json();
+      if (res.ok && json.data) {
+        setBookmarks(json.data);
       }
-    };
-    load();
-  }, [router]);
+    } catch (error) {
+      console.error('Failed to fetch bookmarks:', error);
+      setError('Terjadi kesalahan saat memuat bookmark.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleRemove = (id: string) => {
+  useEffect(() => {
+    fetchBookmarks();
+  }, []);
+
+  const handleRemove = async (id: string) => {
+    // Optimistic UI update
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
+    
+    try {
+      const res = await fetch(`/api/bookmarks/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        // Revert if failed
+        fetchBookmarks();
+      }
+    } catch (error) {
+      console.error('Failed to remove bookmark:', error);
+      fetchBookmarks();
+    }
   };
 
   return (

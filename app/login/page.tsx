@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast"; // Import Toast
@@ -13,9 +13,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const [callbackPath, setCallbackPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("callbackUrl");
+    setCallbackPath(raw && raw.startsWith("/") ? raw : null);
+  }, []);
 
   const handleGoogleLogin = async () => {
-    await signIn("google", { callbackUrl: "/auth/post-login" });
+    await signIn("google", { callbackUrl: callbackPath || "/auth/post-login" });
   };
 
   const handleLogin = async () => {
@@ -38,6 +44,9 @@ export default function LoginPage() {
         body: JSON.stringify({
           email,
           password,
+          callbackUrl: callbackPath
+            ? new URL(callbackPath, window.location.origin).toString()
+            : undefined,
         }),
       });
 
@@ -45,20 +54,22 @@ export default function LoginPage() {
 
       // 4. Handle Response
       if (response.ok) {
-        let redirectPath = "/";
+        let redirectPath = callbackPath || "/";
 
-        try {
-          const meResponse = await fetch("/api/auth/me", { method: "GET" });
-          if (meResponse.ok) {
-            const meData = (await meResponse.json()) as {
-              user?: { role?: string };
-            };
-            if (meData.user?.role === "ADMIN") {
-              redirectPath = "/admin/kyc";
+        if (!callbackPath) {
+          try {
+            const meResponse = await fetch("/api/auth/me", { method: "GET" });
+            if (meResponse.ok) {
+              const meData = (await meResponse.json()) as {
+                user?: { role?: string };
+              };
+              if (meData.user?.role === "ADMIN") {
+                redirectPath = "/admin/kyc";
+              }
             }
+          } catch (meError) {
+            console.warn("Gagal mengambil data role setelah login:", meError);
           }
-        } catch (meError) {
-          console.warn("Gagal mengambil data role setelah login:", meError);
         }
 
         toast.success("Login berhasil! Mengalihkan...");

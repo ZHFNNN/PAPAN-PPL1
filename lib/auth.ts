@@ -7,7 +7,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().transform((value) => value.trim().toLowerCase()),
   password: z.string().min(6),
 });
 
@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({ where: { email } });
 
         // Tambahkan pengecekan: Jika user login manual tapi akunnya dibuat dari Google (password null)
-        if (!user || !user.passwordHash) {
+        if (!user || !user.passwordHash || !user.emailVerified) {
           return null;
         }
 

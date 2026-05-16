@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   // Temukan semua owner yang sudah KYC APPROVED.
-  const ownerFilter: any = {
+  const ownerFilter: Record<string, unknown> = {
     kycStatus: KycStatus.APPROVED,
   };
 

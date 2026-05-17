@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { BOOST_PACKAGES, type BoosterPackage } from '@/lib/booster';
 
@@ -410,7 +409,6 @@ function StepProperty({ properties, selectedPkg, isLoading, onAddToCart, cartCou
 type Step = 'package' | 'property';
 
 export default function OwnerBoosterPage() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>('package');
   const [selectedPkg, setSelectedPkg] = useState<BoosterPackage | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -480,13 +478,20 @@ export default function OwnerBoosterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: cart, paymentMethod: method }),
       });
-      if (!res.ok) throw new Error();
-      setCart([]);
-      setCartOpen(false);
-      addToast('Booster berhasil diaktifkan! 🚀', 'success');
-      setTimeout(() => router.push('/owner/dashboard?boost=success'), 1500);
-    } catch {
-      addToast('Gagal memproses pembayaran. Coba lagi.', 'error');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.message ?? 'Gagal memproses pembayaran.');
+      }
+
+      const redirectUrl = data?.data?.redirectUrl as string | undefined;
+      if (!redirectUrl) {
+        throw new Error('Midtrans tidak mengembalikan halaman pembayaran.');
+      }
+
+      addToast('Mengalihkan ke halaman pembayaran Midtrans...', 'info');
+      window.location.href = redirectUrl;
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : 'Gagal memproses pembayaran. Coba lagi.', 'error');
     } finally {
       setIsProcessing(false);
     }

@@ -130,6 +130,9 @@ export async function GET() {
       },
       boosts: {
         where: {
+          startsAt: {
+            lte: now,
+          },
           endsAt: {
             gt: now,
           },

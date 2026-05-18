@@ -1,0 +1,190 @@
+/* ── PapanLoading.module.css ── */
+
+/* Wrapper */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: #0d1b2e;
+  border-radius: 16px;
+  padding: 32px 40px 24px;
+  width: fit-content;
+  margin: auto;
+}
+
+/* Ukuran */
+.sm { transform: scale(0.65); transform-origin: center top; }
+.md { transform: scale(1); }
+.lg { transform: scale(1.35); transform-origin: center top; }
+
+/* ── Tiang + Papan ── */
+.postWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: -4px;
+  z-index: 2;
+}
+
+.postTop {
+  width: 36px;
+  height: 6px;
+  background: white;
+  border-radius: 3px;
+  margin-bottom: 2px;
+}
+
+.post {
+  width: 6px;
+  height: 32px;
+  background: white;
+  border-radius: 3px;
+}
+
+/* Papan berayun */
+.sign {
+  position: absolute;
+  top: 8px;
+  width: 90px;
+  background: white;
+  border-radius: 6px;
+  border: 1.5px solid #d0d0d0;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.4;
+  animation: swing 2.2s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+
+.signDivider {
+  width: 80%;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 3px 0;
+}
+
+.signTop,
+.signBottom {
+  letter-spacing: 0.5px;
+}
+
+/* ── Gerbang ── */
+.gateRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.gateCenter {
+  width: 14px;
+  background: white;
+  border-radius: 3px;
+  min-height: 100px;
+}
+
+.gate {
+  width: 70px;
+  height: 100px;
+  border: 2.5px solid white;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-evenly;
+  padding: 6px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.gateLeft {
+  transform-origin: right center;
+  animation: openLeft 2.2s ease-in-out infinite alternate;
+}
+
+.gateRight {
+  transform-origin: left center;
+  animation: openRight 2.2s ease-in-out infinite alternate;
+}
+
+.gateBar {
+  width: 3px;
+  background: white;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Brand ── */
+.brand {
+  margin: 12px 0 8px;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: white;
+}
+
+/* ── Progress bar ── */
+.progressTrack {
+  width: 180px;
+  height: 6px;
+  background: #1a2e4a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: #4a9eff;
+  border-radius: 4px;
+  animation: progressFill 2.2s ease-in-out infinite alternate;
+}
+
+/* ── Label ── */
+.label {
+  margin-top: 10px;
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 13px;
+  color: #8899aa;
+  letter-spacing: 0.5px;
+}
+
+/* ── Keyframes ── */
+@keyframes swing {
+  0%   { transform: rotate(-7deg); }
+  100% { transform: rotate(7deg); }
+}
+
+@keyframes openLeft {
+  0%   { transform: perspective(200px) rotateY(0deg); }
+  100% { transform: perspective(200px) rotateY(-45deg); }
+}
+
+@keyframes openRight {
+  0%   { transform: perspective(200px) rotateY(0deg); }
+  100% { transform: perspective(200px) rotateY(45deg); }
+}
+
+@keyframes progressFill {
+  0%   { width: 10%; }
+  100% { width: 100%; }
+}
+
+/* ── Full-screen overlay (opsional) ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

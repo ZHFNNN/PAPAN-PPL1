@@ -34,6 +34,9 @@ model User {
   bookmarks Bookmark[]
   reviews   Review[]
   reviewReplies ReviewReply[]
+  conversationsAsUser  Conversation[] @relation("ConversationUser")
+  conversationsAsOwner Conversation[] @relation("ConversationOwner")
+  sentMessages         Message[]      @relation("MessageSender")
 }
 
 model Account {
@@ -116,6 +119,7 @@ model Property {
   boostCart   BoostCart[]
   bookmarks   Bookmark[]
   reviews   Review[]
+  conversations Conversation[]
 }
 
 model Notification {
@@ -305,4 +309,32 @@ model ReviewReply {
 
   @@index([reviewId])
   @@index([ownerId])
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  propertyId String
+  userId     String
+  ownerId    String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user       User      @relation("ConversationUser", fields: [userId], references: [id], onDelete: Cascade)
+  owner      User      @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@unique([propertyId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
 }

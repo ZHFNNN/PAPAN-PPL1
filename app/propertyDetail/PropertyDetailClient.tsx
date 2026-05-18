@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import StartChatButton from '@/components/chat/StartChatButton';
 import styles from './page.module.css';
 import { formatPrice } from '@/lib/format-price';
 
@@ -559,8 +560,13 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
                   <p className={styles.agentName}>{prop.ownerName}</p>
                   <p className={styles.agentRole}>Pemilik Properti</p>
                 </div>
-                <button className={styles.agentContactBtn}>Hubungi</button>
               </div>
+
+              {prop.ownerId && (
+                <div style={{ marginTop: 10 }}>
+                  <StartChatButton propertyId={prop.id} ownerId={prop.ownerId} />
+                </div>
+              )}
             </div>
           </div>
 

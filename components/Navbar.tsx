@@ -13,7 +13,7 @@ import {
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/bookmark", label: "Bookmark" },
-  { href: "/history", label: "History" },
+  // { href: "/history", label: "History" },
   { href: "/notification", label: "Notification" },
 ];
 

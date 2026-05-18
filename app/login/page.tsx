@@ -36,7 +36,7 @@ function LoginPageContent() {
   }, [searchParams]);
 
   const handleGoogleLogin = async () => {
-    await signIn("google", { callbackUrl: "/auth/post-login" });
+    await signIn("google", { callbackUrl: callbackPath || "/auth/post-login" });
   };
 
   const handleLogin = async () => {
@@ -59,6 +59,9 @@ function LoginPageContent() {
         body: JSON.stringify({
           email,
           password,
+          callbackUrl: callbackPath
+            ? new URL(callbackPath, window.location.origin).toString()
+            : undefined,
         }),
       });
 
@@ -68,18 +71,20 @@ function LoginPageContent() {
       if (response.ok) {
         let redirectPath = "/auth/post-login";
 
-        try {
-          const meResponse = await fetch("/api/auth/me", { method: "GET" });
-          if (meResponse.ok) {
-            const meData = (await meResponse.json()) as {
-              user?: { role?: string };
-            };
-            if (meData.user?.role === "ADMIN") {
-              redirectPath = "/admin/kyc";
+        if (!callbackPath) {
+          try {
+            const meResponse = await fetch("/api/auth/me", { method: "GET" });
+            if (meResponse.ok) {
+              const meData = (await meResponse.json()) as {
+                user?: { role?: string };
+              };
+              if (meData.user?.role === "ADMIN") {
+                redirectPath = "/admin/kyc";
+              }
             }
+          } catch (meError) {
+            console.warn("Gagal mengambil data role setelah login:", meError);
           }
-        } catch (meError) {
-          console.warn("Gagal mengambil data role setelah login:", meError);
         }
 
         toast.success("Login berhasil! Mengalihkan...");

@@ -25,6 +25,13 @@ function mergeCookieHeaders(...parts: Array<string | null | undefined>): string 
   return parts.filter((value) => Boolean(value && value.trim())).join("; ");
 }
 
+type CallbackPayload = {
+  ok?: boolean;
+  status?: number;
+  error?: string | null;
+  url?: string | null;
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -92,10 +99,17 @@ export async function POST(request: Request) {
     });
 
     const responseText = await callbackResponse.text();
-    const responseHeaders = new Headers();
+    let callbackPayload: CallbackPayload | null = null;
 
-    const contentType = callbackResponse.headers.get("content-type") || "application/json";
-    responseHeaders.set("content-type", contentType);
+    try {
+      callbackPayload = JSON.parse(responseText) as CallbackPayload;
+    } catch {
+      callbackPayload = null;
+    }
+
+    const responseHeaders = new Headers({
+      "content-type": "application/json"
+    });
 
     const callbackSetCookies = getSetCookies(callbackResponse.headers);
     for (const value of callbackSetCookies) {
@@ -103,14 +117,33 @@ export async function POST(request: Request) {
     }
 
     const location = callbackResponse.headers.get("location");
-    if (location) {
-      responseHeaders.set("location", location);
+    const isSuccess =
+      Boolean(callbackPayload?.ok) ||
+      (typeof callbackPayload?.url === "string" && callbackPayload.url.length > 0 && !callbackPayload.url.includes("error=")) ||
+      (callbackResponse.status >= 200 && callbackResponse.status < 300);
+
+    if (!isSuccess) {
+      return new Response(
+        JSON.stringify({
+          message: "Login gagal, periksa kembali email dan password Anda."
+        }),
+        {
+          status: 401,
+          headers: responseHeaders
+        }
+      );
     }
 
-    return new Response(responseText, {
-      status: callbackResponse.status,
-      headers: responseHeaders
-    });
+    return new Response(
+      JSON.stringify({
+        message: "Login berhasil",
+        url: callbackPayload?.url || location || parsed.data.callbackUrl || baseUrl
+      }),
+      {
+        status: 200,
+        headers: responseHeaders
+      }
+    );
   } catch {
     return Response.json({ message: "Terjadi kesalahan server" }, { status: 500 });
   }

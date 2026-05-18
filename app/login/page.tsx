@@ -66,7 +66,15 @@ function LoginPageContent() {
         }),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        data = (await response.json()) as { message?: string };
+      } else {
+        const rawText = await response.text();
+        console.warn("Login API mengembalikan non-JSON response:", rawText.slice(0, 200));
+      }
 
       // 4. Handle Response
       if (response.ok) {

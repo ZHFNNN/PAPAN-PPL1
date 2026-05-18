@@ -2,7 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast"; // Import Toast
 import { signIn } from "next-auth/react";
 

@@ -22,6 +22,7 @@ function LoginPageContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const callbackPath = searchParams.get("callbackUrl");
 
   useEffect(() => {
     if (searchParams.get("registered") === "1") {

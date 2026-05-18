@@ -30,6 +30,9 @@ model User {
   criteriaWeights     UserCriteriaWeight[]
   personalization     UserPersonalization?
   preferredFacilities UserPreferenceFacility[]
+  conversationAsUser  Conversation[]           @relation("ConversationUser")
+  conversationAsOwner Conversation[]           @relation("ConversationOwner")
+  sentMessages        Message[]                @relation("MessageSender")
   boostCart BoostCart[]
   bookmarks Bookmark[]
   reviews   Review[]

@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { formatPrice } from '../../../lib/format-price';
 
+type ActiveBoost = {
+  id: string;
+  packageId: string;
+  packageTitle: string;
+  days: number;
+  price: number;
+  startDate: string;
+  endDate: string;
+  remainingDays: number;
+  remainingTimeMs?: number;
+};
+
 type Property = {
   id: string;
   title: string;
@@ -16,6 +28,8 @@ type Property = {
   views?: number;
   status?: string;
   createdAt: string;
+  isBoosted?: boolean;
+  activeBoost?: ActiveBoost | null;
 };
 
 type DashboardStats = {
@@ -43,6 +57,34 @@ const STATUS_COLOR: Record<string, string> = {
   Terjual: styles.statusTerjual,
 };
 
+function formatCountdown(targetDate: string, nowMs: number) {
+  const remainingMs = new Date(targetDate).getTime() - nowMs;
+
+  if (remainingMs <= 0) {
+    return '0 detik';
+  }
+
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days} hari ${hours} jam`;
+  }
+
+  if (hours > 0) {
+    return `${hours} jam ${minutes} menit`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes} menit ${seconds} detik`;
+  }
+
+  return `${seconds} detik`;
+}
+
 function StatCard({ title, value }: { title: string; value: string | number }) {
   return (
     <div className={styles.statCard}>
@@ -58,10 +100,10 @@ export default function OwnerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const fetchDashboard = async () => {
     try {
-      // NOTE: Buat API route GET /api/owner/dashboard
       const res = await fetch('/api/owner/dashboard');
       if (!res.ok) {
         if (res.status === 401) {
@@ -84,14 +126,20 @@ export default function OwnerDashboardPage() {
     fetchDashboard();
   }, [router]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus properti ini?')) return;
     setDeletingId(id);
     try {
-      // NOTE: Buat API route DELETE /api/owner/properties/[id]
       const res = await fetch(`/api/owner/properties/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus properti.');
-      // Refresh data
       await fetchDashboard();
     } catch (err) {
       alert('Gagal menghapus properti. Coba lagi.');
@@ -209,12 +257,23 @@ export default function OwnerDashboardPage() {
                           <span className={styles.listingBadge}>
                             {LISTING_TYPE_LABEL[property.listingType] ?? property.listingType}
                           </span>
+                          {property.activeBoost && (
+                            <span className={styles.boosterBadge}>Booster</span>
+                          )}
                           <span className={`${styles.statusBadge} ${STATUS_COLOR[property.status ?? 'Aktif'] ?? styles.statusAktif}`}>
                             {property.status ?? 'Aktif'}
                           </span>
                         </div>
                       </div>
                       <p className={styles.propertyPrice}>{formatPrice(property.price)}</p>
+                      {property.activeBoost && (
+                        <div className={styles.boosterInfo}>
+                          <p className={styles.boosterTitle}>Booster aktif</p>
+                          <p className={styles.boosterCountdown}>
+                            Sisa booster: {formatCountdown(property.activeBoost.endDate, now)}
+                          </p>
+                        </div>
+                      )}
                       {property.address && (
                         <p className={styles.propertyAddress}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">

@@ -58,6 +58,7 @@ export async function GET() {
             price: activeBoost.price,
             startDate: activeBoost.startsAt.toISOString(),
             endDate: activeBoost.endsAt.toISOString(),
+            remainingTimeMs: Math.max(activeBoost.endsAt.getTime() - now.getTime(), 0),
             remainingDays: getRemainingDays(activeBoost.endsAt, now),
           }
         : null,

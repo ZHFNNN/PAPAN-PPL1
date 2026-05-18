@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
 import {
   type ApiProperty,
   type PropertySuggestion,
@@ -16,10 +16,17 @@ const NAV_ITEMS = [
   { href: "/notification", label: "Notification" },
 ];
 
-export default function Navbar() {
+function NavbarContent() {
   const router = useRouter();
   const pathname = usePathname();
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams?.get("q") || "");
+
+  useEffect(() => {
+    if (searchParams) {
+      setSearchQuery(searchParams.get("q") || "");
+    }
+  }, [searchParams]);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
@@ -38,10 +45,15 @@ export default function Navbar() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchFocused(false);
+    const q = searchQuery.trim();
+    if (q) {
+      router.push(`/search?q=${encodeURIComponent(q)}`);
+    } else {
+      if (pathname.startsWith('/search')) {
+        router.push('/search');
+      }
     }
+    setIsSearchFocused(false);
   };
 
   const handleSuggestionClick = (item: PropertySuggestion) => {
@@ -294,5 +306,13 @@ export default function Navbar() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={<div className="h-[38px] sm:h-[42px] md:h-[46px]" />}>
+      <NavbarContent />
+    </Suspense>
   );
 }

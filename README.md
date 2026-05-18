@@ -68,6 +68,21 @@ Tambahkan nilai env production ke `Settings > Secrets and variables > Actions` d
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM` (opsional, fallback ke `ADMIN_EMAIL`)
+- `MIDTRANS_SERVER_KEY`
+- `MIDTRANS_IS_PRODUCTION` (`true` untuk production, selain itu sandbox)
+
+### Midtrans webhook
+
+Setelah checkout Midtrans aktif, arahkan notifikasi server ke endpoint ini:
+
+- `POST /api/owner/boosts/webhook`
+
+Endpoint tersebut akan memverifikasi signature Midtrans, menandai transaksi sebagai `PAID`, lalu membuat `PropertyBoost` hanya setelah pembayaran sukses.
 
 ### Catatan
 

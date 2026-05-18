@@ -52,29 +52,10 @@ export default function RegisterPage() {
 
       // 4. Handle Response
       if (response.ok) {
-        const loginResponse = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-            callbackUrl: `${window.location.origin}/personalisasi`,
-          }),
-        });
-
-        if (loginResponse.ok) {
-          toast.success("Registrasi berhasil! Lanjut personalisasi...");
-          setTimeout(() => {
-            router.push("/personalisasi");
-          }, 500);
-        } else {
-          toast.success("Registrasi berhasil! Silakan login dulu.");
-          setTimeout(() => {
-            router.push("/login");
-          }, 700);
-        }
+        toast.success("Registrasi berhasil! Silakan cek email untuk verifikasi akun.");
+        setTimeout(() => {
+          router.push("/login?registered=1");
+        }, 800);
       } else {
         toast.error(data.message || "Registrasi gagal, silakan coba lagi.");
       }

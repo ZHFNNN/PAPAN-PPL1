@@ -232,6 +232,18 @@
   font-family: 'Poppins', sans-serif;
 }
 
+.boosterBadge {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'Poppins', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .statusBadge {
   font-size: 11px;
   font-weight: 600;
@@ -260,6 +272,33 @@
   font-weight: 700;
   color: #000cb8;
   margin: 0 0 4px 0;
+}
+
+.boosterInfo {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(249, 115, 22, 0.08));
+  border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.boosterTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c2410c;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.boosterCountdown {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9a3412;
+  margin: 0;
 }
 
 .propertyAddress {

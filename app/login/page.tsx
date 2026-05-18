@@ -1,24 +1,40 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import styles from "./page.module.css";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast"; // Import Toast
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  const [callbackPath, setCallbackPath] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const callbackPath = searchParams.get("callbackUrl");
 
   useEffect(() => {
-    const raw = new URLSearchParams(window.location.search).get("callbackUrl");
-    setCallbackPath(raw && raw.startsWith("/") ? raw : null);
-  }, []);
+    if (searchParams.get("registered") === "1") {
+      toast.success("Akun berhasil dibuat. Cek email untuk verifikasi.");
+    }
+    if (searchParams.get("verification") === "success") {
+      toast.success("Email berhasil diverifikasi. Silakan login.");
+    }
+    if (searchParams.get("verification") === "invalid") {
+      toast.error("Tautan verifikasi tidak valid atau sudah kedaluwarsa.");
+    }
+  }, [searchParams]);
 
   const handleGoogleLogin = async () => {
     await signIn("google", { callbackUrl: callbackPath || "/auth/post-login" });
@@ -50,11 +66,19 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        data = (await response.json()) as { message?: string };
+      } else {
+        const rawText = await response.text();
+        console.warn("Login API mengembalikan non-JSON response:", rawText.slice(0, 200));
+      }
 
       // 4. Handle Response
       if (response.ok) {
-        let redirectPath = callbackPath || "/";
+        let redirectPath = "/auth/post-login";
 
         if (!callbackPath) {
           try {

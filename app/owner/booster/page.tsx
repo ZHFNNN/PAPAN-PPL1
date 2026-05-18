@@ -26,7 +26,7 @@ type CartItem = {
   price: number;
 };
 
-type PaymentMethod = 'QRIS' | 'BCA' | 'BRI' | 'MANDIRI';
+type PaymentMethod = 'MIDTRANS';
 
 type Toast = {
   id: number;
@@ -35,13 +35,6 @@ type Toast = {
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const PAYMENT_METHODS: { id: PaymentMethod; label: string; type: 'qris' | 'va' }[] = [
-  { id: 'QRIS', label: 'QRIS', type: 'qris' },
-  { id: 'BCA', label: 'BCA', type: 'va' },
-  { id: 'BRI', label: 'BRIVA', type: 'va' },
-  { id: 'MANDIRI', label: 'Mandiri', type: 'va' },
-];
 
 const ADMIN_FEE = 1000;
 
@@ -105,7 +98,6 @@ function CartDrawer({
   properties: Property[];
   toast: (msg: string, type?: Toast['type']) => void;
 }) {
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('QRIS');
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editMode, setEditMode] = useState<'package' | 'property' | null>(null);
 
@@ -234,33 +226,12 @@ function CartDrawer({
                 <span>Total</span><span>{formatRupiah(total)}</span>
               </div>
 
-              <p className={styles.drawerPayLabel}>Metode Pembayaran</p>
-              <div className={styles.drawerPayGroup}>
-                {PAYMENT_METHODS.filter(m => m.type === 'qris').map(m => (
-                  <label key={m.id} className={`${styles.drawerPayOption} ${selectedMethod === m.id ? styles.drawerPaySelected : ''}`}>
-                    <input type="radio" name="dpay" checked={selectedMethod === m.id} onChange={() => setSelectedMethod(m.id)} className={styles.hiddenRadio} />
-                    <span className={styles.radioCircle} />
-                    <span className={styles.radioLabel}>{m.label}</span>
-                  </label>
-                ))}
-              </div>
-              <p className={styles.drawerPayGroupLabel}>Virtual Account</p>
-              <div className={styles.drawerPayGroup}>
-                {PAYMENT_METHODS.filter(m => m.type === 'va').map(m => (
-                  <label key={m.id} className={`${styles.drawerPayOption} ${selectedMethod === m.id ? styles.drawerPaySelected : ''}`}>
-                    <input type="radio" name="dpay" checked={selectedMethod === m.id} onChange={() => setSelectedMethod(m.id)} className={styles.hiddenRadio} />
-                    <span className={styles.radioCircle} />
-                    <span className={styles.radioLabel}>{m.label}</span>
-                  </label>
-                ))}
-              </div>
-
               <button
                 className={styles.drawerPayBtn}
-                onClick={() => onCheckout(selectedMethod)}
+                onClick={() => onCheckout('MIDTRANS')}
                 disabled={isProcessing}
               >
-                {isProcessing ? 'Memproses...' : `Bayar ${formatRupiah(total)}`}
+                {isProcessing ? 'Memproses...' : 'Pilih Metode Pembayaran'}
               </button>
             </div>
           </div>

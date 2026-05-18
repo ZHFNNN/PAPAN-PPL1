@@ -16,15 +16,12 @@ type CartItem = {
 
 type CheckoutBody = {
   items: CartItem[];
-  paymentMethod: 'QRIS' | 'BCA' | 'BRI' | 'MANDIRI';
+  paymentMethod: 'MIDTRANS';
 };
 
 const ADMIN_FEE = 1000;
 const ALLOWED_PAYMENT_METHODS = new Set<CheckoutBody['paymentMethod']>([
-  'QRIS',
-  'BCA',
-  'BRI',
-  'MANDIRI',
+  'MIDTRANS',
 ]);
 
 export async function POST(req: Request) {
@@ -147,8 +144,8 @@ export async function POST(req: Request) {
       ownerId: userId,
       provider: 'MIDTRANS',
       status: 'PENDING',
-      paymentMethod,
-      paymentType: paymentMethod,
+      paymentMethod: 'MIDTRANS',
+      paymentType: 'MIDTRANS',
       subtotal,
       adminFee: ADMIN_FEE,
       grossAmount,
@@ -196,7 +193,7 @@ export async function POST(req: Request) {
     const snap = await createMidtransSnapTransaction({
       orderId,
       grossAmount,
-      paymentMethod,
+      paymentMethod: 'MIDTRANS',
       customer: {
         first_name: user.name?.trim() || 'Owner',
         email: user.email ?? undefined,

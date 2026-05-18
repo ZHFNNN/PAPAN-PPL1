@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 
-export type MidtransPaymentMethod = "QRIS" | "BCA" | "BRI" | "MANDIRI";
+export type MidtransPaymentMethod = "MIDTRANS" | "QRIS" | "BCA" | "BRI" | "MANDIRI";
 
 export type MidtransItemDetail = {
   id: string;

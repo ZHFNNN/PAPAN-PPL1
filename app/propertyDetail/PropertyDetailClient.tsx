@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import StartChatButton from '@/components/chat/StartChatButton';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import toast from 'react-hot-toast';
 import styles from './page.module.css';
 import { formatPrice } from '@/lib/format-price';
 
@@ -215,6 +217,9 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [reviewDeleteCandidate, setReviewDeleteCandidate] = useState<{ id: string } | null>(null);
+  const [reviewDeleteLoading, setReviewDeleteLoading] = useState(false);
+  const [reviewDeleteError, setReviewDeleteError] = useState<string | null>(null);
 
   // Review form
   const [formRating, setFormRating] = useState(0);
@@ -316,11 +321,9 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
       else throw new Error('no share api');
     } catch {
       await navigator.clipboard.writeText(window.location.href);
-      alert('Link berhasil disalin!');
+      toast.success('Link berhasil disalin!');
     }
   };
-
-  const handleBuy = () => alert('Fitur pembelian akan segera hadir!');
 
   const handleBookmark = async () => {
     if (bookmarkLoading || !propertyId) return;
@@ -330,16 +333,18 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
         const res = await fetch(`/api/bookmarks/${encodeURIComponent(propertyId)}`, { method: 'DELETE', credentials: 'include' });
         const json = await res.json().catch(() => ({}));
         if (res.status === 401) { router.push('/login'); return; }
-        if (!res.ok) { alert(json.message ?? 'Gagal menghapus bookmark.'); return; }
+        if (!res.ok) { toast.error(json.message ?? 'Gagal menghapus bookmark.'); return; }
         setBookmarked(false);
+        toast.success('Dihapus dari bookmark.');
       } else {
         const res = await fetch('/api/bookmarks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ propertyId }), credentials: 'include' });
         const json = await res.json().catch(() => ({}));
         if (res.status === 401) { router.push('/login'); return; }
-        if (!res.ok) { alert(json.message ?? 'Gagal menyimpan bookmark.'); return; }
+        if (!res.ok) { toast.error(json.message ?? 'Gagal menyimpan bookmark.'); return; }
         setBookmarked(true);
+        toast.success('Disimpan ke bookmark.');
       }
-    } catch { alert('Terjadi kesalahan saat memperbarui bookmark.'); }
+    } catch { toast.error('Terjadi kesalahan saat memperbarui bookmark.'); }
     finally { setBookmarkLoading(false); }
   };
 
@@ -410,14 +415,35 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
   };
 
   // ── Delete own review ────────────────────────────────────────
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!confirm('Hapus review kamu?')) return;
+  const openDeleteReviewModal = (reviewId: string) => {
+    setReviewDeleteCandidate({ id: reviewId });
+    setReviewDeleteError(null);
+  };
+
+  const closeDeleteReviewModal = () => {
+    if (reviewDeleteLoading) return;
+    setReviewDeleteCandidate(null);
+    setReviewDeleteError(null);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!reviewDeleteCandidate) return;
+    setReviewDeleteLoading(true);
+    setReviewDeleteError(null);
     try {
-      const res = await fetch(`/api/properties/${encodeURIComponent(propertyId)}/reviews/${reviewId}`, { method: 'DELETE', credentials: 'include' });
+      const res = await fetch(
+        `/api/properties/${encodeURIComponent(propertyId)}/reviews/${reviewDeleteCandidate.id}`,
+        { method: 'DELETE', credentials: 'include' }
+      );
       if (res.status === 401) { router.push('/login'); return; }
-      if (!res.ok) { alert('Gagal menghapus review.'); return; }
+      if (!res.ok) { setReviewDeleteError('Gagal menghapus review.'); return; }
+      setReviewDeleteCandidate(null);
       await fetchReviews();
-    } catch { alert('Terjadi kesalahan.'); }
+    } catch {
+      setReviewDeleteError('Terjadi kesalahan.');
+    } finally {
+      setReviewDeleteLoading(false);
+    }
   };
 
   // ── Rating distribution ──────────────────────────────────────
@@ -445,12 +471,13 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
       });
       const json = await res.json().catch(() => ({}));
       if (res.status === 401) { router.push('/login'); return; }
-      if (!res.ok) { alert(json.message ?? 'Gagal mengirim balasan.'); return; }
+      if (!res.ok) { toast.error(json.message ?? 'Gagal mengirim balasan.'); return; }
 
       setReplyDrafts((prev) => ({ ...prev, [reviewId]: '' }));
       await fetchReviews();
+      toast.success('Balasan berhasil dikirim.');
     } catch {
-      alert('Terjadi kesalahan saat mengirim balasan.');
+      toast.error('Terjadi kesalahan saat mengirim balasan.');
     } finally {
       setReplySubmitting(null);
     }
@@ -507,6 +534,18 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
         </div>
       )}
 
+      <ConfirmDialog
+        open={Boolean(reviewDeleteCandidate)}
+        title="Hapus review?"
+        description="Review kamu akan dihapus dan tidak bisa dikembalikan."
+        confirmText="Hapus"
+        cancelText="Batal"
+        loading={reviewDeleteLoading}
+        errorText={reviewDeleteError}
+        onCancel={closeDeleteReviewModal}
+        onConfirm={confirmDeleteReview}
+      />
+
       <div className={styles.contentArea}>
         <div className={styles.container}>
           <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>
@@ -534,7 +573,11 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
               <p className={styles.priceLabel}>Harga</p>
               <p className={styles.priceValue}>{prop.price}</p>
               <p className={styles.priceEstimate}>{prop.biayaHidup}</p>
-              <button className={styles.btnBuy} onClick={handleBuy}>Beli Sekarang</button>
+
+          {prop.ownerId ? (
+            <StartChatButton propertyId={prop.id} ownerId={prop.ownerId} variant="light" />
+          ) : null}
+
               <button
                 className={`${styles.btnOutline} ${bookmarked ? styles.btnOutlineActive : ''}`}
                 onClick={handleBookmark}
@@ -561,12 +604,6 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
                   <p className={styles.agentRole}>Pemilik Properti</p>
                 </div>
               </div>
-
-              {prop.ownerId && (
-                <div style={{ marginTop: 10 }}>
-                  <StartChatButton propertyId={prop.id} ownerId={prop.ownerId} />
-                </div>
-              )}
             </div>
           </div>
 
@@ -736,7 +773,7 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
                         <button
                           type="button"
                           className={styles.reviewDeleteBtn}
-                          onClick={() => handleDeleteReview(review.id)}
+                          onClick={() => openDeleteReviewModal(review.id)}
                           title="Hapus ulasan"
                         >
                           Hapus review

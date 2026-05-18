@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import styles from './ownerSidebar.module.css';
 import { signOut } from 'next-auth/react';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const MENU_ITEMS = [
   { href: '/profile', label: 'Profile' },
@@ -26,6 +27,8 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [highlightStyle, setHighlightStyle] = useState({ top: '0px', height: '0px', opacity: 0 });
   const [isSwitching, setIsSwitching] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const activeHref = pathname;
 
@@ -75,6 +78,25 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
     }
   };
 
+  const openLogoutModal = () => {
+    setLogoutOpen(true);
+  };
+
+  const closeLogoutModal = () => {
+    if (logoutLoading) return;
+    setLogoutOpen(false);
+  };
+
+  const confirmLogout = async () => {
+    if (logoutLoading) return;
+    setLogoutLoading(true);
+    try {
+      await signOut({ callbackUrl: '/login' });
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
       {/* Sidebar panel */}
@@ -117,7 +139,7 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
               {isSwitching ? 'Memproses...' : 'Aktifkan Mode Pemilik'}
             </button>
             <button
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={openLogoutModal}
               className={styles.logoutButton}
             >
               <span className={styles.logoutText}>Log Out</span>
@@ -125,6 +147,17 @@ export default function Sidebar({ collapsed, onToggle, onSwitchMode }: SidebarPr
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={logoutOpen}
+        title="Keluar dari akun?"
+        description="Kamu akan logout dari akun ini."
+        confirmText="Log Out"
+        cancelText="Batal"
+        loading={logoutLoading}
+        onCancel={closeLogoutModal}
+        onConfirm={confirmLogout}
+      />
 
       {/* Toggle button — always visible */}
       <button

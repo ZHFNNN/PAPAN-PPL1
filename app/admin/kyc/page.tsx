@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import styles from './page.module.css';
 import { signOut } from 'next-auth/react';
 
@@ -285,19 +285,6 @@ export default function AdminKycPage() {
 
   return (
     <div className={styles.page}>
-      <Toaster position="top-center" toastOptions={{
-        style: {
-          background: 'rgba(255,255,255,0.72)',
-          color: '#171717',
-          border: '1px solid #9a9a9a',
-          borderRadius: '999px',
-          backdropFilter: 'blur(10px)',
-          fontSize: '13px',
-          fontWeight: 500,
-          fontFamily: 'inherit',
-        },
-      }} />
-
       {selected && (
         <DetailModal
           submission={selected}
@@ -320,6 +307,9 @@ export default function AdminKycPage() {
           </button>
           <button className={styles.navItem} onClick={() => router.push('/admin/notifications')}>
             <span>🔔</span> Kirim Notifikasi
+          </button>
+          <button className={styles.navItem} onClick={() => router.push('/admin/chat')}>
+            <span>💬</span> Monitoring Chat
           </button>
         </nav>
 

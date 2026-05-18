@@ -27,6 +27,11 @@ export async function GET(req: NextRequest) {
         role: true,
         kycStatus: true,
         createdAt: true,
+        _count: {
+          select: {
+            properties: true,
+          },
+        },
       },
     });
 
@@ -105,6 +110,11 @@ export async function PATCH(req: NextRequest) {
         phoneNumber: true,
         role: true,
         kycStatus: true,
+        _count: {
+          select: {
+            properties: true,
+          },
+        },
       },
     });
 

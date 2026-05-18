@@ -68,6 +68,11 @@ Tambahkan nilai env production ke `Settings > Secrets and variables > Actions` d
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM` (opsional, fallback ke `ADMIN_EMAIL`)
 
 ### Catatan
 

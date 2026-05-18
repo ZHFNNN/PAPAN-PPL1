@@ -1,24 +1,39 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast"; // Import Toast
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  const [callbackPath, setCallbackPath] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const raw = new URLSearchParams(window.location.search).get("callbackUrl");
-    setCallbackPath(raw && raw.startsWith("/") ? raw : null);
-  }, []);
+    if (searchParams.get("registered") === "1") {
+      toast.success("Akun berhasil dibuat. Cek email untuk verifikasi.");
+    }
+    if (searchParams.get("verification") === "success") {
+      toast.success("Email berhasil diverifikasi. Silakan login.");
+    }
+    if (searchParams.get("verification") === "invalid") {
+      toast.error("Tautan verifikasi tidak valid atau sudah kedaluwarsa.");
+    }
+  }, [searchParams]);
 
   const handleGoogleLogin = async () => {
     await signIn("google", { callbackUrl: callbackPath || "/auth/post-login" });
@@ -54,7 +69,7 @@ export default function LoginPage() {
 
       // 4. Handle Response
       if (response.ok) {
-        let redirectPath = callbackPath || "/";
+        let redirectPath = "/auth/post-login";
 
         if (!callbackPath) {
           try {

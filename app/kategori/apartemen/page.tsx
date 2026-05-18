@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import styles from '../../HomePage.module.css';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
-import { properties, Properti } from '../../../lib/properties';
+import { formatPrice } from '../../../lib/format-price';
+import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
@@ -35,7 +36,7 @@ const HOTSPOTS = [
 
 const HERO_HOVER_STORAGE_KEY = 'hero-hover-spot';
 
-function PropertyCard({ prop }: { prop: Properti }) {
+function PropertyCard({ prop }: { prop: PropertyCardData }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -74,7 +75,7 @@ function PropertyCard({ prop }: { prop: Properti }) {
       </div>
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
-        <p className={styles.cardPrice}>{prop.price}</p>
+        <p className={styles.cardPrice}>{formatPrice(prop.price)}</p>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
         <div className={styles.cardLokasi}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -97,7 +98,17 @@ function PropertyCard({ prop }: { prop: Properti }) {
   );
 }
 
-function PropertySection({ title, data }: { title: string; data: Properti[] }) {
+function PropertySection({
+  title,
+  data,
+  isLoading,
+  error,
+}: {
+  title: string;
+  data: PropertyCardData[];
+  isLoading: boolean;
+  error: string | null;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scroll = (dir: 'left' | 'right') => {
     scrollRef.current?.scrollBy({ left: dir === 'right' ? 370 : -370, behavior: 'smooth' });
@@ -113,10 +124,29 @@ function PropertySection({ title, data }: { title: string; data: Properti[] }) {
         </div>
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
-        {data.length === 0
-          ? <p style={{ color: '#999', padding: '20px 0' }}>Tidak ada properti tersedia.</p>
-          : data.map((p) => <PropertyCard key={p.id} prop={p} />)
-        }
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={`skeleton-${i}`} className={styles.skeletonCard} aria-hidden>
+              <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+              <div className={styles.skeletonBody}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                <div className={styles.skeletonRow}>
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : error ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>{error}</p>
+        ) : data.length === 0 ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>Tidak ada properti tersedia.</p>
+        ) : (
+          data.map((p) => <PropertyCard key={p.id} prop={p} />)
+        )}
       </div>
     </section>
   );
@@ -127,6 +157,9 @@ export default function ApartemenPage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [charaX, setCharaX] = useState(50);
   const [hoveredSpot, setHoveredSpot] = useState<string | null>(null);
+  const [items, setItems] = useState<PropertyCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
   const aktif: KategoriType = 'Apartemen'; // ← BEDA tiap file
@@ -139,6 +172,39 @@ export default function ApartemenPage() {
   }, [router]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const loadProperties = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch('/api/properties?category=APARTEMEN&take=120');
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        if (!cancelled) {
+          setItems(data.map(mapApiPropertyToCard));
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Gagal memuat properti.');
+          setItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadProperties();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     const savedSpot = sessionStorage.getItem(HERO_HOVER_STORAGE_KEY);
     if (savedSpot && HOTSPOTS.some((spot) => spot.id === savedSpot)) {
@@ -147,7 +213,8 @@ export default function ApartemenPage() {
     sessionStorage.removeItem(HERO_HOVER_STORAGE_KEY);
   }, []);
 
-  const filtered = properties.filter((p) => p.kategori === aktif);
+  const filtered = items;
+  const countLabel = isLoading ? '...' : String(filtered.length);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!heroRef.current) return;
@@ -238,11 +305,11 @@ export default function ApartemenPage() {
             Apartemen
           </h1>
           <p style={{ color: '#888', fontSize: 14, marginTop: 6 }}>
-            Menampilkan {filtered.length} properti
+            Menampilkan {countLabel} properti
           </p>
         </div>
-        <PropertySection title="Rekomendasi" data={filtered} />
-        <PropertySection title="Best Seller" data={filtered} />
+        <PropertySection title="Rekomendasi" data={filtered} isLoading={isLoading} error={error} />
+        <PropertySection title="Best Seller" data={filtered} isLoading={isLoading} error={error} />
       </div>
       <Footer />
     </div>

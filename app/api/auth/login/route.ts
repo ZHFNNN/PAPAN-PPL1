@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -37,6 +38,21 @@ export async function POST(request: Request) {
     }
 
     const baseUrl = process.env.NEXTAUTH_URL || new URL(request.url).origin;
+    const email = parsed.data.email.trim().toLowerCase();
+    const account = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        emailVerified: true,
+        passwordHash: true,
+      },
+    });
+
+    if (account?.passwordHash && !account.emailVerified) {
+      return Response.json(
+        { message: "Email belum diverifikasi. Silakan cek inbox untuk tautan verifikasi." },
+        { status: 403 }
+      );
+    }
 
     const csrfResponse = await fetch(`${baseUrl}/api/auth/csrf`, {
       method: "GET",
@@ -60,7 +76,7 @@ export async function POST(request: Request) {
 
     const form = new URLSearchParams();
     form.set("csrfToken", csrfData.csrfToken);
-    form.set("email", parsed.data.email);
+    form.set("email", email);
     form.set("password", parsed.data.password);
     form.set("callbackUrl", parsed.data.callbackUrl || baseUrl);
     form.set("json", "true");

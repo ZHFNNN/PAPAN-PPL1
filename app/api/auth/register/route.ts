@@ -1,8 +1,11 @@
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { sendVerificationEmail } from "@/lib/mailer";
 
 const registerSchema = z.object({
+  name: z.string().min(1).max(100),
   username: z.string().min(3).max(30),
   email: z.string().email(),
   phoneNumber: z.string().min(8).max(20),
@@ -25,10 +28,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { username, email, phoneNumber, password } = parsed.data;
+    const { name, username, email, phoneNumber, password } = parsed.data;
+    const normalizedEmail = email.trim().toLowerCase();
 
     const [existingEmail, existingUsername, existingPhone] = await Promise.all([
-      prisma.user.findUnique({ where: { email } }),
+      prisma.user.findUnique({ where: { email: normalizedEmail } }),
       prisma.user.findUnique({ where: { username } }),
       prisma.user.findUnique({ where: { phoneNumber } })
     ]);
@@ -46,34 +50,59 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await hash(password, 12);
+    const verificationToken = randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    const user = await prisma.user.create({
-      data: {
+    await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          username,
+          name,
+          email: normalizedEmail,
+          phoneNumber,
+          passwordHash,
+          emailVerified: null,
+        },
+      }),
+      prisma.verificationToken.create({
+        data: {
+          identifier: normalizedEmail,
+          token: verificationToken,
+          expires: expiresAt,
+        },
+      }),
+    ]);
+
+    const verifyUrl = new URL("/api/auth/verify-email", request.url);
+    verifyUrl.searchParams.set("email", normalizedEmail);
+    verifyUrl.searchParams.set("token", verificationToken);
+
+    try {
+      await sendVerificationEmail({
+        to: normalizedEmail,
         username,
-        name: username,
-        email,
-        phoneNumber,
-        passwordHash
-      },
-      select: {
-        id: true,
-        username: true,
-        name: true,
-        email: true,
-        phoneNumber: true,
-        role: true,
-        kycStatus: true
-      }
-    });
+        verifyUrl: verifyUrl.toString(),
+      });
+    } catch (mailError) {
+      await prisma.verificationToken.deleteMany({
+        where: { identifier: normalizedEmail, token: verificationToken },
+      });
+      await prisma.user.delete({
+        where: { email: normalizedEmail },
+      });
+
+      throw mailError;
+    }
 
     return Response.json(
       {
-        message: "Register berhasil",
-        user
+        message: "Register berhasil. Silakan cek email untuk verifikasi akun.",
+        verificationRequired: true,
       },
       { status: 201 }
     );
-  } catch {
-    return Response.json({ message: "Terjadi kesalahan server" }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Terjadi kesalahan server";
+    return Response.json({ message }, { status: 500 });
   }
 }

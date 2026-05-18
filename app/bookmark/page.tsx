@@ -16,26 +16,6 @@ type BookmarkedProperty = {
   listingType: string;
 };
 
-// Dummy data – ganti dengan fetch API saat endpoint tersedia
-const DUMMY_BOOKMARKS: BookmarkedProperty[] = [
-  {
-    id: '1',
-    title: 'Rumah keren nan megah',
-    location: 'Kebayoran Baru, Jakarta Selatan',
-    price: 3500000000,
-    coverImageUrl: '/images/rumah1.jpg',
-    listingType: 'Rumah',
-  },
-  {
-    id: '2',
-    title: 'Kosan Phareab',
-    location: 'Kebayoran Baru, Jakarta Selatan',
-    price: 1200000,
-    coverImageUrl: '/images/kosan1.jpg',
-    listingType: 'Kosan',
-  },
-];
-
 function formatRupiah(value: number): string {
   if (value >= 1_000_000_000) {
     const val = value / 1_000_000_000;
@@ -46,6 +26,14 @@ function formatRupiah(value: number): string {
     return `Rp${val % 1 === 0 ? val : val.toFixed(1)} Juta`;
   }
   return `Rp${value.toLocaleString('id-ID')}`;
+}
+
+function formatLocation(item: BookmarkedProperty): string {
+  return (
+    [item.neighbourhood, item.district, item.city]
+      .filter((v) => Boolean(v?.trim()))
+      .join(', ') || item.address || 'Lokasi belum tersedia'
+  );
 }
 
 function BookmarkCard({
@@ -60,10 +48,19 @@ function BookmarkCard({
   onSimilar: (id: string) => void;
 }) {
   const [imgError, setImgError] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  const handleRemove = async () => {
+    setRemoving(true);
+    try {
+      await onRemove(item.id);
+    } catch {
+      setRemoving(false);
+    }
+  };
 
   return (
     <div className={styles.card}>
-      {/* Thumbnail */}
       <div className={styles.cardThumb}>
         {item.coverImageUrl && !imgError ? (
           <img
@@ -79,36 +76,28 @@ function BookmarkCard({
         )}
       </div>
 
-      {/* Info */}
       <div className={styles.cardInfo}>
         <p className={styles.cardTitle}>{item.title}</p>
         <p className={styles.cardLocation}>
           <span className={styles.locationIcon}>📍</span>
-          {item.location}
+          {formatLocation(item)}
         </p>
         <p className={styles.cardPrice}>{formatRupiah(item.price)}</p>
       </div>
 
-      {/* Actions */}
       <div className={styles.cardActions}>
-        <button
-          className={styles.btnPrimary}
-          onClick={() => onDetail(item.id)}
-        >
-          Beli Sekarang
+        <button className={styles.btnPrimary} onClick={() => onDetail(item.id)}>
+          Lihat Detail
         </button>
-        <button
-          className={styles.btnSecondary}
-          onClick={() => onSimilar(item.id)}
-        >
-          Lihat properti serupa
+        <button className={styles.btnSecondary} onClick={() => onSimilar(item.id)}>
+          Properti Serupa
         </button>
       </div>
 
-      {/* Remove bookmark */}
       <button
         className={styles.removeBtn}
-        onClick={() => onRemove(item.id)}
+        onClick={handleRemove}
+        disabled={removing}
         title="Hapus dari bookmark"
       >
         ✕
@@ -119,30 +108,45 @@ function BookmarkCard({
 
 export default function BookmarkPage() {
   const router = useRouter();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [bookmarks, setBookmarks] = useState<BookmarkedProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchBookmarks = async () => {
+    try {
+      const res = await fetch('/api/bookmarks');
+      const json = await res.json();
+      if (res.ok && json.data) {
+        setBookmarks(json.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch bookmarks:', error);
+      setError('Terjadi kesalahan saat memuat bookmark.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // TODO: ganti dengan fetch('/api/bookmarks') saat endpoint tersedia
-    const timer = setTimeout(() => {
-      setBookmarks(DUMMY_BOOKMARKS);
-      setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
+    fetchBookmarks();
   }, []);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = async (id: string) => {
+    // Optimistic UI update
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
-    // TODO: DELETE /api/bookmarks/:id
-  };
-
-  const handleDetail = (id: string) => {
-    router.push(`/propertyDetail/${id}`);
-  };
-
-  const handleSimilar = (id: string) => {
-    router.push(`/search?similar=${id}`);
+    
+    try {
+      const res = await fetch(`/api/bookmarks/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        // Revert if failed
+        fetchBookmarks();
+      }
+    } catch (error) {
+      console.error('Failed to remove bookmark:', error);
+      fetchBookmarks();
+    }
   };
 
   return (

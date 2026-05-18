@@ -1,13 +1,8 @@
-// ============================================================
-// FILE: app/api/owner/dashboard/route.ts
-// GET /api/owner/dashboard
-// ============================================================
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth'; // atau auth helper kamu
-import { authOptions } from '@/lib/auth';      // sesuaikan path
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-
+import { getRemainingDays } from '@/lib/booster';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -17,10 +12,28 @@ export async function GET() {
 
   const userId = session.user.id;
 
+  const now = new Date();
+
   const [properties, user] = await Promise.all([
     prisma.property.findMany({
       where: { ownerId: userId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        boosts: {
+          where: {
+            startsAt: {
+              lte: now,
+            },
+            endsAt: {
+              gt: now,
+            },
+          },
+          orderBy: {
+            endsAt: 'desc',
+          },
+          take: 1,
+        },
+      },
     }),
     prisma.user.findUnique({
       where: { id: userId },
@@ -28,20 +41,42 @@ export async function GET() {
     }),
   ]);
 
-  // Hitung stats sederhana — sesuaikan dengan field asli kamu
+  const normalizedProperties = properties.map((property) => {
+    const activeBoost = property.boosts[0] ?? null;
+    const { boosts, ...plainProperty } = property;
+
+    return {
+      ...plainProperty,
+      price: property.price.toString(),
+      isBoosted: Boolean(activeBoost),
+      activeBoost: activeBoost
+        ? {
+            id: activeBoost.id,
+            packageId: activeBoost.packageId,
+            packageTitle: activeBoost.packageTitle,
+            days: activeBoost.days,
+            price: activeBoost.price,
+            startDate: activeBoost.startsAt.toISOString(),
+            endDate: activeBoost.endsAt.toISOString(),
+            remainingTimeMs: Math.max(activeBoost.endsAt.getTime() - now.getTime(), 0),
+            remainingDays: getRemainingDays(activeBoost.endsAt, now),
+          }
+        : null,
+    };
+  });
+
   const stats = {
-    totalProperties: properties.length,
-    activeProperties: properties.length, // Tambah field `status` ke model Property jika perlu
-    rentedRooms: 0,                       // Tambah relasi Booking / Room ke Property jika perlu
-    soldProperties: 0,                    // Idem
-    totalRevenue: 0,                      // Hitung dari transaksi
+    totalProperties: normalizedProperties.length,
+    activeProperties: normalizedProperties.length,
+    rentedRooms: 0,
+    soldProperties: 0,
+    totalRevenue: 0,
+    boostedProperties: normalizedProperties.filter((p) => p.isBoosted).length,
   };
 
   return NextResponse.json({
     stats,
-    properties: properties.map((p) => ({
-      ...p,
-      price: p.price.toString(),
-    })),
+    kycStatus: user?.kycStatus ?? 'NONE',
+    properties: normalizedProperties,
   });
 }

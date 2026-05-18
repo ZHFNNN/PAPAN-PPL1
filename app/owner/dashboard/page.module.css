@@ -232,6 +232,18 @@
   font-family: 'Poppins', sans-serif;
 }
 
+.boosterBadge {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: 'Poppins', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .statusBadge {
   font-size: 11px;
   font-weight: 600;
@@ -260,6 +272,33 @@
   font-weight: 700;
   color: #000cb8;
   margin: 0 0 4px 0;
+}
+
+.boosterInfo {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(249, 115, 22, 0.08));
+  border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.boosterTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c2410c;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.boosterCountdown {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9a3412;
+  margin: 0;
 }
 
 .propertyAddress {
@@ -393,6 +432,124 @@
   gap: 16px;
   color: #19263c;
   font-size: 15px;
+}
+
+/* ── Skeleton ── */
+.skeletonWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.skeletonStats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .skeletonStats { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .skeletonStats { grid-template-columns: repeat(2, 1fr); }
+}
+
+.skeletonCard {
+  background: #eef2f7;
+  border-radius: 24px;
+  height: 110px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonLine.lg { height: 18px; }
+.skeletonLine.md { height: 14px; }
+.skeletonLine.w40 { width: 40%; }
+.skeletonLine.w60 { width: 60%; }
+.skeletonLine.w70 { width: 70%; }
+
+.skeletonShimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.skeletonPill {
+  width: 80px;
+  height: 20px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeletonPropertyCard {
+  background: #f7f9fc;
+  border-radius: 20px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonThumb {
+  width: 110px;
+  height: 80px;
+  border-radius: 12px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeletonInfo {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.skeletonActions {
+  display: grid;
+  gap: 8px;
+  width: 120px;
+}
+
+.skeletonBtn {
+  height: 32px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
 }
 
 .spinner {

@@ -17,351 +17,145 @@ const DEFAULT_FACILITIES = [
 
 const DUMMY_OWNER_EMAIL = "owner-demo@papan.local";
 
-type DummyTemplate = {
-  titlePrefix: string;
-  category: 'RUMAH' | 'APARTEMEN' | 'KOSAN';
-  description: string;
-  price: number;
-  listingType: string;
-  facilityCodes: string[];
-  imageUrls: string[];
+// Komponen deskripsi random agar tidak kembar
+const DESC_PARTS = {
+  intro: ["Hunian eksklusif", "Tempat tinggal nyaman", "Lokasi premium", "Pilihan cerdas hunian", "Akomodasi terbaik"],
+  vibes: ["dengan lingkungan yang tenang", "di pusat keramaian kota", "dengan akses mudah ke perkantoran", "dekat dengan area kampus", "yang aman dan bebas banjir"],
+  feature: ["Fasilitas lengkap untuk produktivitas.", "Desain modern minimalis.", "Sangat cocok untuk keluarga.", "Keamanan 24 jam terjamin.", "Pencahayaan sangat baik."]
 };
 
-type DummyArea = {
-  city: string;
-  district: string;
-  neighbourhood: string;
-  lat: number;
-  lng: number;
-};
+function getRandomDesc() {
+  const i = Math.floor(Math.random() * DESC_PARTS.intro.length);
+  const v = Math.floor(Math.random() * DESC_PARTS.vibes.length);
+  const f = Math.floor(Math.random() * DESC_PARTS.feature.length);
+  return `${DESC_PARTS.intro[i]} ${DESC_PARTS.vibes[v]}. ${DESC_PARTS.feature[f]}`;
+}
 
-type DummyProperty = {
-  title: string;
-  category: 'RUMAH' | 'APARTEMEN' | 'KOSAN';
-  description: string;
-  price: number;
-  listingType: string;
-  facilityCodes: string[];
-  address: string;
-  city: string;
-  district: string;
-  neighbourhood: string;
-  latitude: number;
-  longitude: number;
-  imageUrls: string[];
-};
+function buildFinalProperties() {
+  const result = [];
+  const cities = [
+    { name: "Jakarta", lat: -6.2088, lng: 106.8456, dists: [
+      { d: "Setiabudi", n: ["Kuningan", "Karet", "Sudirman"] },
+      { d: "Menteng", n: ["Cikini", "Kebon Sirih", "Gondangdia"] },
+      { d: "Tebet", n: ["Manggarai", "Menteng Dalam", "Kebon Baru"] }
+    ]},
+    { name: "Bandung", lat: -6.9175, lng: 107.6191, dists: [
+      { d: "Coblong", n: ["Dago", "Lebak Siliwangi", "Sadang Serang"] },
+      { d: "Sukajadi", n: ["Pasteur", "Cipedes", "Sukawarna"] },
+      { d: "Lengkong", n: ["Malabar", "Burangrang", "Turangga"] }
+    ]},
+    { name: "Surabaya", lat: -7.2575, lng: 112.7521, dists: [
+      { d: "Gubeng", n: ["Airlangga", "Mojo", "Kertajaya"] },
+      { d: "Wonokromo", n: ["Darmo", "Jagir", "Sawunggaling"] },
+      { d: "Tegalsari", n: ["Kedungdoro", "Keputran", "Dr. Soetomo"] }
+    ]},
+    { name: "Yogyakarta", lat: -7.7956, lng: 110.3695, dists: [
+      { d: "Gondokusuman", n: ["Terban", "Kotabaru", "Demangan"] },
+      { d: "Jetis", n: ["Gowongan", "Cokrodiningratan", "Bumijo"] },
+      { d: "Depok", n: ["Caturtunggal", "Maguwoharjo", "Seturan"] }
+    ]},
+    { name: "Semarang", lat: -6.9932, lng: 110.4203, dists: [
+      { d: "Semarang Tengah", n: ["Sekayu", "Miroto", "Brumbungan"] },
+      { d: "Tembalang", n: ["Banyumanik", "Bulusan", "Sambiroto"] },
+      { d: "Gajahmungkur", n: ["Sampangan", "Bendanduwur", "Lempongsari"] }
+    ]}
+  ];
 
-const DUMMY_TEMPLATES: DummyTemplate[] = [
-  {
-    titlePrefix: "Kost AC dekat kampus",
-    category: 'KOSAN',
-    description: "Kosan nyaman untuk mahasiswa. AC, WiFi, Water Heater, dan akses transportasi umum.",
-    price: 2_100_000,
-    listingType: "RENT",
-    facilityCodes: ["AC", "WIFI", "WATER_HEATER", "DEKAT_TRANSPORTASI", "UNFURNISHED"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200&q=80",
-      "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Apartemen furnished premium",
-    category: 'APARTEMEN',
-    description: "Apartemen furnished dengan dapur modern, parkir mobil, dan keamanan 24 jam.",
-    price: 4_800_000,
-    listingType: "RENT",
-    facilityCodes: ["FURNISHED", "PARKIR_MOBIL", "DAPUR", "AC"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Rumah pet-friendly keluarga",
-    category: 'RUMAH',
-    description: "Rumah sewa untuk keluarga kecil, pet-friendly, carport luas, dan kamar mandi dalam.",
-    price: 3_900_000,
-    listingType: "RENT",
-    facilityCodes: ["PET_FRIENDLY", "UNFURNISHED", "PARKIR_MOBIL", "KAMAR_MANDI_DALAM"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Studio hemat strategis",
-    category: 'APARTEMEN',
-    description: "Studio hemat dengan akses ke halte dan stasiun, cocok untuk pekerja dan mahasiswa.",
-    price: 1_650_000,
-    listingType: "RENT",
-    facilityCodes: ["UNFURNISHED", "DEKAT_TRANSPORTASI"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200&q=80",
-      "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Apartemen modern view kota",
-    category: 'APARTEMEN',
-    description: "Unit modern dengan AC, WiFi, water heater, dan dapur. Cocok untuk profesional muda.",
-    price: 5_200_000,
-    listingType: "RENT",
-    facilityCodes: ["FURNISHED", "AC", "WIFI", "WATER_HEATER", "DAPUR"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1200&q=80",
-      "https://images.unsplash.com/photo-1616594039964-3f2b91fcb0f7?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Kost putri dekat transportasi",
-    category: 'KOSAN',
-    description: "Kost putri aman dan nyaman, dekat MRT/KRL, AC dan WiFi tersedia.",
-    price: 2_750_000,
-    listingType: "RENT",
-    facilityCodes: ["AC", "WIFI", "DEKAT_TRANSPORTASI", "UNFURNISHED"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80",
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Rumah siap huni",
-    category: 'RUMAH',
-    description: "Rumah siap huni dengan dapur, AC, kamar mandi dalam, dan lingkungan tenang.",
-    price: 4_400_000,
-    listingType: "RENT",
-    facilityCodes: ["FURNISHED", "AC", "DAPUR", "KAMAR_MANDI_DALAM"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?w=1200&q=80",
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Unit commuter dekat stasiun",
-    category: 'APARTEMEN',
-    description: "Unit cocok untuk commuter, dekat stasiun, tersedia furnished dan water heater.",
-    price: 3_300_000,
-    listingType: "RENT",
-    facilityCodes: ["FURNISHED", "WATER_HEATER", "DEKAT_TRANSPORTASI"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1617098474202-0d0d7f60f4e9?w=1200&q=80",
-      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Kost pet-friendly",
-    category: 'KOSAN',
-    description: "Kost pet-friendly dengan internet cepat, cocok untuk yang bawa hewan peliharaan.",
-    price: 2_450_000,
-    listingType: "RENT",
-    facilityCodes: ["PET_FRIENDLY", "WIFI", "UNFURNISHED"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1560185127-6ed189bf02f4?w=1200&q=80",
-      "https://images.unsplash.com/photo-1616486029423-aaa4789e8c9a?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Apartemen unfurnished nyaman",
-    category: 'APARTEMEN',
-    description: "Apartemen unfurnished dengan parkir mobil dan akses transportasi umum.",
-    price: 3_000_000,
-    listingType: "RENT",
-    facilityCodes: ["UNFURNISHED", "PARKIR_MOBIL", "DEKAT_TRANSPORTASI"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1560185008-b033106af5c3?w=1200&q=80",
-      "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Rumah keluarga luas",
-    category: 'RUMAH',
-    description: "Rumah keluarga luas dengan carport, dapur lengkap, dan ventilasi baik.",
-    price: 5_500_000,
-    listingType: "RENT",
-    facilityCodes: ["UNFURNISHED", "PARKIR_MOBIL", "DAPUR", "KAMAR_MANDI_DALAM"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80",
-      "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200&q=80",
-    ],
-  },
-  {
-    titlePrefix: "Kost super hemat",
-    category: 'KOSAN',
-    description: "Kost hemat untuk mahasiswa, dekat kampus dan akses transportasi umum.",
-    price: 1_250_000,
-    listingType: "RENT",
-    facilityCodes: ["UNFURNISHED", "DEKAT_TRANSPORTASI"],
-    imageUrls: [
-      "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=1200&q=80",
-      "https://images.unsplash.com/photo-1493666438817-866a91353ca9?w=1200&q=80",
-    ],
-  },
-];
+  const categories: ('RUMAH' | 'APARTEMEN' | 'KOSAN')[] = ['RUMAH', 'APARTEMEN', 'KOSAN'];
+  const baseFacs = ["AC", "WIFI", "WATER_HEATER", "DEKAT_TRANSPORTASI", "KAMAR_MANDI_DALAM", "DAPUR", "PARKIR_MOBIL", "PET_FRIENDLY"];
 
-const DUMMY_AREAS: DummyArea[] = [
-  { city: "Bandung", district: "Coblong", neighbourhood: "Dago", lat: -6.893, lng: 107.61 },
-  { city: "Bandung", district: "Sukajadi", neighbourhood: "Cihampelas", lat: -6.892, lng: 107.595 },
-  { city: "Bandung", district: "Lengkong", neighbourhood: "Buah Batu", lat: -6.94, lng: 107.63 },
-  { city: "Bandung", district: "Arcamanik", neighbourhood: "Arcamanik", lat: -6.917, lng: 107.673 },
-  { city: "Bandung", district: "Antapani", neighbourhood: "Antapani", lat: -6.911, lng: 107.657 },
-  { city: "Bandung", district: "Cidadap", neighbourhood: "Setiabudi", lat: -6.874, lng: 107.604 },
-  { city: "Jakarta Selatan", district: "Tebet", neighbourhood: "Tebet Timur", lat: -6.229, lng: 106.853 },
-  { city: "Jakarta Selatan", district: "Kebayoran Baru", neighbourhood: "Senopati", lat: -6.229, lng: 106.809 },
-  { city: "Depok", district: "Pancoran Mas", neighbourhood: "Margo", lat: -6.402, lng: 106.822 },
-  { city: "Depok", district: "Beji", neighbourhood: "Kukusan", lat: -6.365, lng: 106.832 },
-  { city: "Tangerang Selatan", district: "Ciputat", neighbourhood: "Ciputat Timur", lat: -6.307, lng: 106.763 },
-  { city: "Bekasi", district: "Bekasi Selatan", neighbourhood: "Pekayon", lat: -6.257, lng: 106.993 },
-  { city: "Cimahi", district: "Cimahi Tengah", neighbourhood: "Baros", lat: -6.884, lng: 107.542 },
-  { city: "Sumedang", district: "Jatinangor", neighbourhood: "Sayang", lat: -6.93, lng: 107.77 },
-  { city: "Bandung", district: "Regol", neighbourhood: "Batununggal", lat: -6.933, lng: 107.633 },
-  { city: "Bandung", district: "Andir", neighbourhood: "Ciroyom", lat: -6.914, lng: 107.588 },
-];
+  let globalCount = 1;
 
-function buildDummyProperties(total: number): DummyProperty[] {
-  const result: DummyProperty[] = [];
+  for (const cityInfo of cities) {
+    for (const cat of categories) {
+      for (let i = 0; i < 15; i++) {
+        // Pilih District & Neighbourhood secara dinamis
+        const distData = cityInfo.dists[i % 3];
+        const neighbourhood = distData.n[Math.floor(Math.random() * distData.n.length)];
 
-  for (let i = 0; i < total; i++) {
-    const template = DUMMY_TEMPLATES[i % DUMMY_TEMPLATES.length];
-    const area = DUMMY_AREAS[i % DUMMY_AREAS.length];
-    const cycle = Math.floor(i / DUMMY_TEMPLATES.length);
-    const variation = (i % 5) * 125_000 + cycle * 50_000;
-    const latJitter = ((i % 7) - 3) * 0.0012;
-    const lngJitter = ((i % 9) - 4) * 0.0011;
+        // Listing Type Logic
+        let lType = "RENT";
+        if (cat === "RUMAH") lType = "SALE";
+        else if (cat === "APARTEMEN") lType = Math.random() > 0.5 ? "SALE" : "RENT";
 
-    result.push({
-      title: `[DUMMY] ${template.titlePrefix} ${area.neighbourhood} #${i + 1}`,
-      category: template.category,
-      description: `${template.description} Lokasi ${area.neighbourhood}, ${area.district}, ${area.city}.`,
-      price: template.price + variation,
-      listingType: template.listingType,
-      facilityCodes: template.facilityCodes,
-      address: `${area.neighbourhood}, ${area.district}, ${area.city}`,
-      city: area.city,
-      district: area.district,
-      neighbourhood: area.neighbourhood,
-      latitude: Number((area.lat + latJitter).toFixed(6)),
-      longitude: Number((area.lng + lngJitter).toFixed(6)),
-      imageUrls: template.imageUrls,
-    });
+        // Acak Fasilitas
+        const facilityCodes = [...baseFacs].sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 4) + 4);
+        facilityCodes.push(Math.random() > 0.5 ? "FURNISHED" : "UNFURNISHED");
+
+        // Harga
+        let basePrice = cat === "RUMAH" ? 1_800_000_000 : cat === "APARTEMEN" ? 750_000_000 : 2_000_000;
+        if (lType === "RENT" && cat !== "KOSAN") basePrice = 6_000_000;
+        const price = basePrice + (Math.floor(Math.random() * 30) * 100_000);
+
+        result.push({
+          title: `${cat.charAt(0) + cat.slice(1).toLowerCase()} di ${neighbourhood} #${globalCount}`,
+          category: cat,
+          description: getRandomDesc(),
+          price,
+          listingType: lType,
+          facilityCodes,
+          address: `Jl. Strategis No. ${globalCount}, ${neighbourhood}, ${cityInfo.name}`,
+          city: cityInfo.name,
+          district: distData.d,
+          neighbourhood: neighbourhood,
+          latitude: Number((cityInfo.lat + (Math.random() - 0.5) * 0.04).toFixed(6)),
+          longitude: Number((cityInfo.lng + (Math.random() - 0.5) * 0.04).toFixed(6)),
+          imageUrls: ["https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=1200"],
+        });
+        globalCount++;
+      }
+    }
   }
-
   return result;
 }
 
-const DUMMY_PROPERTIES = buildDummyProperties(48);
-
 async function main() {
-  const adminName = process.env.ADMIN_NAME || "Admin";
-  const adminUsername = process.env.ADMIN_USERNAME || "admin";
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@papan.local";
-  const adminPhoneNumber = process.env.ADMIN_PHONE_NUMBER || "081111111111";
-  const adminPassword = process.env.ADMIN_PASSWORD || "admin12345";
+  console.log("🚀 Membersihkan data lama dan memproses 225 data dengan neighbourhood asli...");
 
-  const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!existing) {
-    const passwordHash = await hash(adminPassword, 12);
+  await Promise.all(DEFAULT_FACILITIES.map(f => prisma.facility.upsert({ where: { code: f.code }, update: {}, create: f })));
 
-    await prisma.user.create({
-      data: {
-        username: adminUsername,
-        name: adminName,
-        email: adminEmail,
-        phoneNumber: adminPhoneNumber,
-        passwordHash,
-        role: Role.ADMIN
-      }
-    });
-
-    console.log("Admin seeded:", adminEmail);
-  } else {
-    console.log("Admin already exists");
-  }
-
-  await prisma.facility.createMany({
-    data: DEFAULT_FACILITIES,
-    skipDuplicates: true,
-  });
-
-  console.log("Facilities seeded:", DEFAULT_FACILITIES.length);
-
+  const hashedPassword = await hash("password123", 10);
   const dummyOwner = await prisma.user.upsert({
     where: { email: DUMMY_OWNER_EMAIL },
-    update: {
-      name: "Owner Demo",
-      username: "ownerdemo",
-      phoneNumber: "081222222222",
-      role: Role.USER,
-      kycStatus: KycStatus.APPROVED,
-    },
-    create: {
-      name: "Owner Demo",
-      username: "ownerdemo",
-      email: DUMMY_OWNER_EMAIL,
-      phoneNumber: "081222222222",
-      role: Role.USER,
-      kycStatus: KycStatus.APPROVED,
-    },
+    update: {},
+    create: { email: DUMMY_OWNER_EMAIL, name: "Owner Demo", passwordHash: hashedPassword, role: Role.OWNER, kycStatus: KycStatus.APPROVED },
   });
 
-  const allFacilities = await prisma.facility.findMany({
-    select: { id: true, code: true },
-  });
-  const facilityByCode = new Map(allFacilities.map((facility) => [facility.code, facility.id]));
+  const facilityByCode = new Map((await prisma.facility.findMany()).map(f => [f.code, f.id]));
 
-  await prisma.property.deleteMany({
-    where: {
-      ownerId: dummyOwner.id,
-      title: {
-        startsWith: "[DUMMY]",
-      },
-    },
-  });
+  // Hapus semua data dummy sebelumnya agar bersih
+  await prisma.property.deleteMany({ where: { ownerId: dummyOwner.id } });
 
-  for (const item of DUMMY_PROPERTIES) {
-    const propertyData = {
-      ownerId: dummyOwner.id,
-      title: item.title,
-      address: item.address,
-      city: item.city,
-      district: item.district,
-      neighbourhood: item.neighbourhood,
-      latitude: item.latitude,
-      longitude: item.longitude,
-      imageUrls: item.imageUrls,
-      description: item.description,
-      price: item.price,
-      listingType: item.listingType,
-    };
-
-    Object.assign(propertyData, { category: item.category });
-
+  const FINAL_PROPERTIES = buildFinalProperties();
+  
+  for (const item of FINAL_PROPERTIES) {
     const property = await prisma.property.create({
-      data: propertyData,
+      data: {
+        ownerId: dummyOwner.id,
+        title: item.title,
+        address: item.address,
+        city: item.city,
+        district: item.district,
+        neighbourhood: item.neighbourhood,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        imageUrls: item.imageUrls,
+        description: item.description,
+        price: item.price,
+        listingType: item.listingType,
+        category: item.category,
+      },
     });
 
-    const facilityIds = item.facilityCodes
-      .map((code) => facilityByCode.get(code))
-      .filter((id): id is string => Boolean(id));
-
-    if (facilityIds.length > 0) {
+    const fIds = item.facilityCodes.map(c => facilityByCode.get(c)).filter((id): id is string => !!id);
+    if (fIds.length > 0) {
       await prisma.propertyFacility.createMany({
-        data: facilityIds.map((facilityId) => ({
-          propertyId: property.id,
-          facilityId,
-        })),
-        skipDuplicates: true,
+        data: fIds.map(fId => ({ propertyId: property.id, facilityId: fId })),
       });
     }
   }
 
-  console.log("Dummy properties seeded:", DUMMY_PROPERTIES.length);
+  console.log("✅ SELESAI! 225 data dengan lokasi nyata sudah masuk.");
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch(e => { console.error(e); process.exit(1); }).finally(async () => { await prisma.$disconnect(); });

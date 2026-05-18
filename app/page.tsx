@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import styles from './HomePage.module.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { properties, type Properti } from '../lib/properties';
+import { formatPrice } from '../lib/format-price';
+import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
@@ -14,6 +15,11 @@ type RecommendationItem = {
   title: string;
   listingType: string;
   coverImageUrl?: string | null;
+  images?: string[];    
+  address?: string | null;        
+  neighbourhood?: string | null;  
+  district?: string | null;       
+  city?: string | null;       
   price: number;
   score: number;
   breakdown: {
@@ -48,7 +54,7 @@ const HOTSPOTS = [
 const HERO_HOVER_STORAGE_KEY = 'hero-hover-spot';
 
 /* ── Property Card ── */
-function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Properti) => void }) {
+function PropertyCard({ prop, onOpen }: { prop: PropertyCardData; onOpen?: (prop: PropertyCardData) => void }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -104,7 +110,7 @@ function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Proper
 
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
-        <p className={styles.cardPrice}>{prop.price}</p>
+        <p className={styles.cardPrice}>{formatPrice(prop.price)}</p>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
 
         <div className={styles.cardLokasi}>
@@ -136,7 +142,17 @@ function PropertyCard({ prop, onOpen }: { prop: Properti; onOpen?: (prop: Proper
 }
 
 /* ── Property Section ── */
-function PropertySection({ title }: { title: string }) {
+function PropertySection({
+  title,
+  items,
+  isLoading,
+  error,
+}: {
+  title: string;
+  items: PropertyCardData[];
+  isLoading: boolean;
+  error: string | null;
+}) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -160,11 +176,128 @@ function PropertySection({ title }: { title: string }) {
         </div>
       </div>
       <div className={styles.scrollTrack} ref={scrollRef}>
-        {properties.map((p) => (
-          <PropertyCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
-        ))}
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={`skeleton-${i}`} className={styles.skeletonCard} aria-hidden>
+              <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+              <div className={styles.skeletonBody}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                <div className={styles.skeletonRow}>
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : error ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>{error}</p>
+        ) : items.length === 0 ? (
+          <p style={{ color: '#999', padding: '20px 0' }}>Belum ada properti tersedia.</p>
+        ) : (
+          items.map((p) => (
+            <PropertyCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
+          ))
+        )}
       </div>
     </section>
+  );
+}
+
+function RecommendationCard({
+  item,
+  images,
+  onOpen,
+  formatPrice,
+  formatListingType,
+  formatFacilityCode,
+}: {
+  item: RecommendationItem;
+  images: string[];
+  onOpen: () => void;
+  formatPrice: (price: number) => string;
+  formatListingType: (type: string) => string;
+  formatFacilityCode: (code: string) => string;
+}) {
+  const [imgIndex, setImgIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (!isHovered || images.length <= 1) return;
+    const id = setInterval(() => {
+      setImgIndex((prev) => (prev + 1) % images.length);
+    }, 1200);
+    return () => clearInterval(id);
+  }, [isHovered, images.length]);
+
+  return (
+    <article
+      className={styles.card}
+      role="button"
+      tabIndex={0}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      <div className={styles.cardImageWrapper}>
+        <div
+          className={styles.cardImageTrack}
+          style={{ transform: `translateX(-${imgIndex * 100}%)` }}
+        >
+          {images.map((src, i) => (
+            <img key={i} src={src} alt={item.title} className={styles.cardImage} />
+          ))}
+        </div>
+        <div className={styles.dots}>
+          {images.map((_, i) => (
+            <button
+              key={i}
+              className={`${styles.dot} ${i === imgIndex ? styles.dotActive : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setImgIndex(i);
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.cardBody}>
+        <h3 className={styles.cardTitle}>{item.title}</h3>
+        <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
+        <p className={styles.cardBiaya}>Tipe: {formatListingType(item.listingType)}</p>
+
+        <div className={styles.cardLokasi}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>
+          {[item.address, item.neighbourhood, item.district, item.city]
+            .filter((v) => Boolean(v && v.trim()))
+            .join(', ') || 'Lokasi belum tersedia'}
+        </span>
+        </div>
+
+        <hr className={styles.divider} />
+
+        <div className={styles.cardFasilitas}>
+          {(item.breakdown.matchedFacilityCodes ?? []).slice(0, 4).map((code) => (
+            <span key={code}>{formatFacilityCode(code)}</span>
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -222,9 +355,6 @@ function RecommendationSection() {
     }
   };
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(price);
-
   const formatListingType = (listingType: string) => {
     const normalized = listingType.trim().toUpperCase();
     if (normalized === 'RENT') return 'Sewa';
@@ -254,7 +384,23 @@ function RecommendationSection() {
       </div>
 
       {isLoading ? (
-        <div className={styles.recommendationNotice}>Menghitung rekomendasi...</div>
+        <div className={styles.scrollTrack} ref={scrollRef}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={`skeleton-rec-${i}`} className={styles.skeletonCard} aria-hidden>
+              <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+              <div className={styles.skeletonBody}>
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                <div className={styles.skeletonRow}>
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                  <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : items.length === 0 ? (
         <div className={styles.recommendationNotice}>
           <p>{message ?? 'Belum ada rekomendasi.'}</p>
@@ -267,40 +413,22 @@ function RecommendationSection() {
         </div>
       ) : (
         <div className={styles.scrollTrack} ref={scrollRef}>
-          {items.map((item, idx) => (
-            <article
-              key={item.id}
-              className={styles.card}
-              role="button"
-              tabIndex={0}
-              onClick={() => openPropertyDetail(item.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openPropertyDetail(item.id);
-                }
-              }}
-            >
-              <div className={styles.cardImageWrapper}>
-                <img
-                  src={item.coverImageUrl ?? (idx % 2 === 0 ? '/images/bgHomeKosan.jpeg' : '/images/bgHomeApart.png')}
-                  alt={item.title}
-                  className={styles.cardImage}
-                />
-              </div>
-
-              <div className={styles.cardBody}>
-                <h3 className={styles.cardTitle}>{item.title}</h3>
-                <p className={styles.cardPrice}>{formatPrice(item.price)}</p>
-                <p className={styles.cardBiaya}>Tipe: {formatListingType(item.listingType)}</p>
-                <div className={styles.cardFasilitas}>
-                  {(item.breakdown.matchedFacilityCodes ?? []).slice(0, 4).map((code) => (
-                    <span key={code}>{formatFacilityCode(code)}</span>
-                  ))}
-                </div>
-              </div>
-            </article>
-          ))}
+          {items.map((item, idx) => {
+            const images = item.images && item.images.length > 0
+              ? item.images
+              : [item.coverImageUrl ?? (idx % 2 === 0 ? '/images/bgHomeKosan.jpeg' : '/images/bgHomeApart.png')];
+            return (
+              <RecommendationCard
+                key={item.id}
+                item={item}
+                images={images}
+                onOpen={() => openPropertyDetail(item.id)}
+                formatPrice={formatPrice}
+                formatListingType={formatListingType}
+                formatFacilityCode={formatFacilityCode}
+              />
+            );
+          })}
         </div>
       )}
     </section>
@@ -312,8 +440,8 @@ function DiscountCard({
   prop,
   onOpen,
 }: {
-  prop: Properti & { discount: number; originalPrice: string };
-  onOpen?: (prop: Properti) => void;
+  prop: PropertyCardData & { discount: number; originalPrice: string };
+  onOpen?: (prop: PropertyCardData) => void;
 }) {
   const [imgIndex, setImgIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -373,8 +501,8 @@ function DiscountCard({
       <div className={styles.cardBody}>
         <h3 className={styles.cardTitle}>{prop.title}</h3>
         <div className={styles.discountPriceRow}>
-          <p className={styles.discountOriginalPrice}>{prop.originalPrice}</p>
-          <p className={styles.discountNewPrice}>{prop.price}</p>
+          <p className={styles.discountOriginalPrice}>{formatPrice(prop.originalPrice)}</p>
+          <p className={styles.discountNewPrice}>{formatPrice(prop.price)}</p>
         </div>
         <p className={styles.cardBiaya}>{prop.biayaHidup}</p>
 
@@ -407,14 +535,22 @@ function DiscountCard({
 }
 
 /* ── Discount Section ── */
-function DiscountSection() {
+function DiscountSection({
+  items,
+  isLoading,
+  error,
+}: {
+  items: PropertyCardData[];
+  isLoading: boolean;
+  error: string | null;
+}) {
   const router = useRouter();
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasPlayedIntro, setHasPlayedIntro] = useState(false);
   const tickerItems = Array.from({ length: 5 });
 
-  const discountProperties = properties.map((p, i) => ({
+  const discountProperties = items.map((p, i) => ({
     ...p,
     discount: [15, 20, 10, 25, 30, 18][i % 6],
     originalPrice: p.price,
@@ -545,9 +681,31 @@ function DiscountSection() {
 
         <div className={styles.discountTrackWrap}>
           <div className={styles.discountTrack}>
-            {discountProperties.map((p) => (
-              <DiscountCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <div key={`skeleton-disc-${i}`} className={styles.skeletonCard} aria-hidden>
+                  <div className={`${styles.skeletonImg} ${styles.skeletonShimmer}`} />
+                  <div className={styles.skeletonBody}>
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w50}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.sm} ${styles.w60}`} />
+                    <div className={styles.skeletonRow}>
+                      <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                      <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                      <span className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : error ? (
+              <p style={{ color: '#fff', padding: '24px 6px' }}>{error}</p>
+            ) : discountProperties.length === 0 ? (
+              <p style={{ color: '#fff', padding: '24px 6px' }}>Belum ada promo tersedia.</p>
+            ) : (
+              discountProperties.map((p) => (
+                <DiscountCard key={p.id} prop={p} onOpen={(prop) => openPropertyDetail(prop.id)} />
+              ))
+            )}
           </div>
         </div>
 
@@ -584,11 +742,47 @@ function DiscountSection() {
 export default function HomePage() {
   const router = useRouter();
 
+  const [propertyItems, setPropertyItems] = useState<PropertyCardData[]>([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
+  const [propertiesError, setPropertiesError] = useState<string | null>(null);
   const [charaX, setCharaX] = useState(50);
   const heroRef = useRef<HTMLDivElement>(null);
   const [hoveredSpot, setHoveredSpot] = useState<string | null>(null);
 
   const tabs: KategoriType[] = ['Apartemen', 'Rumah', 'Kosan'];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadProperties = async () => {
+      setPropertiesLoading(true);
+      setPropertiesError(null);
+
+      try {
+        const res = await fetch('/api/properties?take=18');
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        if (!cancelled) {
+          setPropertyItems(data.map(mapApiPropertyToCard));
+        }
+      } catch {
+        if (!cancelled) {
+          setPropertiesError('Gagal memuat properti.');
+          setPropertyItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setPropertiesLoading(false);
+        }
+      }
+    };
+
+    loadProperties();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     router.prefetch('/kategori/apartemen');
@@ -693,8 +887,13 @@ export default function HomePage() {
       {/* ── Konten ── */}
       <div className={styles.content}>
         <RecommendationSection />
-        <DiscountSection />
-        <PropertySection title="Best Seller" />
+        <DiscountSection items={propertyItems} isLoading={propertiesLoading} error={propertiesError} />
+        <PropertySection
+          title="Best Seller"
+          items={propertyItems}
+          isLoading={propertiesLoading}
+          error={propertiesError}
+        />
       </div>
       <Footer />
     </div>

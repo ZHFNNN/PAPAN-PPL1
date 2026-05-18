@@ -3,6 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
+import { formatPrice } from '../../../lib/format-price';
+
+type ActiveBoost = {
+  id: string;
+  packageId: string;
+  packageTitle: string;
+  days: number;
+  price: number;
+  startDate: string;
+  endDate: string;
+  remainingDays: number;
+  remainingTimeMs?: number;
+};
 
 type Property = {
   id: string;
@@ -15,6 +28,8 @@ type Property = {
   views?: number;
   status?: string;
   createdAt: string;
+  isBoosted?: boolean;
+  activeBoost?: ActiveBoost | null;
 };
 
 type DashboardStats = {
@@ -42,6 +57,34 @@ const STATUS_COLOR: Record<string, string> = {
   Terjual: styles.statusTerjual,
 };
 
+function formatCountdown(targetDate: string, nowMs: number) {
+  const remainingMs = new Date(targetDate).getTime() - nowMs;
+
+  if (remainingMs <= 0) {
+    return '0 detik';
+  }
+
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days} hari ${hours} jam`;
+  }
+
+  if (hours > 0) {
+    return `${hours} jam ${minutes} menit`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes} menit ${seconds} detik`;
+  }
+
+  return `${seconds} detik`;
+}
+
 function StatCard({ title, value }: { title: string; value: string | number }) {
   return (
     <div className={styles.statCard}>
@@ -57,10 +100,10 @@ export default function OwnerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const fetchDashboard = async () => {
     try {
-      // NOTE: Buat API route GET /api/owner/dashboard
       const res = await fetch('/api/owner/dashboard');
       if (!res.ok) {
         if (res.status === 401) {
@@ -83,14 +126,20 @@ export default function OwnerDashboardPage() {
     fetchDashboard();
   }, [router]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus properti ini?')) return;
     setDeletingId(id);
     try {
-      // NOTE: Buat API route DELETE /api/owner/properties/[id]
       const res = await fetch(`/api/owner/properties/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus properti.');
-      // Refresh data
       await fetchDashboard();
     } catch (err) {
       alert('Gagal menghapus properti. Coba lagi.');
@@ -100,19 +149,6 @@ export default function OwnerDashboardPage() {
     }
   };
 
-  const formatPrice = (price: string) => {
-    const num = Number(price);
-    if (isNaN(num)) return price;
-    if (num >= 1_000_000_000) return `Rp${(num / 1_000_000_000).toFixed(1).replace('.0', '')} M`;
-    if (num >= 1_000_000) return `Rp${(num / 1_000_000).toFixed(0)} Jt`;
-    return `Rp${num.toLocaleString('id-ID')}`;
-  };
-
-  const formatRevenue = (num: number) => {
-    if (num >= 1_000_000_000) return `Rp${(num / 1_000_000_000).toFixed(1).replace('.0', '')} M`;
-    if (num >= 1_000_000) return `Rp${(num / 1_000_000).toFixed(0)} Jt`;
-    return `Rp${num.toLocaleString('id-ID')}`;
-  };
 
   return (
     <div className={styles.contentArea}>
@@ -122,18 +158,38 @@ export default function OwnerDashboardPage() {
             <h1 className={styles.pageTitle}>Dashboard</h1>
             <p className={styles.pageSubtitle}>Hai! Yuk cek properti-properti kamu!</p>
           </div>
-          <button
-            className={styles.addPropertyBtn}
-            onClick={() => router.push('/owner/addProperty')}
-          >
-            + Tambah Properti
-          </button>
         </div>
 
         {isLoading ? (
-          <div className={styles.loadingState}>
-            <div className={styles.spinner} />
-            <p>Memuat dashboard...</p>
+          <div className={styles.skeletonWrap} aria-hidden>
+            <div className={styles.skeletonStats}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={`stat-skeleton-${i}`} className={`${styles.skeletonCard} ${styles.skeletonShimmer}`} />
+              ))}
+            </div>
+
+            <div className={styles.skeletonSectionHeader}>
+              <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w40}`} />
+              <div className={`${styles.skeletonPill} ${styles.skeletonShimmer}`} />
+            </div>
+
+            <div className={styles.skeletonList}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={`list-skeleton-${i}`} className={styles.skeletonPropertyCard}>
+                  <div className={`${styles.skeletonThumb} ${styles.skeletonShimmer}`} />
+                  <div className={styles.skeletonInfo}>
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.lg} ${styles.w70}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.md} ${styles.w60}`} />
+                    <div className={`${styles.skeletonLine} ${styles.skeletonShimmer} ${styles.w40}`} />
+                  </div>
+                  <div className={styles.skeletonActions}>
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                    <div className={`${styles.skeletonBtn} ${styles.skeletonShimmer}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className={styles.errorState}>
@@ -150,7 +206,7 @@ export default function OwnerDashboardPage() {
               <StatCard title="Properti Aktif" value={data.stats.activeProperties} />
               <StatCard title="Kamar Kosan Tersewa" value={data.stats.rentedRooms} />
               <StatCard title="Properti Terjual" value={data.stats.soldProperties} />
-              <StatCard title="Total Pendapatan" value={formatRevenue(data.stats.totalRevenue)} />
+              <StatCard title="Total Pendapatan" value={formatPrice(data.stats.totalRevenue)} />
             </div>
 
             {/* ── Properties List ── */}
@@ -201,12 +257,23 @@ export default function OwnerDashboardPage() {
                           <span className={styles.listingBadge}>
                             {LISTING_TYPE_LABEL[property.listingType] ?? property.listingType}
                           </span>
+                          {property.activeBoost && (
+                            <span className={styles.boosterBadge}>Booster</span>
+                          )}
                           <span className={`${styles.statusBadge} ${STATUS_COLOR[property.status ?? 'Aktif'] ?? styles.statusAktif}`}>
                             {property.status ?? 'Aktif'}
                           </span>
                         </div>
                       </div>
                       <p className={styles.propertyPrice}>{formatPrice(property.price)}</p>
+                      {property.activeBoost && (
+                        <div className={styles.boosterInfo}>
+                          <p className={styles.boosterTitle}>Booster aktif</p>
+                          <p className={styles.boosterCountdown}>
+                            Sisa booster: {formatCountdown(property.activeBoost.endDate, now)}
+                          </p>
+                        </div>
+                      )}
                       {property.address && (
                         <p className={styles.propertyAddress}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -222,7 +289,12 @@ export default function OwnerDashboardPage() {
 
                     {/* Actions */}
                     <div className={styles.propertyActions}>
-                      <button className={styles.boostBtn}>Boost</button>
+                      <button
+                        className={styles.boostBtn}
+                        onClick={() => router.push(`/propertyDetail/${property.id}#reviews`)}
+                      >
+                        Review
+                      </button>
                       <button
                         className={styles.editBtn}
                         onClick={() => router.push(`/owner/properties/${property.id}/edit`)}

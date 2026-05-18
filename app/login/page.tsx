@@ -1,18 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast"; // Import Toast
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackPath = searchParams.get("callbackUrl");
+
+  useEffect(() => {
+    if (searchParams.get("registered") === "1") {
+      toast.success("Akun berhasil dibuat. Cek email untuk verifikasi.");
+    }
+    if (searchParams.get("verification") === "success") {
+      toast.success("Email berhasil diverifikasi. Silakan login.");
+    }
+    if (searchParams.get("verification") === "invalid") {
+      toast.error("Tautan verifikasi tidak valid atau sudah kedaluwarsa.");
+    }
+  }, [searchParams]);
+
+  const handleGoogleLogin = async () => {
+    await signIn("google", { callbackUrl: callbackPath || "/auth/post-login" });
+  };
 
   const handleLogin = async () => {
     // 1. Validasi frontend
@@ -34,6 +60,9 @@ export default function LoginPage() {
         body: JSON.stringify({
           email,
           password,
+          callbackUrl: callbackPath
+            ? new URL(callbackPath, window.location.origin).toString()
+            : undefined,
         }),
       });
 
@@ -41,20 +70,22 @@ export default function LoginPage() {
 
       // 4. Handle Response
       if (response.ok) {
-        let redirectPath = "/";
+        let redirectPath = "/auth/post-login";
 
-        try {
-          const meResponse = await fetch("/api/auth/me", { method: "GET" });
-          if (meResponse.ok) {
-            const meData = (await meResponse.json()) as {
-              user?: { role?: string };
-            };
-            if (meData.user?.role === "ADMIN") {
-              redirectPath = "/admin/kyc";
+        if (!callbackPath) {
+          try {
+            const meResponse = await fetch("/api/auth/me", { method: "GET" });
+            if (meResponse.ok) {
+              const meData = (await meResponse.json()) as {
+                user?: { role?: string };
+              };
+              if (meData.user?.role === "ADMIN") {
+                redirectPath = "/admin/kyc";
+              }
             }
+          } catch (meError) {
+            console.warn("Gagal mengambil data role setelah login:", meError);
           }
-        } catch (meError) {
-          console.warn("Gagal mengambil data role setelah login:", meError);
         }
 
         toast.success("Login berhasil! Mengalihkan...");
@@ -181,7 +212,7 @@ export default function LoginPage() {
           {isLoading ? "Memproses..." : "Login"}
         </button>
 
-        <button className={styles.googleBtn} onClick={() => signIn("google", { callbackUrl: "/" })}>
+        <button className={styles.googleBtn} onClick={handleGoogleLogin}>
           <GoogleIcon />
           <span>Google</span>
         </button>

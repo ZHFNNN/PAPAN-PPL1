@@ -9,7 +9,6 @@ import { getServerSession } from 'next-auth';
 import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { resolveFacilityCodes } from '@/lib/dss/facility-mapping';
 
 const ALLOWED_CATEGORIES = ['RUMAH', 'APARTEMEN', 'KOSAN'] as const;
 const ALLOWED_LISTING_TYPES = ['JUAL', 'SEWA'] as const;
@@ -31,6 +30,26 @@ function normalizeListingType(listingType: unknown): (typeof ALLOWED_LISTING_TYP
   return ALLOWED_LISTING_TYPES.includes(normalized as (typeof ALLOWED_LISTING_TYPES)[number])
     ? (normalized as (typeof ALLOWED_LISTING_TYPES)[number])
     : null;
+}
+
+// Support code preset maupun nama custom (upsert)
+async function resolveFacilityRecords(inputs: string[]): Promise<{ id: string }[]> {
+  return Promise.all(
+    inputs.map(async (input) => {
+      // Cek apakah ini code preset yang sudah ada di DB
+      const byCode = await prisma.facility.findUnique({ where: { code: input } });
+      if (byCode) return { id: byCode.id };
+
+      // Anggap nama custom — upsert by generated code
+      const code = `custom_${input.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}`;
+      const result = await prisma.facility.upsert({
+        where: { code },
+        update: {},
+        create: { code, name: input },
+      });
+      return { id: result.id };
+    })
+  );
 }
 
 export async function GET(
@@ -111,7 +130,7 @@ export async function PATCH(
 
   const body = await req.json();
   const { title, description, price, listingType, category, facilities, address, location, imageUrls } = body;
-  const normalizedCategory = normalizeCategory(category);
+  const normalizedCategory    = normalizeCategory(category);
   const normalizedListingType = normalizeListingType(listingType);
 
   if (!title || !price || !normalizedListingType) {
@@ -122,23 +141,19 @@ export async function PATCH(
     return NextResponse.json({ message: 'Kategori properti tidak valid.' }, { status: 400 });
   }
 
-  const latitude = typeof location?.lat === 'number' ? location.lat : null;
-  const longitude = typeof location?.lng === 'number' ? location.lng : null;
-  const city = typeof location?.city === 'string' ? location.city.trim() : null;
-  const district = typeof location?.district === 'string' ? location.district.trim() : null;
+  const latitude      = typeof location?.lat === 'number' ? location.lat : null;
+  const longitude     = typeof location?.lng === 'number' ? location.lng : null;
+  const city          = typeof location?.city === 'string' ? location.city.trim() : null;
+  const district      = typeof location?.district === 'string' ? location.district.trim() : null;
   const neighbourhood = typeof location?.neighbourhood === 'string' ? location.neighbourhood.trim() : null;
 
   const facilityItems = Array.isArray(facilities) ? (facilities as string[]) : null;
   const photoUrls = Array.isArray(imageUrls)
     ? imageUrls.filter((item: unknown): item is string => typeof item === 'string' && item.trim().length > 0)
     : null;
-  const facilityCodes = facilityItems ? resolveFacilityCodes(facilityItems) : [];
-  const facilityRecords = facilityItems
-    ? await prisma.facility.findMany({
-        where: { code: { in: facilityCodes } },
-        select: { id: true },
-      })
-    : [];
+
+  // Resolve facilities — support code preset + nama custom
+  const facilityRecords = facilityItems ? await resolveFacilityRecords(facilityItems) : [];
 
   const updated = await prisma.property.update({
     where: { id },
@@ -146,24 +161,18 @@ export async function PATCH(
       title,
       ...(typeof address === 'string' ? { address } : {}),
       ...(location
-        ? {
-            city,
-            district,
-            neighbourhood,
-            latitude,
-            longitude,
-          }
+        ? { city, district, neighbourhood, latitude, longitude }
         : {}),
       ...(photoUrls ? { imageUrls: photoUrls } : {}),
-      description: description ?? null,
-      price: Number(price),
-      listingType: normalizedListingType,
+      description:  description ?? null,
+      price:        Number(price),
+      listingType:  normalizedListingType,
       ...(facilityItems
         ? {
             facilities: {
               deleteMany: {},
               createMany: {
-                data: facilityRecords.map((facility) => ({ facilityId: facility.id })),
+                data:           facilityRecords.map((f) => ({ facilityId: f.id })),
                 skipDuplicates: true,
               },
             },
@@ -174,10 +183,7 @@ export async function PATCH(
       facilities: {
         include: {
           facility: {
-            select: {
-              code: true,
-              name: true,
-            },
+            select: { code: true, name: true },
           },
         },
       },
@@ -227,7 +233,6 @@ export async function DELETE(
     return NextResponse.json({ message: 'Properti tidak ditemukan.' }, { status: 404 });
   }
 
-  // Pastikan hanya owner yang bisa hapus
   if (property.ownerId !== session.user.id) {
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }

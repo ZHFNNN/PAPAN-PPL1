@@ -46,7 +46,7 @@ type PropertyResponse = {
   listingType?: string;
   category?: string;
   imageUrls?: string[];
-  facilities?: Array<{ facility?: { code?: string } }>;
+  facilities?: Array<{ facility?: { code?: string; name?: string } }>;
 };
 
 const LISTING_TYPE_OPTIONS: { value: ListingType; label: string }[] = [
@@ -60,8 +60,6 @@ const CATEGORY_OPTIONS: { value: PropertyCategory; label: string }[] = [
   { value: 'KOSAN', label: 'Kosan' },
 ];
 
-// ── Helpers normalize nilai dari API ──────────────────────────────────────
-
 function normalizeCategory(value: unknown): PropertyCategory {
   if (typeof value !== 'string') return '';
   switch (value.trim().toUpperCase()) {
@@ -72,19 +70,17 @@ function normalizeCategory(value: unknown): PropertyCategory {
   }
 }
 
-// API DB pakai SELL/RENT, form pakai JUAL/SEWA — normalize saat load
 function normalizeListingType(value: unknown): ListingType {
   if (typeof value !== 'string') return '';
   switch (value.trim().toUpperCase()) {
     case 'JUAL':
-    case 'SELL':  return 'JUAL';
+    case 'SELL': return 'JUAL';
     case 'SEWA':
-    case 'RENT':  return 'SEWA';
-    default:      return '';
+    case 'RENT': return 'SEWA';
+    default:     return '';
   }
 }
 
-// API DB pakai SELL/RENT — konversi balik saat submit
 function listingTypeToApi(value: ListingType): string {
   switch (value) {
     case 'JUAL': return 'SELL';
@@ -94,58 +90,44 @@ function listingTypeToApi(value: ListingType): string {
 }
 
 function inferCategory(data: PropertyResponse): PropertyCategory {
-  // Coba dari field category dulu
   const cat = normalizeCategory(data.category);
   if (cat !== '') return cat;
-
-  // Fallback: beberapa API encode kosan sebagai listingType
   const lt = typeof data.listingType === 'string' ? data.listingType.trim().toUpperCase() : '';
   if (lt === 'KOSAN') return 'KOSAN';
-
   return '';
 }
 
-// ── Komponen utama ────────────────────────────────────────────────────────
-
 export default function EditPropertyPage() {
-  const router = useRouter();
-  const params = useParams<{ id: string }>();
+  const router     = useRouter();
+  const params     = useParams<{ id: string }>();
   const propertyId = useMemo(() => String(params?.id ?? ''), [params]);
 
   const [form, setForm] = useState<FormData>({
-    title: '',
-    address: '',
-    locationLat: null,
-    locationLng: null,
-    locationCity: '',
-    locationDistrict: '',
-    locationNeighbourhood: '',
-    price: '',
-    description: '',
-    listingType: '',
-    category: '',
-    facilities: [],
+    title: '', address: '', locationLat: null, locationLng: null,
+    locationCity: '', locationDistrict: '', locationNeighbourhood: '',
+    price: '', description: '', listingType: '', category: '', facilities: [],
   });
 
-  const [errors, setErrors]                     = useState<FormErrors>({});
-  const [isLoading, setIsLoading]               = useState(true);
-  const [isSubmitting, setIsSubmitting]         = useState(false);
-  const [loadError, setLoadError]               = useState<string | null>(null);
-  const [submitError, setSubmitError]           = useState<string | null>(null);
-  const [facilityOptions, setFacilityOptions]   = useState<FacilityOption[]>([]);
+  const [errors, setErrors]                           = useState<FormErrors>({});
+  const [isLoading, setIsLoading]                     = useState(true);
+  const [isSubmitting, setIsSubmitting]               = useState(false);
+  const [loadError, setLoadError]                     = useState<string | null>(null);
+  const [submitError, setSubmitError]                 = useState<string | null>(null);
+  const [facilityOptions, setFacilityOptions]         = useState<FacilityOption[]>([]);
   const [isLoadingFacilities, setIsLoadingFacilities] = useState(true);
   const [facilityLoadError, setFacilityLoadError]     = useState<string | null>(null);
-  const [showMap, setShowMap]                   = useState(false);
-  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
-  const [newPhotos, setNewPhotos]               = useState<File[]>([]);
-  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([]);
-  const [isDragOver, setIsDragOver]             = useState(false);
+  const [showMap, setShowMap]                         = useState(false);
+  const [existingImageUrls, setExistingImageUrls]     = useState<string[]>([]);
+  const [newPhotos, setNewPhotos]                     = useState<File[]>([]);
+  const [newPhotoPreviews, setNewPhotoPreviews]       = useState<string[]>([]);
+  const [isDragOver, setIsDragOver]                   = useState(false);
+  const [customFacility, setCustomFacility]           = useState('');
+  const [customFacilities, setCustomFacilities]       = useState<string[]>([]);
 
-  // ── Upload ke Cloudinary ─────────────────────────────────────────────────
   const uploadPhotosToCloudinary = async (files: File[]) => {
     const uploadedUrls: string[] = [];
     for (const file of files) {
-      const fd = new FormData();
+      const fd  = new FormData();
       fd.append('file', file);
       const res  = await fetch('/api/uploads/property', { method: 'POST', body: fd });
       const json = await res.json().catch(() => ({}));
@@ -157,7 +139,7 @@ export default function EditPropertyPage() {
     return uploadedUrls;
   };
 
-  // ── Load fasilitas ───────────────────────────────────────────────────────
+  // Load fasilitas preset
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -178,11 +160,10 @@ export default function EditPropertyPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Load data properti ───────────────────────────────────────────────────
+  // Load data properti
   useEffect(() => {
     if (!propertyId) return;
     let cancelled = false;
-
     const run = async () => {
       setIsLoading(true);
       setLoadError(null);
@@ -196,24 +177,51 @@ export default function EditPropertyPage() {
           .filter((v) => Boolean(v?.trim()))
           .join(', ');
 
+        // Pisahkan facilities: mana yang code preset, mana yang custom (code-nya prefix custom_)
+        const allFacilityCodes: string[] = Array.isArray(data.facilities)
+          ? data.facilities
+              .map((item) => item?.facility?.code)
+              .filter((code): code is string => typeof code === 'string' && code.length > 0)
+          : [];
+
+        // Fetch semua facility preset untuk mengetahui code-nya
+        const res2    = await fetch('/api/facilities');
+        const json2   = await res2.json().catch(() => ({}));
+        const presets: FacilityOption[] = Array.isArray(json2.data) ? json2.data : [];
+        const presetCodes = new Set(presets.map((p) => p.code));
+
+        // Custom = code yang tidak ada di preset
+        const loadedCustomCodes = allFacilityCodes.filter((c) => !presetCodes.has(c));
+        // Nama custom diambil dari data facilities
+        const loadedCustomNames: string[] = [];
+        if (Array.isArray(data.facilities)) {
+          for (const item of data.facilities) {
+            const code = item?.facility?.code ?? '';
+            const name = item?.facility?.name ?? '';
+            if (code && !presetCodes.has(code) && name) {
+              loadedCustomNames.push(name);
+            }
+          }
+        }
+
+        setCustomFacilities(loadedCustomNames);
         setForm({
-          title:               data.title ?? '',
-          address:             data.address ?? addressFromParts,
-          locationLat:         typeof data.latitude  === 'number' ? data.latitude  : null,
-          locationLng:         typeof data.longitude === 'number' ? data.longitude : null,
-          locationCity:        data.city         ?? '',
-          locationDistrict:    data.district     ?? '',
+          title:                 data.title ?? '',
+          address:               data.address ?? addressFromParts,
+          locationLat:           typeof data.latitude  === 'number' ? data.latitude  : null,
+          locationLng:           typeof data.longitude === 'number' ? data.longitude : null,
+          locationCity:          data.city          ?? '',
+          locationDistrict:      data.district      ?? '',
           locationNeighbourhood: data.neighbourhood ?? '',
-          price:               String(data.price ?? ''),
-          description:         data.description ?? '',
-          // ▼ Ini yang penting: gunakan helper yang benar, bukan handleChange
-          listingType:         normalizeListingType(data.listingType),
-          category:            inferCategory(data),
-          facilities:          Array.isArray(data.facilities)
-            ? data.facilities
-                .map((item) => item?.facility?.code)
-                .filter((code): code is string => typeof code === 'string' && code.length > 0)
-            : [],
+          price:                 String(data.price ?? ''),
+          description:           data.description ?? '',
+          listingType:           normalizeListingType(data.listingType),
+          category:              inferCategory(data),
+          // Preset codes + custom names (karena backend handle keduanya)
+          facilities: [
+            ...allFacilityCodes.filter((c) => presetCodes.has(c)),
+            ...loadedCustomNames,
+          ],
         });
         setExistingImageUrls(Array.isArray(data.imageUrls) ? data.imageUrls : []);
       } catch (err: any) {
@@ -222,50 +230,59 @@ export default function EditPropertyPage() {
         if (!cancelled) setIsLoading(false);
       }
     };
-
     run();
     return () => { cancelled = true; };
   }, [propertyId]);
 
-  // ── Handlers form ────────────────────────────────────────────────────────
-
-  // Handler untuk field teks biasa
   const handleChange = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  // Handler khusus category — pakai type yang benar agar React state pasti terupdate
   const handleCategoryChange = (value: PropertyCategory) => {
     setForm((prev) => ({ ...prev, category: value }));
     setErrors((prev) => ({ ...prev, category: undefined }));
   };
 
-  // Handler khusus listingType — sama alasannya
   const handleListingTypeChange = (value: ListingType) => {
     setForm((prev) => ({ ...prev, listingType: value }));
     setErrors((prev) => ({ ...prev, listingType: undefined }));
   };
 
-  const toggleFacility = (code: string) => {
+  const toggleFacility = (codeOrName: string) => {
     setForm((prev) => ({
       ...prev,
-      facilities: prev.facilities.includes(code)
-        ? prev.facilities.filter((c) => c !== code)
-        : [...prev.facilities, code],
+      facilities: prev.facilities.includes(codeOrName)
+        ? prev.facilities.filter((c) => c !== codeOrName)
+        : [...prev.facilities, codeOrName],
     }));
   };
 
+  const addCustomFacility = () => {
+    const val = customFacility.trim();
+    if (!val) return;
+    if (customFacilities.includes(val)) { setCustomFacility(''); return; }
+    if (facilityOptions.some((o) => o.name === val)) { setCustomFacility(''); return; }
+    setCustomFacilities((prev) => [...prev, val]);
+    setForm((prev) => ({ ...prev, facilities: [...prev.facilities, val] }));
+    setCustomFacility('');
+  };
+
+  const removeCustomFacility = (name: string) => {
+    setCustomFacilities((prev) => prev.filter((f) => f !== name));
+    setForm((prev) => ({ ...prev, facilities: prev.facilities.filter((f) => f !== name) }));
+  };
+
   const handleLocationPicked = (loc: PickedLocation) => {
-    const parts    = [loc.neighbourhood, loc.district, loc.city].filter(Boolean);
+    const parts     = [loc.neighbourhood, loc.district, loc.city].filter(Boolean);
     const shortName = parts.join(', ') || loc.displayName;
     setForm((prev) => ({
       ...prev,
-      address:              shortName,
-      locationLat:          loc.lat,
-      locationLng:          loc.lng,
-      locationCity:         loc.city,
-      locationDistrict:     loc.district,
+      address:               shortName,
+      locationLat:           loc.lat,
+      locationLng:           loc.lng,
+      locationCity:          loc.city,
+      locationDistrict:      loc.district,
       locationNeighbourhood: loc.neighbourhood,
     }));
     setErrors((prev) => ({ ...prev, address: undefined }));
@@ -278,10 +295,10 @@ export default function EditPropertyPage() {
     setNewPhotoPreviews((prev) => [...prev, ...valid.map((f) => URL.createObjectURL(f))]);
   };
 
-  const handlePhotoChange  = (e: React.ChangeEvent<HTMLInputElement>) => appendPhotoFiles(Array.from(e.target.files ?? []));
-  const handleDragOver     = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(true);  };
-  const handleDragLeave    = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(false); };
-  const handleDrop         = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(false); appendPhotoFiles(Array.from(e.dataTransfer.files ?? [])); };
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => appendPhotoFiles(Array.from(e.target.files ?? []));
+  const handleDragOver    = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(true);  };
+  const handleDragLeave   = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(false); };
+  const handleDrop        = (e: React.DragEvent<HTMLLabelElement>)   => { e.preventDefault(); setIsDragOver(false); appendPhotoFiles(Array.from(e.dataTransfer.files ?? [])); };
 
   const removeExistingImage = (i: number) => setExistingImageUrls((prev) => prev.filter((_, j) => j !== i));
   const removeNewPhoto      = (i: number) => {
@@ -292,20 +309,19 @@ export default function EditPropertyPage() {
 
   useEffect(() => () => { newPhotoPreviews.forEach((u) => URL.revokeObjectURL(u)); }, [newPhotoPreviews]);
 
-  // ── Validasi ─────────────────────────────────────────────────────────────
   const validate = () => {
     const next: FormErrors = {};
-    if (!form.title.trim())       next.title       = 'Nama properti wajib diisi.';
+    if (!form.title.trim())      next.title       = 'Nama properti wajib diisi.';
     if (!form.address.trim() || form.locationLat == null || form.locationLng == null)
-                                   next.address     = 'Lokasi wajib dipilih lewat peta.';
-    if (!form.price.trim())        next.price       = 'Harga wajib diisi.';
+                                  next.address     = 'Lokasi wajib dipilih lewat peta.';
+    if (!form.price.trim())       next.price       = 'Harga wajib diisi.';
     else if (Number.isNaN(Number(form.price.replace(/[^0-9]/g, ''))))
-                                   next.price       = 'Harga harus berupa angka.';
-    if (!form.description.trim())  next.description = 'Deskripsi wajib diisi.';
-    if (!form.listingType)         next.listingType = 'Tipe listing wajib dipilih.';
-    if (!form.category)            next.category    = 'Kategori properti wajib dipilih.';
+                                  next.price       = 'Harga harus berupa angka.';
+    if (!form.description.trim()) next.description = 'Deskripsi wajib diisi.';
+    if (!form.listingType)        next.listingType = 'Tipe listing wajib dipilih.';
+    if (!form.category)           next.category    = 'Kategori properti wajib dipilih.';
     if (existingImageUrls.length + newPhotos.length === 0)
-                                   next.facilities  = 'Minimal harus ada 1 foto properti.';
+                                  next.facilities  = 'Minimal harus ada 1 foto properti.';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -315,15 +331,13 @@ export default function EditPropertyPage() {
     return num ? Number(num).toLocaleString('id-ID') : '';
   };
 
-  // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validate()) return;
     setIsSubmitting(true);
     setSubmitError(null);
-
     try {
-      const uploadedUrls  = newPhotos.length > 0 ? await uploadPhotosToCloudinary(newPhotos) : [];
-      const allImageUrls  = [...existingImageUrls, ...uploadedUrls];
+      const uploadedUrls = newPhotos.length > 0 ? await uploadPhotosToCloudinary(newPhotos) : [];
+      const allImageUrls = [...existingImageUrls, ...uploadedUrls];
 
       const res = await fetch(`/api/owner/properties/${propertyId}`, {
         method:  'PATCH',
@@ -332,15 +346,14 @@ export default function EditPropertyPage() {
           title:       form.title,
           description: form.description,
           price:       Number(form.price.replace(/[^0-9]/g, '')),
-          // ▼ Konversi balik ke format DB (SELL/RENT) sebelum dikirim
           listingType: listingTypeToApi(form.listingType),
           category:    form.category,
           address:     form.address,
           location: {
-            lat:          form.locationLat,
-            lng:          form.locationLng,
-            city:         form.locationCity,
-            district:     form.locationDistrict,
+            lat:           form.locationLat,
+            lng:           form.locationLng,
+            city:          form.locationCity,
+            district:      form.locationDistrict,
             neighbourhood: form.locationNeighbourhood,
           },
           imageUrls:  allImageUrls,
@@ -358,21 +371,12 @@ export default function EditPropertyPage() {
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
   if (isLoading) {
-    return (
-      <div className={styles.contentArea}>
-        <p className={styles.facilityHint}>Memuat data properti...</p>
-      </div>
-    );
+    return <div className={styles.contentArea}><p className={styles.facilityHint}>Memuat data properti...</p></div>;
   }
 
   if (loadError) {
-    return (
-      <div className={styles.contentArea}>
-        <div className={styles.submitErrorBanner}>⚠️ {loadError}</div>
-      </div>
-    );
+    return <div className={styles.contentArea}><div className={styles.submitErrorBanner}>⚠️ {loadError}</div></div>;
   }
 
   return (
@@ -382,10 +386,8 @@ export default function EditPropertyPage() {
       </div>
 
       <div className={styles.formCard}>
-        {/* ── Kiri: Form Fields ── */}
         <div className={styles.formLeft}>
 
-          {/* Nama Properti */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Nama Properti</label>
             <input
@@ -397,7 +399,6 @@ export default function EditPropertyPage() {
             {errors.title && <p className={styles.errorText}>{errors.title}</p>}
           </div>
 
-          {/* Lokasi */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Lokasi Properti</label>
             <div
@@ -411,9 +412,7 @@ export default function EditPropertyPage() {
                 <>
                   <span className={styles.locationIcon}>📍</span>
                   <span className={styles.locationValue}>{form.address}</span>
-                  <button type="button" className={styles.changeLocationBtn} onClick={(e) => { e.stopPropagation(); setShowMap(true); }}>
-                    Ganti
-                  </button>
+                  <button type="button" className={styles.changeLocationBtn} onClick={(e) => { e.stopPropagation(); setShowMap(true); }}>Ganti</button>
                 </>
               ) : (
                 <>
@@ -425,43 +424,32 @@ export default function EditPropertyPage() {
             {errors.address && <p className={styles.errorText}>{errors.address}</p>}
           </div>
 
-          {/* Kategori — pakai handleCategoryChange, bukan handleChange */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Kategori Properti</label>
             <div className={styles.listingTypeGroup}>
               {CATEGORY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
+                <button key={opt.value} type="button"
                   onClick={() => handleCategoryChange(opt.value)}
                   className={`${styles.listingTypeBtn} ${form.category === opt.value ? styles.listingTypeBtnActive : ''}`}
-                >
-                  {opt.label}
-                </button>
+                >{opt.label}</button>
               ))}
             </div>
             {errors.category && <p className={styles.errorText}>{errors.category}</p>}
           </div>
 
-          {/* Tipe Listing — pakai handleListingTypeChange, bukan handleChange */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Tipe Listing</label>
             <div className={styles.listingTypeGroup}>
               {LISTING_TYPE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
+                <button key={opt.value} type="button"
                   onClick={() => handleListingTypeChange(opt.value)}
                   className={`${styles.listingTypeBtn} ${form.listingType === opt.value ? styles.listingTypeBtnActive : ''}`}
-                >
-                  {opt.label}
-                </button>
+                >{opt.label}</button>
               ))}
             </div>
             {errors.listingType && <p className={styles.errorText}>{errors.listingType}</p>}
           </div>
 
-          {/* Harga */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Harga</label>
             <div className={styles.priceWrapper}>
@@ -476,7 +464,6 @@ export default function EditPropertyPage() {
             {errors.price && <p className={styles.errorText}>{errors.price}</p>}
           </div>
 
-          {/* Deskripsi */}
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Deskripsi</label>
             <textarea
@@ -498,35 +485,63 @@ export default function EditPropertyPage() {
               <p className={styles.errorText}>{facilityLoadError}</p>
             ) : (
               <div className={styles.facilityOptionGrid}>
+                {/* Preset */}
                 {facilityOptions.map((facility) => {
                   const selected = form.facilities.includes(facility.code);
                   return (
-                    <button
-                      key={facility.code}
-                      type="button"
+                    <button key={facility.code} type="button"
                       onClick={() => toggleFacility(facility.code)}
                       className={`${styles.facilityOptionBtn} ${selected ? styles.facilityOptionBtnActive : ''}`}
+                    >{facility.name}</button>
+                  );
+                })}
+                {/* Custom — tampil di grid yang sama */}
+                {customFacilities.map((name) => {
+                  const selected = form.facilities.includes(name);
+                  return (
+                    <div key={name}
+                      className={`${styles.facilityOptionBtn} ${selected ? styles.facilityOptionBtnActive : ''}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                     >
-                      {facility.name}
-                    </button>
+                      <button type="button"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit', font: 'inherit' }}
+                        onClick={() => toggleFacility(name)}
+                      >{name}</button>
+                      <button type="button"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: 'inherit', fontSize: 12 }}
+                        onClick={() => removeCustomFacility(name)}
+                      >✕</button>
+                    </div>
                   );
                 })}
               </div>
             )}
+
+            {/* Input tambah custom */}
+            <div className={styles.customFacilityRow}>
+              <input
+                className={styles.input}
+                placeholder="Tambah fasilitas lainnya..."
+                value={customFacility}
+                onChange={(e) => setCustomFacility(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomFacility(); } }}
+              />
+              <button type="button" className={styles.listingTypeBtn} onClick={addCustomFacility}>
+                + Tambah
+              </button>
+            </div>
             {errors.facilities && <p className={styles.errorText}>{errors.facilities}</p>}
           </div>
         </div>
 
-        {/* ── Kanan: Upload Foto ── */}
+        {/* Upload Foto */}
         <div className={styles.formRight}>
           <label className={styles.label}>Upload Foto-foto Properti</label>
           <label
             className={`${styles.uploadArea} ${isDragOver ? styles.uploadAreaDragOver : ''}`}
             htmlFor="photo-upload-edit"
-            onDragOver={handleDragOver}
-            onDragEnter={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
+            onDragOver={handleDragOver} onDragEnter={handleDragOver}
+            onDragLeave={handleDragLeave} onDrop={handleDrop}
           >
             {existingImageUrls.length + newPhotoPreviews.length === 0 ? (
               <div className={styles.uploadPlaceholder}>

@@ -1,4 +1,3 @@
-
 // ============================================================
 // FILE: app/api/owner/properties/route.ts
 // POST /api/owner/properties
@@ -8,7 +7,6 @@ import { getServerSession } from 'next-auth';
 import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { resolveFacilityCodes } from '@/lib/dss/facility-mapping';
 
 const ALLOWED_CATEGORIES = ['RUMAH', 'APARTEMEN', 'KOSAN'] as const;
 const ALLOWED_LISTING_TYPES = ['JUAL', 'SEWA'] as const;
@@ -31,13 +29,32 @@ function normalizeListingType(listingType: unknown): (typeof ALLOWED_LISTING_TYP
     : null;
 }
 
+// Resolve facility — support code preset maupun nama custom (upsert)
+async function resolveFacilityRecords(inputs: string[]): Promise<{ id: string }[]> {
+  return Promise.all(
+    inputs.map(async (input) => {
+      // Cek apakah ini code preset yang sudah ada di DB
+      const byCode = await prisma.facility.findUnique({ where: { code: input } });
+      if (byCode) return { id: byCode.id };
+
+      // Cek apakah nama ini sudah ada (custom sebelumnya)
+      const code = `custom_${input.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}`;
+      const result = await prisma.facility.upsert({
+        where: { code },
+        update: {},
+        create: { code, name: input },
+      });
+      return { id: result.id };
+    })
+  );
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  // Hanya user dengan KYC APPROVED yang boleh tambah properti
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { kycStatus: true },
@@ -59,45 +76,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Data tidak lengkap.' }, { status: 400 });
   }
 
-  const latitude = typeof location?.lat === 'number' ? location.lat : null;
-  const longitude = typeof location?.lng === 'number' ? location.lng : null;
-  const city = typeof location?.city === 'string' ? location.city.trim() : null;
-  const district = typeof location?.district === 'string' ? location.district.trim() : null;
+  const latitude      = typeof location?.lat === 'number' ? location.lat : null;
+  const longitude     = typeof location?.lng === 'number' ? location.lng : null;
+  const city          = typeof location?.city === 'string' ? location.city.trim() : null;
+  const district      = typeof location?.district === 'string' ? location.district.trim() : null;
   const neighbourhood = typeof location?.neighbourhood === 'string' ? location.neighbourhood.trim() : null;
 
-  const facilityItems = Array.isArray(facilities) ? (facilities as string[]) : [];
+  const facilityInputs = Array.isArray(facilities) ? (facilities as string[]) : [];
   const photoUrls = Array.isArray(imageUrls)
     ? imageUrls.filter((item: unknown): item is string => typeof item === 'string' && item.trim().length > 0)
     : [];
-  const facilityCodes = resolveFacilityCodes(facilityItems);
-  const facilityRecords = await prisma.facility.findMany({
-    where: { code: { in: facilityCodes } },
-    select: { id: true },
-  });
 
-  const propertyData = {
-    ownerId: session.user.id,
-    title,
-    address,
-    city,
-    district,
-    neighbourhood,
-    latitude,
-    longitude,
-    imageUrls: photoUrls,
-    description: description ?? null,
-    price: Number(price),
-    listingType: normalizedListingType,
-    facilities: {
-      createMany: {
-        data: facilityRecords.map((facility) => ({ facilityId: facility.id })),
-        skipDuplicates: true,
-      },
-    },
-  };
+  const facilityRecords = await resolveFacilityRecords(facilityInputs);
 
   const property = await prisma.property.create({
-    data: propertyData,
+    data: {
+      ownerId:       session.user.id,
+      title,
+      address,
+      city,
+      district,
+      neighbourhood,
+      latitude,
+      longitude,
+      imageUrls:    photoUrls,
+      description:  description ?? null,
+      price:        Number(price),
+      listingType:  normalizedListingType,
+      facilities: {
+        createMany: {
+          data:            facilityRecords.map((f) => ({ facilityId: f.id })),
+          skipDuplicates:  true,
+        },
+      },
+    },
     include: {
       facilities: {
         include: {

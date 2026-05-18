@@ -34,9 +34,7 @@ model User {
   bookmarks Bookmark[]
   reviews   Review[]
   reviewReplies ReviewReply[]
-  conversationsAsUser  Conversation[] @relation("ConversationUser")
-  conversationsAsOwner Conversation[] @relation("ConversationOwner")
-  sentMessages         Message[]      @relation("MessageSender")
+  boostPayments BoostPayment[]
 }
 
 model Account {
@@ -116,6 +114,7 @@ model Property {
   owner       User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   facilities  PropertyFacility[]
   boosts      PropertyBoost[]
+  boostPaymentItems BoostPaymentItem[]
   boostCart   BoostCart[]
   bookmarks   Bookmark[]
   reviews   Review[]
@@ -138,6 +137,7 @@ model Notification {
 
 model PropertyBoost {
   id           String   @id @default(cuid())
+  paymentId    String?
   propertyId   String
   ownerId      String
   packageId    String
@@ -149,9 +149,11 @@ model PropertyBoost {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  payment  BoostPayment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   owner    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
+  @@index([paymentId])
   @@index([propertyId, endsAt])
   @@index([ownerId, endsAt])
 }
@@ -247,6 +249,66 @@ enum PropertyCategory {
   RUMAH
   APARTEMEN
   KOSAN
+}
+
+enum BoostPaymentProvider {
+  MIDTRANS
+}
+
+enum BoostPaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  EXPIRED
+  FAILED
+  CANCELLED
+}
+
+model BoostPayment {
+  id                    String              @id @default(cuid())
+  orderId               String              @unique
+  ownerId               String
+  provider              BoostPaymentProvider @default(MIDTRANS)
+  status                BoostPaymentStatus   @default(PENDING)
+  paymentMethod         String?
+  paymentType           String?
+  subtotal              Int
+  adminFee              Int                 @default(0)
+  grossAmount           Int
+  providerTransactionId String?             @unique
+  snapToken             String?
+  redirectUrl           String?
+  rawRequest            Json?
+  rawResponse           Json?
+  settledAt             DateTime?
+  expiredAt             DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  owner  User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items  BoostPaymentItem[]
+  boosts PropertyBoost[]
+
+  @@index([ownerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model BoostPaymentItem {
+  id            String       @id @default(cuid())
+  paymentId     String
+  propertyId    String
+  propertyTitle String
+  packageId     String
+  packageTitle  String
+  days          Int
+  price         Int
+  createdAt     DateTime     @default(now())
+
+  payment  BoostPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  property Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([propertyId])
 }
 
 model BoostCart {

@@ -21,6 +21,9 @@ export async function GET() {
       include: {
         boosts: {
           where: {
+            startsAt: {
+              lte: now,
+            },
             endsAt: {
               gt: now,
             },

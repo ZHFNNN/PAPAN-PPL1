@@ -48,6 +48,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       ownerId: true,
       boosts: {
         where: {
+          startsAt: {
+            lte: now,
+          },
           endsAt: {
             gt: now,
           },

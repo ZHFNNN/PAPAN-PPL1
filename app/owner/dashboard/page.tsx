@@ -140,25 +140,22 @@ export default function OwnerDashboardPage() {
     setDeleteModalError(null);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteCandidate) return;
-    
-  const id = deleteCandidate.id;
   useEffect(() => {
-  
-  const timer = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
     return () => window.clearInterval(timer);
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Yakin ingin menghapus properti ini?')) return;
-    setDeletingId(id);
+  const confirmDelete = async () => {
+    if (!deleteCandidate) return;
+
+    setDeletingId(deleteCandidate.id);
     setDeleteModalError(null);
+
     try {
-      const res = await fetch(`/api/owner/properties/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/owner/properties/${deleteCandidate.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus properti.');
       setDeleteCandidate(null);
       await fetchDashboard();

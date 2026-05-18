@@ -12,9 +12,10 @@ import styles from "./StartChatButton.module.css";
 interface StartChatButtonProps {
   propertyId: string;
   ownerId: string;
+	variant?: 'default' | 'light';
 }
 
-export default function StartChatButton({ propertyId, ownerId }: StartChatButtonProps) {
+export default function StartChatButton({ propertyId, ownerId, variant = 'default' }: StartChatButtonProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
@@ -24,6 +25,10 @@ export default function StartChatButton({ propertyId, ownerId }: StartChatButton
 
   // Sembunyikan kalau user adalah owner-nya sendiri
   if (session?.user?.id === ownerId) return null;
+
+  const buttonClassName = variant === 'light'
+    ? `${styles.btn} ${styles.btnLight}`
+    : styles.btn;
 
   const handleOpen = () => {
     if (!session) { router.push("/login"); return; }
@@ -68,7 +73,7 @@ export default function StartChatButton({ propertyId, ownerId }: StartChatButton
 
   return (
     <>
-      <button className={styles.btn} onClick={handleOpen}>
+      <button className={buttonClassName} onClick={handleOpen}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="17" height="17" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>

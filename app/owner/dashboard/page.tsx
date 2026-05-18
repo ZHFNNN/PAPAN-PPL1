@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { formatPrice } from '../../../lib/format-price';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 type ActiveBoost = {
   id: string;
@@ -25,7 +26,7 @@ type Property = {
   listingType: string;
   address?: string;
   imageUrls?: string[];
-  views?: number;
+  bookmarkCount?: number;
   status?: string;
   createdAt: string;
   isBoosted?: boolean;
@@ -100,6 +101,8 @@ export default function OwnerDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<{ id: string; title: string } | null>(null);
+  const [deleteModalError, setDeleteModalError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const fetchDashboard = async () => {
@@ -126,8 +129,24 @@ export default function OwnerDashboardPage() {
     fetchDashboard();
   }, [router]);
 
+  const openDeleteModal = (property: Property) => {
+    setDeleteCandidate({ id: property.id, title: property.title });
+    setDeleteModalError(null);
+  };
+
+  const closeDeleteModal = () => {
+    if (deletingId) return;
+    setDeleteCandidate(null);
+    setDeleteModalError(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteCandidate) return;
+    
+  const id = deleteCandidate.id;
   useEffect(() => {
-    const timer = window.setInterval(() => {
+  
+  const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
@@ -137,12 +156,14 @@ export default function OwnerDashboardPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus properti ini?')) return;
     setDeletingId(id);
+    setDeleteModalError(null);
     try {
       const res = await fetch(`/api/owner/properties/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Gagal menghapus properti.');
+      setDeleteCandidate(null);
       await fetchDashboard();
     } catch (err) {
-      alert('Gagal menghapus properti. Coba lagi.');
+      setDeleteModalError('Gagal menghapus properti. Coba lagi.');
       console.error(err);
     } finally {
       setDeletingId(null);
@@ -283,7 +304,7 @@ export default function OwnerDashboardPage() {
                         </p>
                       )}
                       <p className={styles.propertyViews}>
-                        {property.views ?? 0} Views
+                        {property.bookmarkCount ?? 0} pencari properti menyimpan properti kamu
                       </p>
                     </div>
 
@@ -303,7 +324,7 @@ export default function OwnerDashboardPage() {
                       </button>
                       <button
                         className={styles.deleteBtn}
-                        onClick={() => handleDelete(property.id)}
+                        onClick={() => openDeleteModal(property)}
                         disabled={deletingId === property.id}
                       >
                         {deletingId === property.id ? '...' : 'Delete'}
@@ -313,6 +334,22 @@ export default function OwnerDashboardPage() {
                 ))}
               </div>
             )}
+
+            <ConfirmDialog
+              open={Boolean(deleteCandidate)}
+              title="Hapus properti?"
+              description={
+                deleteCandidate
+                  ? `Properti “${deleteCandidate.title}” akan dihapus dari daftar kamu.`
+                  : 'Properti ini akan dihapus dari daftar kamu.'
+              }
+              confirmText="Hapus"
+              cancelText="Batal"
+              loading={Boolean(deletingId)}
+              errorText={deleteModalError}
+              onCancel={closeDeleteModal}
+              onConfirm={confirmDelete}
+            />
           </>
         ) : null}
     </div>

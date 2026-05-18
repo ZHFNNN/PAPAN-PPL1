@@ -8,6 +8,7 @@ export type ApiProperty = {
 	title: string;
 	category?: string | null;
 	listingType?: string | null;
+	createdAt?: string | null;
 	price: string;
 	imageUrls: string[];
 	address?: string | null;
@@ -31,6 +32,7 @@ export type PropertyCardData = {
 	fasilitas: string[];
 	images: string[];
 	listingType: string;
+	createdAt?: string;
 };
 
 export type PropertySuggestion = {
@@ -66,9 +68,13 @@ export function formatCategoryLabel(value?: string | null): string {
 }
 
 export function mapApiPropertyToCard(property: ApiProperty): PropertyCardData {
-	const listingLabel = formatListingType(property.listingType);
+	const normalizedListingType = property.listingType?.trim()
+		? property.listingType.trim().toUpperCase()
+		: 'RENT';
+	const listingLabel = formatListingType(normalizedListingType);
 	const biayaHidup = listingLabel ? `Tipe: ${listingLabel}` : 'Estimasi biaya hidup: -';
 	const images = property.imageUrls?.length ? property.imageUrls : [FALLBACK_PROPERTY_IMAGE];
+	const createdAt = property.createdAt ?? undefined;
 
 	return {
 		id: property.id,
@@ -83,7 +89,8 @@ export function mapApiPropertyToCard(property: ApiProperty): PropertyCardData {
 		km: '-',
 		fasilitas: property.facilities?.map((item) => item.name) ?? [],
 		images,
-		listingType: property.listingType ?? '',
+		listingType: normalizedListingType,
+		createdAt,
 	};
 }
 

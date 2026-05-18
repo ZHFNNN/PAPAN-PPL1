@@ -33,6 +33,11 @@ export async function GET() {
           },
           take: 1,
         },
+        _count: {
+          select: {
+            bookmarks: true,
+          },
+        },
       },
     }),
     prisma.user.findUnique({
@@ -42,12 +47,13 @@ export async function GET() {
   ]);
 
   const normalizedProperties = properties.map((property) => {
-    const activeBoost = property.boosts[0] ?? null;
-    const { boosts, ...plainProperty } = property;
+    const { boosts, _count, ...plainProperty } = property;
+    const activeBoost = boosts[0] ?? null;
 
     return {
       ...plainProperty,
       price: property.price.toString(),
+      bookmarkCount: _count?.bookmarks ?? 0,
       isBoosted: Boolean(activeBoost),
       activeBoost: activeBoost
         ? {

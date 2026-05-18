@@ -13,7 +13,6 @@ import {
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/bookmark", label: "Bookmark" },
-  // { href: "/history", label: "History" },
   { href: "/notification", label: "Notification" },
 ];
 
@@ -175,7 +174,7 @@ function NavbarContent() {
       <div className="h-[38px] sm:h-[42px] md:h-[46px] w-full flex items-center justify-center gap-1.5 sm:gap-2">
 
         {/* Left Section - Navigation Menu */}
-        <div className="min-w-0 bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] px-2 sm:px-2.5 md:px-3 flex items-center gap-1 sm:gap-1.5 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
+        <div className="min-w-0 bg-[rgba(255,255,255,0.62)] backdrop-blur-md border border-[#9a9a9a] h-[38px] sm:h-[42px] md:h-[46px] rounded-[999px] px-3 sm:px-3.5 md:px-4 flex items-center gap-1.5 sm:gap-2 shadow-[0_5px_14px_rgba(0,0,0,0.06)]">
           {/* Logo */}
           <Link
             href="/"
@@ -194,7 +193,7 @@ function NavbarContent() {
           </Link>
 
           {/* Navigation Items */}
-          <div className="relative flex items-center gap-0.5 sm:gap-1 md:gap-2">
+          <div className="relative flex items-center gap-1 sm:gap-1.5 md:gap-2.5">
             <div
               className="absolute top-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ease-in-out pointer-events-none"
               style={{
@@ -210,7 +209,7 @@ function NavbarContent() {
                 key={item.href}
                 href={item.href}
                 ref={(el) => { linkRefs.current[item.href] = el; }}
-                className={`relative z-10 h-5 sm:h-6 md:h-7 px-1 sm:px-1.5 md:px-3 rounded-full flex items-center whitespace-nowrap text-[10px] sm:text-[11px] md:text-[12px] transition-all ${
+                className={`relative z-10 h-5 sm:h-6 md:h-7 px-2 sm:px-2.5 md:px-4 rounded-full flex items-center whitespace-nowrap text-[10px] sm:text-[11px] md:text-[12px] transition-all ${
                   isActive(item.href)
                     ? "font-semibold text-[#111111]"
                     : "font-medium text-[#303030] hover:text-[#111111]"

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import styles from "./page.module.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -281,7 +281,6 @@ export default function VerifyPage() {
   // ── FORM (ALL STATUS) ─────────────────────────────────────────────────────
   return (
     <div className={styles.root}>
-      <Toaster position="top-center" />
       <div className={styles.inner}>
 
         <button className={styles.backBtn} onClick={() => router.back()}>← Kembali</button>

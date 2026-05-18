@@ -41,26 +41,16 @@ function formatLocation(item: BookmarkedProperty): string {
 
 function BookmarkCard({
   item,
-  onRemove,
+  onOpenRemoveConfirm,
   onDetail,
-  onSimilar,
+  removing,
 }: {
   item: BookmarkedProperty;
-  onRemove: (id: string) => void;
+  onOpenRemoveConfirm: (item: BookmarkedProperty) => void;
   onDetail: (id: string) => void;
-  onSimilar: (id: string) => void;
+  removing: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
-  const [removing, setRemoving] = useState(false);
-
-  const handleRemove = async () => {
-    setRemoving(true);
-    try {
-      await onRemove(item.id);
-    } catch {
-      setRemoving(false);
-    }
-  };
 
   return (
     <div className={styles.card}>
@@ -82,7 +72,6 @@ function BookmarkCard({
       <div className={styles.cardInfo}>
         <p className={styles.cardTitle}>{item.title}</p>
         <p className={styles.cardLocation}>
-          <span className={styles.locationIcon}>📍</span>
           {formatLocation(item)}
         </p>
         <p className={styles.cardPrice}>{formatRupiah(item.price)}</p>
@@ -92,19 +81,14 @@ function BookmarkCard({
         <button className={styles.btnPrimary} onClick={() => onDetail(item.id)}>
           Lihat Detail
         </button>
-        <button className={styles.btnSecondary} onClick={() => onSimilar(item.id)}>
-          Properti Serupa
+        <button
+          className={`${styles.btnSecondary} ${styles.btnDanger}`}
+          onClick={() => onOpenRemoveConfirm(item)}
+          disabled={removing}
+        >
+          {removing ? 'Menghapus...' : 'Hapus dari bookmark'}
         </button>
       </div>
-
-      <button
-        className={styles.removeBtn}
-        onClick={handleRemove}
-        disabled={removing}
-        title="Hapus dari bookmark"
-      >
-        ✕
-      </button>
     </div>
   );
 }
@@ -114,6 +98,8 @@ export default function BookmarkPage() {
   const [bookmarks, setBookmarks] = useState<BookmarkedProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [confirmItem, setConfirmItem] = useState<BookmarkedProperty | null>(null);
 
   const fetchBookmarks = async () => {
     try {
@@ -135,6 +121,7 @@ export default function BookmarkPage() {
   }, []);
 
   const handleRemove = async (id: string) => {
+    setRemovingId(id);
     // Optimistic UI update
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
     
@@ -149,7 +136,21 @@ export default function BookmarkPage() {
     } catch (error) {
       console.error('Failed to remove bookmark:', error);
       fetchBookmarks();
+    } finally {
+      setRemovingId((prev) => (prev === id ? null : prev));
     }
+  };
+
+  const closeConfirm = () => {
+    if (removingId) return;
+    setConfirmItem(null);
+  };
+
+  const confirmRemove = async () => {
+    if (!confirmItem) return;
+    const id = confirmItem.id;
+    setConfirmItem(null);
+    await handleRemove(id);
   };
 
   return (
@@ -197,15 +198,52 @@ export default function BookmarkPage() {
                 <BookmarkCard
                   key={item.id}
                   item={item}
-                  onRemove={handleRemove}
+                  onOpenRemoveConfirm={setConfirmItem}
                   onDetail={(id) => router.push(`/propertyDetail/${id}`)}
-                  onSimilar={(id) => router.push(`/search?similar=${id}`)}
+                  removing={removingId === item.id}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {confirmItem && (
+        <div
+          className={styles.modalOverlay}
+          onClick={closeConfirm}
+          role="presentation"
+        >
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Konfirmasi hapus bookmark"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') closeConfirm();
+            }}
+            tabIndex={-1}
+          >
+            <p className={styles.modalTitle}>Hapus dari bookmark?</p>
+            <p className={styles.modalDesc}>
+              Properti <span className={styles.modalHighlight}>“{confirmItem.title}”</span> akan dihapus dari bookmark.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalBtn} onClick={closeConfirm} disabled={Boolean(removingId)}>
+                Batal
+              </button>
+              <button
+                className={`${styles.modalBtn} ${styles.modalBtnDanger}`}
+                onClick={confirmRemove}
+                disabled={Boolean(removingId)}
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

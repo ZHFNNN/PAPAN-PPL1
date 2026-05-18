@@ -1,0 +1,392 @@
+/* app/(main)/chat/page.module.css */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+/* ── Layout ── */
+.page {
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  background: #f5f6f8;
+  display: flex;
+  flex-direction: column;
+}
+
+.contentArea {
+  flex: 1;
+  padding-top: 80px; /* offset navbar */
+  padding-bottom: 48px;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 0;
+}
+
+/* ── Loading ── */
+.loadingScreen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.centerState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8eaf0;
+  border-top-color: #19263c;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Page Header ── */
+.pageHeader {
+  margin-bottom: 24px;
+}
+
+.pageHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #19263c;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.totalUnreadBadge {
+  background: #19263c;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pageSubtitle {
+  font-size: 0.85rem;
+  color: #8a93a8;
+  margin: 0;
+}
+
+/* ── Search ── */
+.searchWrapper {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #9aa3b8;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #e8eaf0;
+  border-radius: 14px;
+  padding: 13px 16px 13px 44px;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.875rem;
+  color: #19263c;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: #19263c;
+  box-shadow: 0 0 0 3px rgba(25, 38, 60, 0.06);
+}
+
+.searchInput::placeholder { color: #b0b8cc; }
+
+/* ── Empty State ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px 20px;
+  gap: 10px;
+}
+
+.emptyIcon {
+  width: 88px;
+  height: 88px;
+  background: #fff;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4cad8;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 12px rgba(25, 38, 60, 0.06);
+}
+
+.emptyTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #19263c;
+  margin: 0;
+}
+
+.emptySub {
+  font-size: 0.85rem;
+  color: #8a93a8;
+  margin: 0;
+  max-width: 280px;
+}
+
+.browseBtn {
+  margin-top: 8px;
+  background: #19263c;
+  color: #fff;
+  border-radius: 12px;
+  padding: 11px 24px;
+  font-family: "Poppins", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.browseBtn:hover { background: #243450; }
+
+/* ── Conversation List ── */
+.convList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Conversation Card ── */
+.convCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1.5px solid #eceef3;
+  border-radius: 18px;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  animation: cardFadeIn 0.35s ease both;
+  position: relative;
+  overflow: hidden;
+}
+
+.convCard:hover {
+  border-color: #19263c;
+  box-shadow: 0 4px 20px rgba(25, 38, 60, 0.1);
+  transform: translateY(-1px);
+}
+
+.convCardUnread {
+  border-color: rgba(25, 38, 60, 0.2);
+  background: #fafbfd;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Avatar ── */
+.avatarFallback {
+  background: #19263c;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-family: "Poppins", sans-serif;
+}
+
+.convAvatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.roleBadge {
+  position: absolute;
+  bottom: -2px;
+  right: -4px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 999px;
+  border: 1.5px solid #fff;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.roleBadgeOwner {
+  background: #19263c;
+  color: #fff;
+}
+
+.roleBadgeUser {
+  background: #3b6de8;
+  color: #fff;
+}
+
+/* ── Info ── */
+.convInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.convTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.convPartnerName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2c3a52;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.convPartnerNameBold {
+  font-weight: 700;
+  color: #19263c;
+}
+
+.convTime {
+  font-size: 0.7rem;
+  color: #b0b8cc;
+  flex-shrink: 0;
+}
+
+.convMidRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.convPropertyPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: #6b7a99;
+  background: #f0f2f7;
+  border-radius: 999px;
+  padding: 2px 8px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unreadBadge {
+  background: #e84b3b;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  flex-shrink: 0;
+}
+
+.convPreview {
+  font-size: 0.78rem;
+  color: #9aa3b8;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.convPreviewBold {
+  color: #4a5568;
+  font-weight: 500;
+}
+
+/* ── Property Thumbnail ── */
+.convPropertyThumb {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f0f2f7;
+}
+
+.convPropertyThumbPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c4cad8;
+}
+
+.convPriceTag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(25, 38, 60, 0.72);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 2px 4px;
+  backdrop-filter: blur(2px);
+}
+
+/* ── Chevron ── */
+.convChevron {
+  color: #d0d5e0;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.convCard:hover .convChevron { color: #19263c; }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .container { padding: 24px 14px 0; }
+  .pageTitle { font-size: 1.4rem; }
+  .convPropertyThumb { width: 50px; height: 50px; }
+  .convCard { gap: 10px; padding: 12px 12px; }
+}

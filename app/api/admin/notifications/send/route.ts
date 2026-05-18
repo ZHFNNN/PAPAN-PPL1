@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-user';
 import { PropertyCategory, KycStatus } from '@prisma/client';
+import { sendNotificationEmail } from '@/lib/mailer';
 
 export async function POST(request: Request) {
   const admin = await requireAdmin();
@@ -54,9 +55,31 @@ export async function POST(request: Request) {
       isRead: false,
     })),
   });
+  // Attempt to send email notifications to owners who have email addresses
+  const ownerIds = owners.map(o => o.id);
+  const recipients = await prisma.user.findMany({
+    where: { id: { in: ownerIds }, email: { not: null } },
+    select: { id: true, email: true },
+  });
+
+  const sendResults = await Promise.allSettled(
+    recipients.map((r) =>
+      sendNotificationEmail({
+        to: r.email as string,
+        title: title.trim(),
+        message: message.trim(),
+        imageUrl: imageUrl ?? null,
+      })
+    )
+  );
+
+  const succeeded = sendResults.filter(r => r.status === 'fulfilled').length;
+  const failed = sendResults.filter(r => r.status === 'rejected').length;
 
   return Response.json({
-    message: `Notifikasi berhasil dikirim ke ${owners.length} owner.`,
+    message: `Notifikasi berhasil dibuat untuk ${owners.length} owner. Email dikirim ke ${succeeded} penerima (${failed} gagal).`,
     count: owners.length,
+    emailSent: succeeded,
+    emailFailed: failed,
   });
 }

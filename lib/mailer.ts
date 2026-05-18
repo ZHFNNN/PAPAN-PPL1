@@ -11,6 +11,32 @@ type MailerConfig = {
   from: string;
 };
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return escapeHtml(value);
+}
+
+function sanitizeImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.toString();
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function getMailerConfig(): MailerConfig | null {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || "0");
@@ -76,5 +102,49 @@ export async function sendVerificationEmail(params: {
         <p style="margin:24px 0 0;color:#6b7280">Jika kamu tidak meminta pendaftaran ini, abaikan email ini.</p>
       </div>
     `,
+  });
+}
+
+export async function sendNotificationEmail(params: {
+  to: string;
+  title: string;
+  message: string;
+  imageUrl?: string | null;
+}) {
+  const config = getMailerConfig();
+  if (!config) {
+    throw new Error("Konfigurasi email belum tersedia.");
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: config.auth,
+  });
+
+  const safeTitle = escapeHtml(params.title);
+  const safeMessage = escapeHtml(params.message);
+  const safeImageUrl = sanitizeImageUrl(params.imageUrl);
+
+  const htmlParts = [
+    `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">`,
+    `<h2 style="margin:0 0 12px">${safeTitle}</h2>`,
+    `<p style="margin:0 0 12px">${safeMessage}</p>`,
+  ];
+
+  if (safeImageUrl) {
+    htmlParts.push(`<p style="margin:12px 0"><img src="${escapeHtmlAttribute(safeImageUrl)}" alt="image" style="max-width:100%"></p>`);
+  }
+
+  htmlParts.push(`<p style="margin:24px 0 0;color:#6b7280">Jika kamu tidak menginginkan pemberitahuan ini, abaikan email ini.</p>`);
+  htmlParts.push(`</div>`);
+
+  await transporter.sendMail({
+    from: config.from,
+    to: params.to,
+    subject: params.title,
+    text: `${params.title}\n\n${params.message}`,
+    html: htmlParts.join("\n"),
   });
 }

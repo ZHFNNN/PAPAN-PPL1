@@ -1,63 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-user";
 import { personalizationBooleanCodes } from "@/lib/dss/facility-mapping";
-
-const FIXED_CRITERIA_WEIGHTS = {
-  budget: 0.4,
-  location: 0.3,
-  facilities: 0.3,
-} as const;
-
-function normalizeBudgetScore(price: number, min: number | null, max: number | null): number {
-  if (min == null || max == null) {
-    return 0.5;
-  }
-
-  if (price >= min && price <= max) {
-    return 1;
-  }
-
-  if (price < min) {
-    if (min <= 0) return 0;
-    return Math.max(0, 1 - (min - price) / min);
-  }
-
-  if (max <= 0) return 0;
-  return Math.max(0, 1 - (price - max) / max);
-}
-
-function normalizeLocationScore(locationPref: string | null, text: string): number {
-  if (!locationPref || !locationPref.trim()) {
-    return 0.5;
-  }
-
-  const tokens = locationPref
-    .toLowerCase()
-    .split(",")
-    .map((token) => token.trim())
-    .filter(Boolean);
-
-  if (tokens.length === 0) {
-    return 0.5;
-  }
-
-  const hitCount = tokens.filter((token) => text.includes(token)).length;
-  return hitCount / tokens.length;
-}
-
-function normalizeFacilityScore(selectedCodes: string[], propertyCodes: string[]): { score: number; matched: string[] } {
-  if (selectedCodes.length === 0) {
-    return { score: 0.5, matched: [] };
-  }
-
-  const selectedSet = new Set(selectedCodes);
-  const matched = propertyCodes.filter((code) => selectedSet.has(code));
-
-  return {
-    score: matched.length / selectedCodes.length,
-    matched: Array.from(new Set(matched)),
-  };
-}
+import {
+  FIXED_CRITERIA_WEIGHTS,
+  normalizeBudgetScore,
+  normalizeFacilityScore,
+  normalizeLocationScore,
+} from "@/lib/dss/scoring";
 
 export async function GET() {
   const auth = await requireAuth();

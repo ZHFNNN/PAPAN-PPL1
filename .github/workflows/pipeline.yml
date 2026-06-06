@@ -18,6 +18,9 @@ jobs:
   integration-and-security:
     name: CI & CS
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+      DIRECT_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

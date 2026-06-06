@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import styles from './page.module.css';
@@ -95,11 +96,18 @@ function BookmarkCard({
 
 export default function BookmarkPage() {
   const router = useRouter();
+  const { status } = useSession();
   const [bookmarks, setBookmarks] = useState<BookmarkedProperty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [confirmItem, setConfirmItem] = useState<BookmarkedProperty | null>(null);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push(`/login?callbackUrl=${encodeURIComponent('/bookmark')}`);
+    }
+  }, [status, router]);
 
   const fetchBookmarks = async () => {
     try {
@@ -117,8 +125,10 @@ export default function BookmarkPage() {
   };
 
   useEffect(() => {
-    fetchBookmarks();
-  }, []);
+    if (status === 'authenticated') {
+      fetchBookmarks();
+    }
+  }, [status]);
 
   const handleRemove = async (id: string) => {
     setRemovingId(id);

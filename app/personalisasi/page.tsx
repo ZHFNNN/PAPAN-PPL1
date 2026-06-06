@@ -2,6 +2,7 @@
 
 import { useState, lazy, Suspense, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import styles from './page.module.css';
 
 // MapPicker di-import secara lazy supaya Leaflet tidak di-load pas SSR
@@ -41,6 +42,13 @@ const PREFERENCES = [
 
 export default function PersonalisasiPage() {
   const router = useRouter();
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push(`/login?callbackUrl=${encodeURIComponent('/personalisasi')}`);
+    }
+  }, [status, router]);
 
   const [formData, setFormData] = useState<FormData>({
     location:    '',

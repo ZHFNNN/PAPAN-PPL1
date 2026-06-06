@@ -70,8 +70,44 @@ Setelah checkout Midtrans aktif, arahkan notifikasi server ke endpoint ini:
 
 Endpoint tersebut akan memverifikasi signature Midtrans, menandai transaksi sebagai `PAID`, lalu membuat `PropertyBoost` hanya setelah pembayaran sukses.
 
+## Continuous Deployment (CD) ke Vercel
+
+Pipeline utama (`pipeline.yml`) sudah mencakup tahap CD otomatis menggunakan Vercel CLI. Alur lengkapnya:
+
+```
+Push / PR ke main
+       │
+       ▼
+┌──────────────┐
+│  CI & CS     │  Gitleaks, npm audit, Prisma validate, tsc, ESLint
+└──────┬───────┘
+       │ (jika sukses)
+       ▼
+┌──────────────────────────────────────────────┐
+│  CD — Deploy ke Vercel                       │
+│                                              │
+│  • Pull Request  → Preview Deployment        │
+│    (URL preview otomatis dikomentari di PR)   │
+│                                              │
+│  • Push ke main  → Production Deployment     │
+└──────────────────────────────────────────────┘
+```
+
+### Secret tambahan untuk CD
+
+Selain secret CI/CS yang sudah ada, tambahkan juga 3 secret berikut ke `Settings > Secrets and variables > Actions` di GitHub:
+
+- `VERCEL_TOKEN` — Token dari akun Vercel (`vercel.com/account/tokens`)
+- `VERCEL_ORG_ID` — Org/Team ID dari file `.vercel/project.json` (jalankan `npx vercel link`)
+- `VERCEL_PROJECT_ID` — Project ID dari file `.vercel/project.json`
+
+### Setup environment variables di Vercel
+
+Pastikan semua environment variables (dari `.env`) sudah ditambahkan di Vercel Dashboard:
+`Project Settings > Environment Variables`
+
+> **Penting:** Jangan masukkan `NEXTAUTH_URL` ke Vercel karena Vercel otomatis mendeteksi URL domain yang aktif.
+
 ### Catatan
 
 File `.env` lokal jangan di-commit. Jika credential Google login atau secret lain sempat tersebar di luar lingkungan lokal, sebaiknya diganti dulu sebelum dipakai di production.
-
-coba

@@ -49,6 +49,9 @@ jobs:
       - name: Validate Prisma Schema
         run: npx prisma validate
 
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
       - name: Type Check (TypeScript)
         run: npx tsc --noEmit
 
@@ -69,6 +72,7 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      NEXTAUTH_URL: "http://localhost:3000"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -121,6 +125,7 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      NEXTAUTH_URL: "http://localhost:3000"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -1,0 +1,624 @@
+/* ── Base ────────────────────────────────────────────────────────────────── */
+.page {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-family: 'Poppins', sans-serif;
+  padding: 48px 48px;
+  box-sizing: border-box;
+}
+
+.bgAnim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(97, 125, 168, 0.10), transparent 36%),
+    radial-gradient(circle at 88% 84%, rgba(57, 88, 129, 0.08), transparent 36%);
+}
+
+.dropCircle {
+  position: absolute;
+  top: -180px;
+  border-radius: 999px;
+  background: rgba(200, 210, 230, 0.22);
+  border: 0.1px solid rgba(200, 210, 230, 0.12);
+  animation-name: dropDown;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.dropOne   { width: 180px; height: 180px; left: 6%;  animation-duration: 15s;   animation-delay: -7s;   }
+.dropTwo   { width: 48px;  height: 48px;  left: 17%; animation-duration: 8.6s;  animation-delay: -3s;   }
+.dropThree { width: 220px; height: 220px; left: 30%; animation-duration: 17s;   animation-delay: -10s;  }
+.dropFour  { width: 64px;  height: 64px;  left: 45%; animation-duration: 9.2s;  animation-delay: -5.6s; }
+.dropFive  { width: 136px; height: 136px; left: 58%; animation-duration: 11.2s; animation-delay: -1.8s; }
+.dropSix   { width: 34px;  height: 34px;  left: 69%; animation-duration: 7.4s;  animation-delay: -8.1s; }
+.dropSeven { width: 166px; height: 166px; left: 78%; animation-duration: 14.8s; animation-delay: -4.4s; }
+.dropEight { width: 58px;  height: 58px;  left: 88%; animation-duration: 8.4s;  animation-delay: -6.3s; }
+.dropNine  { width: 104px; height: 104px; left: 94%; animation-duration: 10.6s; animation-delay: -2.2s; }
+
+@keyframes dropDown {
+  0%   { transform: translate3d(0, -14vh, 0); opacity: 0; }
+  12%  { opacity: 0.7; }
+  85%  { opacity: 0.5; }
+  100% { transform: translate3d(0, 124vh, 0); opacity: 0; }
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Page Header ─────────────────────────────────────────────────────────── */
+.pageHeader {
+  text-align: center;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #19263c;
+  margin: 0 0 8px 0;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: rgba(25, 38, 60, 0.55);
+  margin: 0;
+}
+
+/* ── Main Grid (full width, no card) ────────────────────────────────────── */
+.cardInner {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 56px;
+  align-items: start;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .cardInner { grid-template-columns: 1fr; }
+  .illustrationCol { display: none; }
+}
+
+/* ── Form Column ─────────────────────────────────────────────────────────── */
+.formCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Section Labels ──────────────────────────────────────────────────────── */
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(25, 38, 60, 0.35);
+  margin: 4px 0 0 0;
+}
+
+.sectionLabelRight {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(25, 38, 60, 0.35);
+  margin: 0 0 8px 0;
+}
+
+/* ── Profile Row (Pekerjaan + Budget side by side) ───────────────────────── */
+.profileRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── Field Group ─────────────────────────────────────────────────────────── */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(25, 38, 60, 0.6);
+  margin: 0;
+}
+
+/* ── Location Input ──────────────────────────────────────────────────────── */
+.locationInput {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(25, 38, 60, 0.04);
+  border: 1.5px dashed rgba(25, 38, 60, 0.2);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  user-select: none;
+  min-height: 52px;
+}
+
+.locationInput:hover {
+  background: rgba(25, 38, 60, 0.07);
+  border-color: rgba(25, 38, 60, 0.35);
+}
+
+.locationInputError {
+  border-color: #ef4444;
+  border-style: solid;
+}
+
+.locationIconCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(25, 38, 60, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.locationInputText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.locationIconSmall {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.locationValue {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #19263c;
+  font-family: 'Poppins', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.locationPlaceholder {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(25, 38, 60, 0.6);
+  font-family: 'Poppins', sans-serif;
+}
+
+.locationSubPlaceholder {
+  font-size: 10px;
+  color: rgba(25, 38, 60, 0.35);
+  font-family: 'Poppins', sans-serif;
+}
+
+.mapArrow {
+  font-size: 16px;
+  color: rgba(25, 38, 60, 0.3);
+  flex-shrink: 0;
+}
+
+.changeLocationBtn {
+  background: rgba(25, 38, 60, 0.08);
+  border: none;
+  color: #19263c;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.changeLocationBtn:hover {
+  background: rgba(25, 38, 60, 0.15);
+}
+
+/* ── Occupation Dropdown ─────────────────────────────────────────────────── */
+.occupationDropdown {
+  position: relative;
+}
+
+.occupationTrigger {
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(25, 38, 60, 0.15);
+  background: white;
+  color: #0f1d33;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.occupationTrigger:hover { border-color: rgba(25, 38, 60, 0.3); }
+
+.occupationTrigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(25, 38, 60, 0.1);
+  border-color: #19263c;
+}
+
+.occupationChevron {
+  font-size: 14px;
+  color: rgba(25, 38, 60, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.occupationChevronOpen { transform: rotate(180deg); }
+
+.occupationMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 16px;
+  border: 1px solid rgba(25, 38, 60, 0.1);
+  background: white;
+  box-shadow: 0 14px 28px rgba(25, 38, 60, 0.12);
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.occupationOption {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: rgba(20, 33, 54, 0.85);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  padding: 12px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  display: block;
+}
+
+.occupationOption:hover  { background: rgba(25, 38, 60, 0.06); }
+.occupationOptionActive  { background: #19263c; color: #ffffff; }
+
+/* ── Budget Dropdown ─────────────────────────────────────────────────────── */
+.budgetDropdown { position: relative; }
+
+.budgetTrigger {
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(25, 38, 60, 0.15);
+  background: white;
+  color: #0f1d33;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.budgetTrigger:hover { border-color: rgba(25, 38, 60, 0.3); }
+
+.budgetTrigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(25, 38, 60, 0.1);
+  border-color: #19263c;
+}
+
+.budgetChevron {
+  font-size: 14px;
+  color: rgba(25, 38, 60, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.budgetChevronOpen { transform: rotate(180deg); }
+
+.budgetMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border-radius: 16px;
+  border: 1px solid rgba(25, 38, 60, 0.1);
+  background: white;
+  box-shadow: 0 14px 28px rgba(25, 38, 60, 0.12);
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.budgetOption {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: rgba(20, 33, 54, 0.85);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  padding: 12px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  display: block;
+}
+
+.budgetOption:hover  { background: rgba(25, 38, 60, 0.06); }
+.budgetOptionActive  { background: #19263c; color: #ffffff; }
+
+/* ── Error Styles ────────────────────────────────────────────────────────── */
+.inputError {
+  box-shadow: 0 0 0 2px #ef4444 !important;
+  border-color: #ef4444 !important;
+}
+
+.errorText {
+  color: #ef4444;
+  font-size: 12px;
+  margin: 0;
+  padding-left: 8px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── Gender Buttons ──────────────────────────────────────────────────────── */
+.genderGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.genderBtn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+  border: 1.5px solid rgba(25, 38, 60, 0.2);
+}
+
+.genderBtnActive   { background: #19263c; color: white; border-color: #19263c; }
+.genderBtnInactive { background: transparent; color: rgba(25, 38, 60, 0.6); }
+.genderBtnInactive:hover { background: rgba(25, 38, 60, 0.05); border-color: rgba(25, 38, 60, 0.35); color: #19263c; }
+
+/* ── Preference Tags ─────────────────────────────────────────────────────── */
+.prefGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.prefBtn {
+  padding: 9px 16px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+  border: 1.5px solid rgba(25, 38, 60, 0.18);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prefBtnActive   { background: #19263c; color: white; border-color: #19263c; }
+.prefBtnInactive { background: transparent; color: rgba(25, 38, 60, 0.6); }
+.prefBtnInactive:hover { background: rgba(25, 38, 60, 0.05); border-color: rgba(25, 38, 60, 0.35); color: #19263c; }
+
+.prefCheck {
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+/* ── Illustration Column ─────────────────────────────────────────────────── */
+.illustrationCol {
+  display: flex;
+  position: sticky;
+  top: 48px;
+}
+
+.illustrationWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mapPreviewFrame {
+  width: 100%;
+  height: 260px;
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f0f2f5;
+}
+
+/* ── Summary Card ────────────────────────────────────────────────────────── */
+.summaryCard {
+  background: #f7f8fa;
+  border: 1px solid rgba(25, 38, 60, 0.08);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.summaryTitle {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(25, 38, 60, 0.35);
+  margin: 0 0 12px 0;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(25, 38, 60, 0.06);
+  font-size: 12px;
+}
+
+.summaryRowLast { border-bottom: none; }
+
+.summaryKey { color: rgba(25, 38, 60, 0.45); }
+
+.summaryVal {
+  color: #19263c;
+  font-weight: 500;
+  text-align: right;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summaryValEmpty {
+  color: rgba(25, 38, 60, 0.25);
+  font-weight: 400;
+}
+
+/* ── Error Banner ────────────────────────────────────────────────────────── */
+.errorBanner {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── Action Buttons ──────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.skipBtn {
+  width: 160px;
+  flex-shrink: 0;
+  padding: 16px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(25, 38, 60, 0.2);
+  background: transparent;
+  color: rgba(25, 38, 60, 0.55);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+}
+
+.skipBtn:hover:not(:disabled) { background: rgba(25, 38, 60, 0.05); color: #19263c; border-color: rgba(25, 38, 60, 0.35); }
+.skipBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.submitBtn {
+  flex: 1;
+  padding: 16px;
+  border-radius: 30px;
+  border: none;
+  background: #19263c;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) { background: #0f1d33; }
+.submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.submittingInner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btnSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Footer Note ─────────────────────────────────────────────────────────── */
+.footerNote {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(25, 38, 60, 0.45);
+  margin: 0;
+  padding-bottom: 16px;
+}
+
+/* ── Map Loading Overlay ─────────────────────────────────────────────────── */
+.mapLoadingOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: white;
+  font-size: 15px;
+  font-family: 'Poppins', sans-serif;
+  z-index: 1000;
+}
+
+.mapLoadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}

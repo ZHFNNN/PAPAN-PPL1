@@ -1,0 +1,377 @@
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal ───────────────────────────────────────────────────────────────── */
+.modal {
+  background: #19263c;
+  border-radius: 28px;
+  width: 100%;
+  max-width: 740px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.22s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 26px 0;
+  gap: 12px;
+}
+
+.modalTitle {
+  font-size: 19px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 5px 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.modalSubtitle {
+  font-size: 12px;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  transition: color 0.3s;
+}
+
+/* Status colors */
+.statusRequesting { color: rgba(255,255,255,0.45); }
+.statusActive     { color: #979797; font-size: 12px; font-weight: 450; }
+.statusError      { color: #fca5a5; }
+
+.closeBtn {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover { background: rgba(255,255,255,0.2); }
+
+/* ── Search Row ──────────────────────────────────────────────────────────── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px 0;
+}
+
+.searchBar {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 11px 18px;
+  border-radius: 30px;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: white;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  outline: none;
+  transition: background 0.2s;
+}
+
+.searchInput::placeholder { color: rgba(255,255,255,0.38); }
+.searchInput:focus { background: rgba(255,255,255,0.18); }
+
+.searchBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: white;
+  color: #19263c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.searchBtn:hover:not(:disabled) { background: #f0f2f5; }
+.searchBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.searchSpinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(25,38,60,0.2);
+  border-top-color: #19263c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+/* Tombol re-center — tampil hanya kalau GPS aktif */
+.recenterBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  background: rgb(45, 53, 74);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.recenterBtn:hover {
+  background: rgba(33,150,243,0.22);
+  border-color: #64b5f6;
+  color: white;
+}
+
+.searchError {
+  color: #fca5a5;
+  font-size: 12px;
+  margin: 5px 26px 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ── Map ─────────────────────────────────────────────────────────────────── */
+.mapWrapper {
+  position: relative;
+  margin: 14px 26px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mapContainer {
+  width: 100%;
+  height: 350px;
+}
+
+/* Overlay geocoding */
+.geocodingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(25,38,60,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: white;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  z-index: 500;
+  border-radius: 18px;
+}
+
+.geocodingSpinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* Overlay detecting lokasi pertama kali */
+.locatingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(25,38,60,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: rgba(255,255,255,0.8);
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  z-index: 499;
+  border-radius: 18px;
+}
+
+/* Ring animasi blue dot di overlay */
+.locatingRing {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2196F3;
+  opacity: 0.8;
+  animation: locatingPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes locatingPulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.8; }
+  50%       { transform: scale(1.4); opacity: 0.3; }
+}
+
+/* Legend pojok kiri bawah peta */
+.legend {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(25,38,60,0.82);
+  backdrop-filter: blur(4px);
+  color: rgba(255,255,255,0.85);
+  font-size: 11px;
+  font-family: 'Poppins', sans-serif;
+  padding: 5px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 400;
+  pointer-events: none;
+}
+
+.legendBlueDot {
+  width: 10px;
+  height: 10px;
+  background: #2196F3;
+  border: 1.5px solid white;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 4px rgba(33,150,243,0.7);
+}
+
+.legendSep { opacity: 0.4; }
+.legendPin { font-size: 12px; }
+
+/* ── Location Info ───────────────────────────────────────────────────────── */
+.locationInfo {
+  padding: 12px 26px 0;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+}
+
+.locationPlaceholder {
+  color: rgba(255,255,255,0.3);
+  font-size: 13px;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-style: italic;
+}
+
+.geocodeError {
+  color: #fca5a5;
+  font-size: 13px;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.locationResult {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 11px 14px;
+  width: 100%;
+  animation: fadeIn 0.2s ease;
+}
+
+.locationPin { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+.locationDetails { flex: 1; min-width: 0; }
+
+.locationMain {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 3px 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.locationSub {
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+.modalActions {
+  display: flex;
+  gap: 10px;
+  padding: 14px 26px 22px;
+}
+
+.cancelBtn {
+  padding: 12px 22px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  background: transparent;
+  color: rgba(255,255,255,0.65);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover { border-color: white; color: white; }
+
+.confirmBtn {
+  flex: 1;
+  padding: 12px 22px;
+  border-radius: 30px;
+  border: none;
+  background: white;
+  color: #19263c;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+}
+
+.confirmBtn:hover:not(:disabled) { background: #f0f2f5; }
+.confirmBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Shared ──────────────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }

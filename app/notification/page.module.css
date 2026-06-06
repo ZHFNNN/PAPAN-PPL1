@@ -1,0 +1,230 @@
+/* ═══════════════════════════════════════════
+   PAPAN — Notification Page Styles
+   ═══════════════════════════════════════════ */
+
+.page {
+  background-color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Main content ── */
+.main {
+  flex: 1;
+  padding: 6.5rem 1rem 4rem;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.title {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: clamp(25px, 1.3vw, 18px);
+  color: #19263c;
+  margin: 0;
+}
+
+.badge {
+  background-color: #19263c;
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 8px;
+  min-width: 22px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.markAllBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #19263c;
+  text-decoration: underline;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.markAllBtn:hover {
+  opacity: 0.65;
+}
+
+/* ── Notification List ── */
+.list {
+  background: #ffffff;
+  border: 1px solid #e8eaed;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* ── Notification Item ── */
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+}
+
+.item:hover {
+  background-color: #f7f8fa;
+}
+
+.itemUnread {
+  background-color: #f0f3f8;
+}
+
+.itemUnread:hover {
+  background-color: #e8ecf4;
+}
+
+/* ── Icon ── */
+.iconWrap {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.iconBookmark {
+  background-color: #e8ecf4;
+  color: #19263c;
+}
+
+.iconPayment {
+  background-color: #e6f4ed;
+  color: #1a7a4a;
+}
+
+/* ── Content ── */
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #19263c;
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.notifDesc {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Meta (date + unread dot) ── */
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.date {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11.5px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #19263c;
+  flex-shrink: 0;
+}
+
+/* ── Divider ── */
+.divider {
+  margin: 0 1.25rem;
+  border: none;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ── Empty state ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem 1rem;
+  color: #9ca3af;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .main {
+    padding: 5.5rem 0.75rem 3rem;
+  }
+
+  .item {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .iconWrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .notifTitle {
+    font-size: 13px;
+  }
+
+  .notifDesc {
+    font-size: 12px;
+  }
+
+  .date {
+    font-size: 11px;
+  }
+}

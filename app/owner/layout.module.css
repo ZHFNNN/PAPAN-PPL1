@@ -1,0 +1,50 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  font-family: 'Poppins', sans-serif;
+}
+
+.pagePlain {
+  background: #ffffff;
+}
+
+.layout {
+  flex: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 120px 16px 40px 16px;
+  box-sizing: border-box;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.layoutPlain {
+  max-width: none;
+  padding: 0;
+  display: block;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mainPlain {
+  width: 100%;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    padding: 86px 16px 20px;
+    flex-direction: column;
+  }
+
+  .layoutPlain {
+    padding: 0;
+    flex-direction: unset;
+  }
+}

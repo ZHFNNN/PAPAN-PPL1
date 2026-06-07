@@ -91,4 +91,4 @@ graph TD
 ```
 
 ---
-*Dibuat untuk memenuhi kebutuhan Proyek Perangkat Lunak 1 (PPL-1).*
+*Dibuat untuk memenuhi kebutuhan Tugas Proyek Perangkat Lunak 1 (PPL-1).*

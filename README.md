@@ -50,7 +50,7 @@ cp .env.example .env
 
 **Kunci Rahasia Penting:**
 - `DATABASE_URL` & `DIRECT_URL` (dari Supabase / PostgreSQL lokal)
-- `NEXTAUTH_SECRET` (generate menggunakan `openssl rand -base64 32`)
+- `NEXTAUTH_SECRET` 
 - Credential Google OAuth, Cloudinary, SMTP (Nodemailer), dan Midtrans Server Key.
 
 ### 2. Instalasi & Setup Database

@@ -1,77 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
+  <h1>🏠 PAPAN</h1>
+  <p>Platform Pencarian & Penyewaan Properti dengan Sistem Rekomendasi Cerdas (DSS)</p>
+  
+  <a href="https://papan-ppl-1.vercel.app" target="_blank">
+    <img src="https://img.shields.io/badge/Live_Website-papan--ppl--1.vercel.app-000000?style=for-the-badge&logo=vercel" alt="Live Website" />
+  </a>
+</div>
 
-## Getting Started
+---
 
- 1. npm install
- 5. npm run dev
+## 📖 Deskripsi Proyek
 
+**PAPAN** adalah sebuah platform modern untuk mencari dan menyewakan properti (Rumah, Apartemen, dan Kosan). Aplikasi ini tidak hanya berfungsi sebagai *marketplace* properti biasa, tetapi juga dilengkapi dengan **Sistem Pendukung Keputusan (DSS)** yang memberikan personalisasi rekomendasi hunian kepada pencari berdasarkan kriteria bobot prioritas mereka (Budget, Lokasi, Fasilitas, dan Gender).
 
+## ✨ Fitur Utama
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 👥 **Multi-Role Access**: Terdiri dari 3 peran utama: `USER` (Pencari), `OWNER` (Pemilik Properti), dan `ADMIN`.
+- 🧠 **Sistem Rekomendasi (DSS)**: Mencocokkan properti terbaik berdasarkan profil personalisasi pengguna dan pembobotan kriteria cerdas.
+- 🛡️ **Verifikasi Identitas (KYC)**: Keamanan ekstra dengan sistem verifikasi KTP dan Selfie untuk mencegah penipuan.
+- 💬 **Interaksi Langsung (Chat)**: Fitur pesan *real-time* terintegrasi antara pencari dan pemilik properti.
+- ⭐ **Review & Bookmark**: Pengguna dapat memberikan ulasan (beserta gambar) dan menyimpan properti favorit.
+- 🚀 **Property Boost (Promosi)**: Pemilik dapat mempromosikan properti mereka agar tampil lebih atas menggunakan **Midtrans Payment Gateway**.
+- 🗺️ **Peta Interaktif**: Pencarian properti berbasis lokasi menggunakan Leaflet.js.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Teknologi (Tech Stack)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Proyek ini dibangun menggunakan teknologi *modern web development*:
 
-## Learn More
+- **Framework**: [Next.js](https://nextjs.org/) (App Router) & React
+- **Styling**: Tailwind CSS v4
+- **Database**: PostgreSQL (via Supabase)
+- **ORM**: Prisma Client (`@prisma/client`)
+- **Authentication**: NextAuth.js (Google OAuth & Credentials)
+- **Payment Gateway**: Midtrans
+- **Media Storage**: Cloudinary
+- **Maps**: Leaflet & React-Leaflet
+- **Testing**: Vitest
+- **CI/CD**: GitHub Actions & Vercel
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Menjalankan Proyek di Komputer Lokal (Development)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 1. Persiapan Environment Variables
+Duplikasi file `.env.example` menjadi `.env` lalu isi nilai-nilainya:
+```bash
+cp .env.example .env
+```
 
-## Deploy on Vercel
+**Kunci Rahasia Penting:**
+- `DATABASE_URL` & `DIRECT_URL` (dari Supabase / PostgreSQL lokal)
+- `NEXTAUTH_SECRET` (generate menggunakan `openssl rand -base64 32`)
+- Credential Google OAuth, Cloudinary, SMTP (Nodemailer), dan Midtrans Server Key.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 2. Instalasi & Setup Database
+```bash
+# Install dependencies
+npm install
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Generate Prisma Client & sinkronisasi database
+npx prisma generate
+npx prisma db push
 
-## GitHub CI dan CS
+# (Opsional) Jalankan seed untuk data awal
+npm run prisma:seed
+```
 
-Repository ini sudah disiapkan dengan 2 workflow GitHub Actions:
+### 3. Jalankan Server Dev
+```bash
+npm run dev
+```
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
-- CI: menjalankan install dependency, `prisma generate`, `lint`, dan `build` setiap push atau pull request ke `main` / `master`.
-- Security: menjalankan dependency review saat pull request dan CodeQL scanning untuk JavaScript / TypeScript.
+---
 
-### Cara pakai
+## ⚙️ CI/CS/CD Pipeline & Deployment
 
-1. Push workflow ini ke branch utama repository.
-2. Buka tab `Actions` di GitHub untuk melihat hasil CI.
-3. Buka tab `Security` untuk melihat hasil CodeQL dan alert keamanan.
-4. Saat membuat atau update pull request, pastikan status check CI dan Dependency Review hijau sebelum merge.
+Repositori ini telah dikonfigurasi dengan otomatisasi *Continuous Integration*, *Continuous Security*, dan *Continuous Deployment* menggunakan **GitHub Actions** (`.github/workflows/pipeline.yml`).
 
-### Secret yang perlu disiapkan
+### Alur Pipeline
 
-Tambahkan nilai env production ke `Settings > Secrets and variables > Actions` di GitHub. Minimal yang dipakai project ini:
+```mermaid
+graph TD
+    A[Push / PR ke main] --> B(CI & CS)
+    B --> |Gitleaks, npm audit, tsc, lint| C{Status CI/CS?}
+    C -->|Gagal| D[Pipeline Berhenti ❌]
+    C -->|Sukses| E{Event Type?}
+    E -->|Pull Request| F[Preview Deployment 🚀]
+    E -->|Push/Merge ke main| G[Production Deployment 🌍]
+```
 
-- `DATABASE_URL`
-- `NEXTAUTH_URL`
-- `NEXTAUTH_SECRET`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `CLOUDINARY_CLOUD_NAME`
-- `CLOUDINARY_API_KEY`
-- `CLOUDINARY_API_SECRET`
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_USER`
-- `SMTP_PASS`
-- `SMTP_FROM` (opsional, fallback ke `ADMIN_EMAIL`)
-- `MIDTRANS_SERVER_KEY`
-- `MIDTRANS_IS_PRODUCTION` (`true` untuk production, selain itu sandbox)
-
-### Midtrans webhook
-
-Setelah checkout Midtrans aktif, arahkan notifikasi server ke endpoint ini:
-
-- `POST /api/owner/boosts/webhook`
-
-Endpoint tersebut akan memverifikasi signature Midtrans, menandai transaksi sebagai `PAID`, lalu membuat `PropertyBoost` hanya setelah pembayaran sukses.
-
-### Catatan
-
-File `.env` lokal jangan di-commit. Jika credential Google login atau secret lain sempat tersebar di luar lingkungan lokal, sebaiknya diganti dulu sebelum dipakai di production.
-
-coba
+---
+*Dibuat untuk memenuhi kebutuhan Tugas Proyek Perangkat Lunak 1 (PPL-1).*

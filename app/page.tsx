@@ -6,7 +6,7 @@ import styles from './HomePage.module.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { formatPrice } from '../lib/format-price';
-import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard } from '@/types/property';
+import { type ApiProperty, type PropertyCardData, mapApiPropertyToCard, calculateDiscountedPrice, isDiscountStillActive } from '@/types/property';
 
 type KategoriType = 'Apartemen' | 'Rumah' | 'Kosan';
 
@@ -550,11 +550,21 @@ function DiscountSection({
   const [hasPlayedIntro, setHasPlayedIntro] = useState(false);
   const tickerItems = Array.from({ length: 5 });
 
-  const discountProperties = items.map((p, i) => ({
-    ...p,
-    discount: [15, 20, 10, 25, 30, 18][i % 6],
-    originalPrice: p.price,
-  }));
+  // Hanya tampilkan properti yang punya diskon aktif (data real dari owner)
+  const discountProperties = items
+    .filter((p) =>
+      isDiscountStillActive(p.discountPercentage, p.discountActiveUntil)
+    )
+    .map((p) => {
+      const pct = p.discountPercentage ?? 0;
+      const discountedPrice = calculateDiscountedPrice(p.price, pct);
+      return {
+        ...p,
+        discount: pct,
+        originalPrice: p.price,           // harga normal (yang dicoret)
+        price: String(discountedPrice),   // harga setelah diskon (yang ditampilkan besar)
+      };
+    });
 
   const openPropertyDetail = (id: string | number) => {
     router.push(`/propertyDetail/${encodeURIComponent(String(id))}`);
@@ -745,6 +755,9 @@ export default function HomePage() {
   const [propertyItems, setPropertyItems] = useState<PropertyCardData[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
   const [propertiesError, setPropertiesError] = useState<string | null>(null);
+  const [promoItems, setPromoItems] = useState<PropertyCardData[]>([]);
+  const [promoLoading, setPromoLoading] = useState(true);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const [charaX, setCharaX] = useState(50);
   const heroRef = useRef<HTMLDivElement>(null);
   const [hoveredSpot, setHoveredSpot] = useState<string | null>(null);
@@ -777,7 +790,30 @@ export default function HomePage() {
       }
     };
 
+    const loadPromos = async () => {
+      setPromoLoading(true);
+      setPromoError(null);
+      try {
+        const res = await fetch('/api/properties?promo=1&take=20');
+        const json = await res.json().catch(() => ({}));
+        const data = Array.isArray(json.data) ? (json.data as ApiProperty[]) : [];
+        if (!cancelled) {
+          setPromoItems(data.map(mapApiPropertyToCard));
+        }
+      } catch {
+        if (!cancelled) {
+          setPromoError('Gagal memuat promo.');
+          setPromoItems([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setPromoLoading(false);
+        }
+      }
+    };
+
     loadProperties();
+    loadPromos();
 
     return () => {
       cancelled = true;
@@ -887,7 +923,7 @@ export default function HomePage() {
       {/* ── Konten ── */}
       <div className={styles.content}>
         <RecommendationSection />
-        <DiscountSection items={propertyItems} isLoading={propertiesLoading} error={propertiesError} />
+        <DiscountSection items={promoItems} isLoading={promoLoading} error={promoError} />
         <PropertySection
           title="Best Seller"
           items={propertyItems}

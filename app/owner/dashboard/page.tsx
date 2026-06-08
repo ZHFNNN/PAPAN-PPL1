@@ -31,6 +31,9 @@ type Property = {
   createdAt: string;
   isBoosted?: boolean;
   activeBoost?: ActiveBoost | null;
+  discountPercentage?: number | null;
+  discountActiveUntil?: string | null;
+  isDiscountActive?: boolean;
 };
 
 type DashboardStats = {
@@ -278,17 +281,45 @@ export default function OwnerDashboardPage() {
                           {property.activeBoost && (
                             <span className={styles.boosterBadge}>Booster</span>
                           )}
+                          {property.isDiscountActive && property.discountPercentage && (
+                            <span className={styles.promoBadge}>Promo -{property.discountPercentage}%</span>
+                          )}
                           <span className={`${styles.statusBadge} ${STATUS_COLOR[property.status ?? 'Aktif'] ?? styles.statusAktif}`}>
                             {property.status ?? 'Aktif'}
                           </span>
                         </div>
                       </div>
-                      <p className={styles.propertyPrice}>{formatPrice(property.price)}</p>
+                      {property.isDiscountActive && property.discountPercentage ? (
+                        <div className={styles.promoPriceRow}>
+                          <p className={styles.promoOriginalPrice}>{formatPrice(property.price)}</p>
+                          <p className={`${styles.propertyPrice} ${styles.promoNewPrice}`}>
+                            {formatPrice(
+                              String(
+                                Math.round(
+                                  Number(property.price) * (100 - property.discountPercentage) / 100
+                                )
+                              )
+                            )}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className={styles.propertyPrice}>{formatPrice(property.price)}</p>
+                      )}
                       {property.activeBoost && (
                         <div className={styles.boosterInfo}>
                           <p className={styles.boosterTitle}>Booster aktif</p>
                           <p className={styles.boosterCountdown}>
                             Sisa booster: {formatCountdown(property.activeBoost.endDate, now)}
+                          </p>
+                        </div>
+                      )}
+                      {property.isDiscountActive && (
+                        <div className={styles.promoInfo}>
+                          <p className={styles.promoTitle}>Promo aktif -{property.discountPercentage}%</p>
+                          <p className={styles.promoCountdown}>
+                            {property.discountActiveUntil
+                              ? `Berlaku sampai ${new Date(property.discountActiveUntil).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                              : 'Berlaku tanpa batas waktu'}
                           </p>
                         </div>
                       )}

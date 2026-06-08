@@ -28,6 +28,9 @@ type PropertyDetail = {
   owner?: { id?: string | null; name?: string | null; username?: string | null; image?: string | null };
   facilities: Array<{ code: string; name: string }>;
   createdAt: string;
+  discountPercentage?: number | null;
+  discountActiveUntil?: string | null;
+  isDiscountActive?: boolean;
 };
 
 type ReviewPhoto = { id: string; data: string };
@@ -70,6 +73,10 @@ type DisplayProperty = {
   title: string;
   kategori: string;
   price: string;
+  originalPrice: string | null;
+  discountPercentage: number | null;
+  discountActiveUntil: string | null;
+  isDiscountActive: boolean;
   biayaHidup: string;
   lokasi: string;
   luas: string;
@@ -108,6 +115,18 @@ function mapApiProperty(data: PropertyDetail): DisplayProperty {
     .filter((v) => Boolean(v && v.trim()))
     .join(', ');
 
+  // Hitung diskon — hanya aktif kalau persentase > 0 dan belum kadaluarsa
+  const now = new Date();
+  const expiry = data.discountActiveUntil ? new Date(data.discountActiveUntil) : null;
+  const discountActive =
+    typeof data.discountPercentage === 'number' &&
+    data.discountPercentage > 0 &&
+    (expiry === null || expiry > now);
+  const numericPrice = Number(data.price);
+  const finalPrice = discountActive && Number.isFinite(numericPrice)
+    ? Math.round(numericPrice * (100 - (data.discountPercentage ?? 0)) / 100)
+    : numericPrice;
+
   return {
     id: data.id,
     title: data.title,
@@ -117,7 +136,11 @@ function mapApiProperty(data: PropertyDetail): DisplayProperty {
         : data.listingType === 'SELL'
           ? 'Properti Jual'
           : 'Properti',
-    price: formatPrice(data.price),
+    price: formatPrice(String(finalPrice)),
+    originalPrice: discountActive ? formatPrice(data.price) : null,
+    discountPercentage: discountActive ? (data.discountPercentage ?? null) : null,
+    discountActiveUntil: data.discountActiveUntil ?? null,
+    isDiscountActive: discountActive,
     biayaHidup: 'Estimasi biaya hidup: -',
     lokasi: lokasi || 'Lokasi belum tersedia',
     luas: '-',
@@ -571,7 +594,24 @@ export default function PropertyDetailClient({ propertyId }: PropertyDetailClien
 
             <div className={styles.priceCard}>
               <p className={styles.priceLabel}>Harga</p>
-              <p className={styles.priceValue}>{prop.price}</p>
+              {prop.isDiscountActive && prop.originalPrice ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 6 }}>
+                  <span style={{ display: 'inline-block', background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 999, width: 'fit-content' }}>
+                    PROMO -{prop.discountPercentage}%
+                  </span>
+                  <p style={{ textDecoration: 'line-through', color: '#888', fontSize: 14, margin: 0 }}>
+                    {prop.originalPrice}
+                  </p>
+                  <p className={styles.priceValue} style={{ color: '#dc2626' }}>{prop.price}</p>
+                  {prop.discountActiveUntil && (
+                    <p style={{ fontSize: 11, color: '#666', margin: 0 }}>
+                      Berlaku sampai {new Date(prop.discountActiveUntil).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className={styles.priceValue}>{prop.price}</p>
+              )}
               <p className={styles.priceEstimate}>{prop.biayaHidup}</p>
 
           {prop.ownerId ? (

@@ -44,6 +44,7 @@ export async function GET(request: Request) {
   const categoryFilter = normalizeCategory(url.searchParams.get('category'));
   const listingTypeFilter = normalizeListingType(url.searchParams.get('listingType'));
   const searchQuery = url.searchParams.get('q')?.trim();
+  const promoOnly = url.searchParams.get('promo') === '1' || url.searchParams.get('promo') === 'true';
 
   const takeRaw = Number(url.searchParams.get('take') ?? '120');
   const take = Number.isFinite(takeRaw)
@@ -51,36 +52,50 @@ export async function GET(request: Request) {
     : 120;
 
   const now = new Date();
-  const baseWhere: Prisma.PropertyWhereInput = {};
+  const conditions: Prisma.PropertyWhereInput[] = [];
 
   if (categoryFilter) {
-    baseWhere.category = categoryFilter;
+    conditions.push({ category: categoryFilter });
   }
 
   if (listingTypeFilter) {
-    baseWhere.listingType = { in: listingTypeFilter };
+    conditions.push({ listingType: { in: listingTypeFilter } });
   }
 
   if (searchQuery) {
-    baseWhere.OR = [
-      { title: { contains: searchQuery, mode: 'insensitive' } },
-      { address: { contains: searchQuery, mode: 'insensitive' } },
-      { neighbourhood: { contains: searchQuery, mode: 'insensitive' } },
-      { district: { contains: searchQuery, mode: 'insensitive' } },
-      { city: { contains: searchQuery, mode: 'insensitive' } },
-      { owner: { name: { contains: searchQuery, mode: 'insensitive' } } },
-      { owner: { username: { contains: searchQuery, mode: 'insensitive' } } },
-      {
-        facilities: {
-          some: {
-            facility: {
-              name: { contains: searchQuery, mode: 'insensitive' },
+    conditions.push({
+      OR: [
+        { title: { contains: searchQuery, mode: 'insensitive' } },
+        { address: { contains: searchQuery, mode: 'insensitive' } },
+        { neighbourhood: { contains: searchQuery, mode: 'insensitive' } },
+        { district: { contains: searchQuery, mode: 'insensitive' } },
+        { city: { contains: searchQuery, mode: 'insensitive' } },
+        { owner: { name: { contains: searchQuery, mode: 'insensitive' } } },
+        { owner: { username: { contains: searchQuery, mode: 'insensitive' } } },
+        {
+          facilities: {
+            some: {
+              facility: {
+                name: { contains: searchQuery, mode: 'insensitive' },
+              },
             },
           },
         },
-      },
-    ];
+      ],
+    });
   }
+
+  if (promoOnly) {
+    conditions.push({
+      discountPercentage: { gt: 0 },
+      OR: [
+        { discountActiveUntil: null },
+        { discountActiveUntil: { gt: now } },
+      ],
+    });
+  }
+
+  const baseWhere: Prisma.PropertyWhereInput = conditions.length ? { AND: conditions } : {};
 
   const includeConfig = {
     owner: {
@@ -166,11 +181,19 @@ export async function GET(request: Request) {
 
   const data = [...boosted, ...nonBoosted].map((property) => {
     const activeBoost = property.boosts[0] ?? null;
-    const { boosts, facilities, ...plainProperty } = property;
+    const { boosts, facilities, discountActiveUntil, ...plainProperty } = property;
+
+    const isDiscountActive =
+      typeof property.discountPercentage === 'number' &&
+      property.discountPercentage > 0 &&
+      (discountActiveUntil === null || (discountActiveUntil && discountActiveUntil > now));
 
     return {
       ...plainProperty,
       price: property.price.toString(),
+      discountPercentage: property.discountPercentage ?? null,
+      discountActiveUntil: discountActiveUntil ? discountActiveUntil.toISOString() : null,
+      isDiscountActive: Boolean(isDiscountActive),
       isBoosted: Boolean(activeBoost),
       activeBoost: activeBoost
         ? {

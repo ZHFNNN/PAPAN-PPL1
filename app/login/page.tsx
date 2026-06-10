@@ -152,12 +152,6 @@ function LoginPageContent() {
               {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
             </button>
           </div>
-
-          <div className={styles.forgotRow}>
-            <span className={styles.forgotLink} style={{ cursor: "pointer" }}>
-              Lupa kata sandi?
-            </span>
-          </div>
         </div>
 
         <button
